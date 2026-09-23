@@ -125,12 +125,23 @@ namespace Ludo.Game
             float gap = 0.25f;
             float y = top ? corners[1].y + gap + half : corners[0].y - gap - half;
             var cam = Camera.main;
-            if (cam != null)                                      // never off the screen
+            if (cam != null)                                      // never off the screen, never over the turn banner and the mode line
             {
-                float edge = cam.orthographicSize - half - 0.1f;
-                y = Mathf.Clamp(y, cam.transform.position.y - edge, cam.transform.position.y + edge);
+                float top = cam.transform.position.y + cam.orthographicSize - TopReserve() - half;
+                float bottom = cam.transform.position.y - cam.orthographicSize + half + 0.1f;
+                y = Mathf.Clamp(y, bottom, top);
             }
             return new Vector3(x, y, 0f);
+        }
+
+        /// <summary>World height taken at the top of the screen by the turn banner and the mode line.</summary>
+        float TopReserve()
+        {
+            var line = modeText != null && modeText.gameObject.activeSelf ? modeText.rectTransform : turnText != null ? turnText.rectTransform.parent as RectTransform : null;
+            var cam = Camera.main;
+            if (line == null || cam == null) return 2.6f;
+            line.GetWorldCorners(corners);
+            return Mathf.Max(0f, cam.transform.position.y + cam.orthographicSize - corners[0].y) + 0.15f;
         }
 
         // ---------- Ludo Star rule: several numbers per turn ----------
@@ -161,7 +172,9 @@ namespace Ludo.Game
                 pendingDice[i].gameObject.SetActive(used);
                 if (used) pendingDice[i].sprite = diceFaces[Mathf.Clamp(values[i], 1, 6) - 1];
             }
-            PlaceAt(pendingRow, diceWorld, new Vector2(0f, 1.9f));
+            // beside the dice, on the side towards the middle of the screen
+            float side = diceWorld.x <= 0f ? 2.35f : -2.35f;
+            PlaceAt(pendingRow, diceWorld, new Vector2(side, 0f));
         }
 
         /// <summary>A pawn can move with more than one of the numbers: ask which (shown above the pawn).</summary>

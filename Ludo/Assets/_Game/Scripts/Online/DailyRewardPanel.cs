@@ -68,6 +68,7 @@ namespace Ludo.Online
                 dayTicks[i].SetActive(claimed);
             }
             claimButton.interactable = can && !busy;
+            claimButton.gameObject.SetActive(can);
             adButton.gameObject.SetActive(can);
             adButton.interactable = can && !busy && AdsService.RewardedReady;
             if (!StatsService.Loaded) statusText.text = "Connecting...";

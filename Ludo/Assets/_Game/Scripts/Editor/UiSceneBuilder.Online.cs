@@ -85,7 +85,7 @@ namespace Ludo.EditorTools
             var fees = Ludo.Core.CoinTables.Fees;
             var feeChips = new Image[fees.Length]; var feeLabels = new TMP_Text[fees.Length];
             var feeTitle = AddText(s, "EntryLabel", "Entry", 38, Color.white, TextAlignmentOptions.Left, true);
-            At(feeTitle.rectTransform, TopCenter, TopCenter, new Vector2(-400f, -700f), new Vector2(160f, 90f));
+            At(feeTitle.rectTransform, TopCenter, TopCenter, new Vector2(-400f, -675f), new Vector2(160f, 88f));
             for (int i = 0; i < fees.Length; i++)
             {
                 var chip = NewRect("Fee" + fees[i], s);
@@ -605,7 +605,7 @@ namespace Ludo.EditorTools
             var modal = NewRect("DailyRewardModal", root); Stretch(modal);
             AddImage(modal, null, new Color(0f, 0f, 0.05f, 0.78f)).raycastTarget = true;
             var card = NewRect("Card", modal);
-            At(card, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(960f, 1180f));
+            At(card, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(960f, 1340f));
             Depth(AddImage(card, Round(), Card, true, 0.45f), CardLip, 14f);
             var title = AddText(card, "Title", "Daily Reward", 70, Navy, TextAlignmentOptions.Center);
             At(title.rectTransform, TopCenter, TopCenter, new Vector2(0f, -30f), new Vector2(800f, 95f));
@@ -624,9 +624,14 @@ namespace Ludo.EditorTools
                 Depth(tiles[i], CardLip, 8f);
                 var day = AddText(t, "Day", "Day " + (i + 1), 38, SubText, TextAlignmentOptions.Center);
                 At(day.rectTransform, TopCenter, TopCenter, new Vector2(0f, -12f), new Vector2(240f, 50f));
-                var star = NewRect("Coin", t);
-                At(star, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 8f), new Vector2(92f, 92f));
-                AddImage(star, Icon2("star"), Gold).raycastTarget = false;
+                var coin = NewRect("Coin", t);                                        // a gold coin: rim, face, shine
+                At(coin, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 8f), new Vector2(big ? 110f : 88f, big ? 110f : 88f));
+                var rim = AddImage(coin, Circle(), new Color(0.85f, 0.55f, 0.05f)); rim.raycastTarget = false;
+                var face = NewRect("Face", coin); Stretch(face, 9f, 9f, 9f, 9f);
+                AddImage(face, Circle(), new Color(1f, 0.82f, 0.18f)).raycastTarget = false;
+                var shine = NewRect("Shine", face);
+                At(shine, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(-8f, 10f), new Vector2(28f, 20f));
+                AddImage(shine, Circle(), new Color(1f, 1f, 1f, 0.55f)).raycastTarget = false;
                 amounts[i] = AddText(t, "Amount", "100", 46, Navy, TextAlignmentOptions.Center, false);
                 At(amounts[i].rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 14f), new Vector2(240f, 56f));
                 var tick = NewRect("Claimed", t);
@@ -639,7 +644,7 @@ namespace Ludo.EditorTools
             }
 
             var status = AddText(card, "Status", "", 40, new Color(0.15f, 0.55f, 0.25f), TextAlignmentOptions.Center);
-            At(status.rectTransform, TopCenter, TopCenter, new Vector2(0f, -905f), new Vector2(880f, 56f));
+            At(status.rectTransform, TopCenter, TopCenter, new Vector2(0f, -1045f), new Vector2(880f, 56f));
             status.enableAutoSizing = true; status.fontSizeMin = 24f; status.fontSizeMax = 40f;
 
             var claim = MakeButton(card, "ClaimButton", "Claim", "Green", new Vector2(360f, 130f), Icon("checkmark"));
