@@ -127,9 +127,9 @@ namespace Ludo.Game
             var cam = Camera.main;
             if (cam != null)                                      // never off the screen, never over the turn banner and the mode line
             {
-                float top = cam.transform.position.y + cam.orthographicSize - TopReserve() - half;
-                float bottom = cam.transform.position.y - cam.orthographicSize + half + 0.1f;
-                y = Mathf.Clamp(y, bottom, top);
+                float highest = cam.transform.position.y + cam.orthographicSize - TopReserve() - half;
+                float lowest = cam.transform.position.y - cam.orthographicSize + half + 0.1f;
+                y = Mathf.Clamp(y, lowest, highest);
             }
             return new Vector3(x, y, 0f);
         }
