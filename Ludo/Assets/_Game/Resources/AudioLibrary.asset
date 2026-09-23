@@ -1,0 +1,63 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 27e02436df6614f46a532ed835f03722, type: 3}
+  m_Name: AudioLibrary
+  m_EditorClassIdentifier: Ludo.Game::Ludo.Game.AudioLibrary
+  sfx:
+  - id: 0
+    clips:
+    - {fileID: 8300000, guid: 756671196386a0e4ab5ebd62ad60359f, type: 3}
+    volume: 0.8
+    pitch: {x: 0.95, y: 1.05}
+  - id: 1
+    clips:
+    - {fileID: 8300000, guid: 5cd24f5f1545f904c8c2f5adc49da6f0, type: 3}
+    volume: 0.8
+    pitch: {x: 0.95, y: 1.05}
+  - id: 2
+    clips:
+    - {fileID: 8300000, guid: 67023714067220346b5f8b12fd808d9f, type: 3}
+    volume: 1
+    pitch: {x: 0.95, y: 1.05}
+  - id: 3
+    clips:
+    - {fileID: 8300000, guid: 3aae941662bfe6d4fa58fcd86f96099f, type: 3}
+    - {fileID: 8300000, guid: 1a859f5e7c9b3364191280ede243860b, type: 3}
+    volume: 1
+    pitch: {x: 0.95, y: 1.05}
+  - id: 4
+    clips:
+    - {fileID: 8300000, guid: 9fe1995252d82cc4d8113244003c1090, type: 3}
+    volume: 0.55
+    pitch: {x: 0.9, y: 1.15}
+  - id: 5
+    clips:
+    - {fileID: 8300000, guid: 3a80289eae29b6b4b8f2244e49cc49a2, type: 3}
+    volume: 1
+    pitch: {x: 0.95, y: 1.05}
+  - id: 6
+    clips:
+    - {fileID: 8300000, guid: 7a3b43032dc53004798b980d4a427339, type: 3}
+    volume: 0.9
+    pitch: {x: 1, y: 1}
+  - id: 8
+    clips:
+    - {fileID: 8300000, guid: 39fbb766baab8df4fb80e8861bad51dd, type: 3}
+    volume: 0.7
+    pitch: {x: 1, y: 1}
+  - id: 7
+    clips:
+    - {fileID: 8300000, guid: 1e2cab0753e74084d9bbfc7088c51366, type: 3}
+    volume: 1
+    pitch: {x: 1, y: 1}
+  music: {fileID: 8300000, guid: abc288a01d58f014fa185c7769222723, type: 3}
+  musicGain: 0.5

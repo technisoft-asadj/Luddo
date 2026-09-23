@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 23eca84b2b3696a44a5b166a78aa5764, type: 3}
+  m_Name: AdsConfig
+  m_EditorClassIdentifier: Ludo.Services::Ludo.Services.AdsConfig
+  adsEnabled: 1
+  useTestAds: 1
+  androidAppId: ca-app-pub-2502837360597894~1360211875
+  androidInterstitialId: ca-app-pub-2502837360597894/4539154968
+  androidBannerId: ca-app-pub-2502837360597894/2002464843
+  androidRewardedId: ca-app-pub-2502837360597894/3226073297
+  showMenuBanner: 1
+  firstAdAfterGames: 2
+  minGamesBetweenAds: 2
+  minSecondsBetweenAds: 120

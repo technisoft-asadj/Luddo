@@ -1,0 +1,14 @@
+{
+    "name": "Ludo.Editor",
+    "rootNamespace": "Ludo.EditorTools",
+    "references": ["Ludo.Core", "Ludo.AI", "Ludo.Game", "Ludo.Services", "Ludo.Online", "Unity.TextMeshPro", "UnityEngine.UI"],
+    "includePlatforms": ["Editor"],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

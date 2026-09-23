@@ -1,0 +1,45 @@
+# Unity generated (rebuilt automatically — never commit)
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/[Mm]emoryCaptures/
+/[Rr]ecordings/
+
+# Screenshots taken by tooling
+/Assets/Screenshots/
+/Assets/Screenshots.meta
+
+# IDE / OS
+/.vs/
+/.idea/
+/.vscode/
+*.csproj
+*.sln
+*.suo
+*.user
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+.DS_Store
+Thumbs.db
+
+# Build outputs
+*.apk
+*.aab
+*.unitypackage
+*.app
+crashlytics-build.properties
+
+# Signing secrets — NEVER commit
+*.keystore
+*.jks
+keystore.properties
+
+# Claude/MCP local tooling
+/.claude/

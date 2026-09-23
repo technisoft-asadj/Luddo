@@ -1,0 +1,33 @@
+{
+    "name": "Ludo.Online",
+    "rootNamespace": "Ludo.Online",
+    "references": [
+        "Ludo.Core",
+        "Ludo.AI",
+        "Ludo.Game",
+        "Ludo.Services",
+        "Unity.TextMeshPro",
+        "UnityEngine.UI",
+        "Unity.Services.Core",
+        "Unity.Services.Core.Environments",
+        "Unity.Services.Authentication",
+        "Unity.Services.Multiplayer",
+        "Unity.Services.Friends",
+        "Unity.Services.CloudSave",
+        "Unity.Services.Leaderboards",
+        "Unity.Services.Vivox",
+        "Unity.Netcode.Runtime",
+        "Unity.Collections",
+        "Unity.Networking.Transport",
+        "Google.Play.Games"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

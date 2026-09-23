@@ -1,0 +1,14 @@
+{
+    "name": "Ludo.AI",
+    "rootNamespace": "Ludo.AI",
+    "references": ["Ludo.Core"],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true
+}

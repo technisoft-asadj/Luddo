@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 82aff26850d2bad4d91e201925fea963, type: 3}
+  m_Name: AvatarLibrary
+  m_EditorClassIdentifier: Ludo.Game::Ludo.Game.AvatarLibrary
+  avatars:
+  - {fileID: 21300000, guid: e7463a792721b6c4291bd9c081f19a9c, type: 3}
+  - {fileID: 21300000, guid: ba7d63b9bf901ef4cbbbaf5e46d5478a, type: 3}
+  - {fileID: 21300000, guid: ec88d43c01d3df64aa83acc6209b0a64, type: 3}
+  - {fileID: 21300000, guid: 85b08dbccd5a0e84a8888ee4d71e0ee6, type: 3}
+  - {fileID: 21300000, guid: 8c7674824e507cc49b6ca3410b8d6a5e, type: 3}
+  - {fileID: 21300000, guid: f0967fe9ee1f9a04eac7e23c1eebd03b, type: 3}
+  - {fileID: 21300000, guid: e3115c0ef53b0ac408c35415586db79c, type: 3}
+  - {fileID: 21300000, guid: b7c0f75d67d84aa4fb9494e10c758d97, type: 3}
+  - {fileID: 21300000, guid: a5f5ca6a6b481d14ea0153654f109283, type: 3}
+  - {fileID: 21300000, guid: 31c628f2509fadf4ca8656a10fd275da, type: 3}
+  computer: {fileID: 21300000, guid: 54905b603af0cb44dba653a1ebe11127, type: 3}

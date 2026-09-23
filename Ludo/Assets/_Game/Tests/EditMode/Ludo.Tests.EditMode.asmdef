@@ -1,0 +1,14 @@
+{
+    "name": "Ludo.Tests.EditMode",
+    "rootNamespace": "Ludo.Tests",
+    "references": ["Ludo.Core", "Ludo.AI", "Ludo.Game", "Ludo.Services", "Ludo.Online", "UnityEngine.TestRunner", "UnityEditor.TestRunner"],
+    "includePlatforms": ["Editor"],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": ["nunit.framework.dll"],
+    "autoReferenced": false,
+    "defineConstraints": ["UNITY_INCLUDE_TESTS"],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

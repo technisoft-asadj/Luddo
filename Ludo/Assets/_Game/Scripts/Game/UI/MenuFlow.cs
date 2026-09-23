@@ -1,0 +1,124 @@
+using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
+using Ludo.AI;
+using Ludo.Core;
+
+namespace Ludo.Game
+{
+    /// <summary>
+    /// The choices made in the menus: how many players, which names, which difficulty. It fills in GameSession and
+    /// starts the Game scene. Buttons call its public methods through the Inspector.
+    /// Flow:  Play > Mode  >  2/3/4 Players > Select Players > Start        (pass-and-play)
+    ///                     >  vs Computer   > Select Difficulty > Start     (1 person vs 1-3 computers)
+    /// </summary>
+    public sealed class MenuFlow : MonoBehaviour
+    {
+        [SerializeField] ScreenRouter router;
+        [SerializeField] int playerSelectScreen = 3;
+        [SerializeField] int difficultyScreen = 4;
+        [SerializeField] ProfileEditor profileEditor;
+
+        [Header("Select Players screen")]
+        [SerializeField] GameObject[] playerRows;        // 4 rows, the first N are shown
+        [SerializeField] TMP_Text[] playerRowNames;
+        [SerializeField] Image[] playerRowPawns;         // tinted with the player's board colour
+        [SerializeField] Image[] playerRowAvatars;       // the player's chosen picture
+
+        [Header("Select Difficulty screen")]
+        [SerializeField] Image[] difficultyCards;        // Easy, Medium, Hard
+        [SerializeField] GameObject[] difficultyChecks;
+        [SerializeField] Image[] opponentButtons;        // 1, 2, 3 opponents
+        [SerializeField] Color selectedColor = new Color(0.86f, 1f, 0.88f);
+        [SerializeField] Color normalColor = new Color(0.93f, 0.96f, 1f);
+
+        int players = 2;
+        int opponents = 1;
+        AiDifficulty level = AiDifficulty.Medium;
+
+        void Start()
+        {
+            RefreshDifficulty();
+            RefreshPlayerRows();
+        }
+
+        // a name or photo can change from outside (Google / Facebook login, the online profile): keep the rows in step
+        void OnEnable() => GameSettings.Changed += RefreshPlayerRows;
+
+        void OnDisable() => GameSettings.Changed -= RefreshPlayerRows;
+
+        // ---------- pass-and-play ----------
+
+        public void ChooseLocal(int count)
+        {
+            players = count;
+            RefreshPlayerRows();
+            router.Show(playerSelectScreen);
+        }
+
+        /// <summary>Opens the profile pop-up (name + picture) for one player. Used by the Edit buttons and the main-menu profile tag.</summary>
+        public void EditProfile(int player)
+        {
+            profileEditor.Open(player, GameSettings.PlayerName(player), GameSettings.AvatarIndex(player), (newName, newAvatar) =>
+            {
+                GameSettings.SetPlayerName(player, newName);
+                GameSettings.SetAvatarIndex(player, newAvatar);
+                RefreshPlayerRows();
+            });
+        }
+
+        public void StartLocalGame()
+        {
+            GameSession.ConfigureLocal(players);
+            GameSession.Mode = ModePicker.Current;
+            SceneLoader.Load(SceneLoader.Game);
+        }
+
+        void RefreshPlayerRows()
+        {
+            int[] seats = Board.DefaultSeats(players);      // 2 players sit opposite: Red and Yellow
+            for (int i = 0; i < playerRows.Length; i++)
+            {
+                playerRows[i].SetActive(i < players);
+                playerRowNames[i].text = GameSettings.PlayerName(i);
+                playerRowAvatars[i].sprite = GameSettings.Picture(i);
+                if (i < players) playerRowPawns[i].color = SeatStyle.Colors[seats[i]];
+            }
+        }
+
+        // ---------- against the computer ----------
+
+        public void ChooseVsComputer() => router.Show(difficultyScreen);
+
+        public void SetDifficulty(int index)
+        {
+            level = (AiDifficulty)index;
+            RefreshDifficulty();
+        }
+
+        public void SetOpponents(int count)
+        {
+            opponents = Mathf.Clamp(count, 1, 3);
+            RefreshDifficulty();
+        }
+
+        public void StartComputerGame()
+        {
+            GameSession.ConfigureVsAi(opponents, level);
+            GameSession.Mode = ModePicker.Current;
+            SceneLoader.Load(SceneLoader.Game);
+        }
+
+        void RefreshDifficulty()
+        {
+            for (int i = 0; i < difficultyCards.Length; i++)
+            {
+                bool on = i == (int)level;
+                difficultyCards[i].color = on ? selectedColor : normalColor;
+                difficultyChecks[i].SetActive(on);
+            }
+            for (int i = 0; i < opponentButtons.Length; i++)
+                opponentButtons[i].color = i + 1 == opponents ? selectedColor : normalColor;
+        }
+    }
+}

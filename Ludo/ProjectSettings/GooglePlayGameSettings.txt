@@ -1,0 +1,9 @@
+proj.AppId=564891670587
+and.BundleId=com.devorbit.ludofight
+proj.classDir=Assets%2f_Game%2fScripts%2fOnline
+proj.ConstantsClassName=Ludo.Online.GpgsIds
+and.ResourceData=%3c%3fxml+version%3d%221.0%22+encoding%3d%22utf-8%22%3f%3e%0a%3cresources%3e%0a++%3c%21--app_id--%3e%0a++%3cstring+name%3d%22app_id%22+translatable%3d%22false%22%3e564891670587%3c%2fstring%3e%0a++%3c%21--package_name--%3e%0a++%3cstring+name%3d%22package_name%22+translatable%3d%22false%22%3ecom.devorbit.ludofight%3c%2fstring%3e%0a%3c%2fresources%3e
+and.ClientId=564891670587-2pkkg3uo5p2veritvkkvkb694pnspgli.apps.googleusercontent.com
+android.SetupDone=true
+lastUpgrade=20100
+proj.pluginVersion=2.1.0

@@ -1,0 +1,6 @@
+Ludo board image
+Author: khurs10101
+Source: https://opengameart.org/content/ludo
+License: CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/)
+Attribution REQUIRED in-game (credits screen): "Ludo board by khurs10101 (CC BY 4.0), opengameart.org".
+Changes: none.

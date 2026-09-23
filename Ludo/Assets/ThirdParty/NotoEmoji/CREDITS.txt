@@ -1,0 +1,4 @@
+Noto Emoji by Google - https://github.com/googlefonts/noto-emoji (folder 2D/png/128), downloaded 2026-09-23.
+The project README states the emoji image resources are under the Apache License 2.0; the repository's LICENSE file
+(copied here as LICENSE.txt) is the SIL Open Font License 1.1. Both allow free use in commercial games.
+Used for the emojis in the in-game chat.

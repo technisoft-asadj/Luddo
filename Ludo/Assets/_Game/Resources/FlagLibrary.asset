@@ -1,0 +1,1267 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9ca89d54893e6824b87e0e773b1baf7a, type: 3}
+  m_Name: FlagLibrary
+  m_EditorClassIdentifier: Ludo.Game::Ludo.Game.FlagLibrary
+  atlas: {fileID: 2800000, guid: 731a9feead5c9ca418e30c169e4c605c, type: 3}
+  codes:
+  - AD
+  - AE
+  - AF
+  - AG
+  - AI
+  - AL
+  - AM
+  - AO
+  - AQ
+  - AR
+  - AS
+  - AT
+  - AU
+  - AW
+  - AX
+  - AZ
+  - BA
+  - BB
+  - BD
+  - BE
+  - BF
+  - BG
+  - BH
+  - BI
+  - BJ
+  - BL
+  - BM
+  - BN
+  - BO
+  - BQ
+  - BR
+  - BS
+  - BT
+  - BV
+  - BW
+  - BY
+  - BZ
+  - CA
+  - CC
+  - CD
+  - CF
+  - CG
+  - CH
+  - CI
+  - CK
+  - CL
+  - CM
+  - CN
+  - CO
+  - CR
+  - CU
+  - CV
+  - CW
+  - CX
+  - CY
+  - CZ
+  - DE
+  - DJ
+  - DK
+  - DM
+  - DO
+  - DZ
+  - EC
+  - EE
+  - EG
+  - EH
+  - ER
+  - ES
+  - ET
+  - FI
+  - FJ
+  - FK
+  - FM
+  - FO
+  - FR
+  - GA
+  - GB
+  - GD
+  - GE
+  - GF
+  - GG
+  - GH
+  - GI
+  - GL
+  - GM
+  - GN
+  - GP
+  - GQ
+  - GR
+  - GS
+  - GT
+  - GU
+  - GW
+  - GY
+  - HK
+  - HM
+  - HN
+  - HR
+  - HT
+  - HU
+  - ID
+  - IE
+  - IL
+  - IM
+  - IN
+  - IO
+  - IQ
+  - IR
+  - IS
+  - IT
+  - JE
+  - JM
+  - JO
+  - JP
+  - KE
+  - KG
+  - KH
+  - KI
+  - KM
+  - KN
+  - KP
+  - KR
+  - KW
+  - KY
+  - KZ
+  - LA
+  - LB
+  - LC
+  - LI
+  - LK
+  - LR
+  - LS
+  - LT
+  - LU
+  - LV
+  - LY
+  - MA
+  - MC
+  - MD
+  - ME
+  - MF
+  - MG
+  - MH
+  - MK
+  - ML
+  - MM
+  - MN
+  - MO
+  - MP
+  - MQ
+  - MR
+  - MS
+  - MT
+  - MU
+  - MV
+  - MW
+  - MX
+  - MY
+  - MZ
+  - NA
+  - NC
+  - NE
+  - NF
+  - NG
+  - NI
+  - NL
+  - NO
+  - NP
+  - NR
+  - NU
+  - NZ
+  - OM
+  - PA
+  - PE
+  - PF
+  - PG
+  - PH
+  - PK
+  - PL
+  - PM
+  - PN
+  - PR
+  - PS
+  - PT
+  - PW
+  - PY
+  - QA
+  - RE
+  - RO
+  - RS
+  - RU
+  - RW
+  - SA
+  - SB
+  - SC
+  - SD
+  - SE
+  - SG
+  - SH
+  - SI
+  - SJ
+  - SK
+  - SL
+  - SM
+  - SN
+  - SO
+  - SR
+  - SS
+  - ST
+  - SV
+  - SX
+  - SY
+  - SZ
+  - TC
+  - TD
+  - TF
+  - TG
+  - TH
+  - TJ
+  - TK
+  - TL
+  - TM
+  - TN
+  - TO
+  - TR
+  - TT
+  - TV
+  - TW
+  - TZ
+  - UA
+  - UG
+  - UM
+  - US
+  - UY
+  - UZ
+  - VA
+  - VC
+  - VE
+  - VG
+  - VI
+  - VN
+  - VU
+  - WF
+  - WS
+  - XK
+  - YE
+  - YT
+  - ZA
+  - ZM
+  - ZW
+  rects:
+  - x: 4
+    y: 813
+    width: 69
+    height: 48
+  - x: 81
+    y: 819
+    width: 72
+    height: 36
+  - x: 159
+    y: 813
+    width: 72
+    height: 48
+  - x: 237
+    y: 813
+    width: 72
+    height: 48
+  - x: 315
+    y: 819
+    width: 72
+    height: 36
+  - x: 395
+    y: 813
+    width: 67
+    height: 48
+  - x: 471
+    y: 819
+    width: 72
+    height: 36
+  - x: 549
+    y: 813
+    width: 72
+    height: 48
+  - x: 627
+    y: 813
+    width: 72
+    height: 48
+  - x: 705
+    y: 815
+    width: 72
+    height: 45
+  - x: 783
+    y: 819
+    width: 72
+    height: 36
+  - x: 861
+    y: 813
+    width: 72
+    height: 48
+  - x: 939
+    y: 819
+    width: 72
+    height: 36
+  - x: 1017
+    y: 813
+    width: 72
+    height: 48
+  - x: 1095
+    y: 814
+    width: 72
+    height: 47
+  - x: 1173
+    y: 819
+    width: 72
+    height: 36
+  - x: 3
+    y: 765
+    width: 72
+    height: 36
+  - x: 81
+    y: 759
+    width: 72
+    height: 48
+  - x: 159
+    y: 762
+    width: 72
+    height: 43
+  - x: 245
+    y: 759
+    width: 55
+    height: 48
+  - x: 315
+    y: 759
+    width: 72
+    height: 48
+  - x: 393
+    y: 762
+    width: 72
+    height: 43
+  - x: 471
+    y: 762
+    width: 72
+    height: 43
+  - x: 549
+    y: 762
+    width: 72
+    height: 43
+  - x: 627
+    y: 759
+    width: 72
+    height: 48
+  - x: 705
+    y: 759
+    width: 72
+    height: 48
+  - x: 783
+    y: 765
+    width: 72
+    height: 36
+  - x: 861
+    y: 765
+    width: 72
+    height: 36
+  - x: 940
+    y: 759
+    width: 70
+    height: 48
+  - x: 1017
+    y: 759
+    width: 72
+    height: 48
+  - x: 1096
+    y: 759
+    width: 69
+    height: 48
+  - x: 1173
+    y: 765
+    width: 72
+    height: 36
+  - x: 3
+    y: 705
+    width: 72
+    height: 48
+  - x: 84
+    y: 705
+    width: 66
+    height: 48
+  - x: 159
+    y: 705
+    width: 72
+    height: 48
+  - x: 237
+    y: 711
+    width: 72
+    height: 36
+  - x: 315
+    y: 705
+    width: 72
+    height: 48
+  - x: 393
+    y: 711
+    width: 72
+    height: 36
+  - x: 471
+    y: 711
+    width: 72
+    height: 36
+  - x: 553
+    y: 705
+    width: 64
+    height: 48
+  - x: 627
+    y: 705
+    width: 72
+    height: 48
+  - x: 705
+    y: 705
+    width: 72
+    height: 48
+  - x: 795
+    y: 705
+    width: 48
+    height: 48
+  - x: 861
+    y: 705
+    width: 72
+    height: 48
+  - x: 939
+    y: 711
+    width: 72
+    height: 36
+  - x: 1017
+    y: 705
+    width: 72
+    height: 48
+  - x: 1095
+    y: 705
+    width: 72
+    height: 48
+  - x: 1173
+    y: 705
+    width: 72
+    height: 48
+  - x: 3
+    y: 651
+    width: 72
+    height: 48
+  - x: 81
+    y: 654
+    width: 72
+    height: 43
+  - x: 159
+    y: 657
+    width: 72
+    height: 36
+  - x: 237
+    y: 654
+    width: 72
+    height: 42
+  - x: 315
+    y: 651
+    width: 72
+    height: 48
+  - x: 393
+    y: 657
+    width: 72
+    height: 36
+  - x: 471
+    y: 651
+    width: 72
+    height: 48
+  - x: 549
+    y: 651
+    width: 72
+    height: 48
+  - x: 627
+    y: 654
+    width: 72
+    height: 43
+  - x: 705
+    y: 651
+    width: 72
+    height: 48
+  - x: 787
+    y: 651
+    width: 63
+    height: 48
+  - x: 861
+    y: 657
+    width: 72
+    height: 36
+  - x: 939
+    y: 651
+    width: 72
+    height: 48
+  - x: 1017
+    y: 651
+    width: 72
+    height: 48
+  - x: 1095
+    y: 651
+    width: 72
+    height: 48
+  - x: 1173
+    y: 652
+    width: 72
+    height: 46
+  - x: 3
+    y: 597
+    width: 72
+    height: 48
+  - x: 81
+    y: 603
+    width: 72
+    height: 36
+  - x: 159
+    y: 603
+    width: 72
+    height: 36
+  - x: 237
+    y: 597
+    width: 72
+    height: 48
+  - x: 315
+    y: 603
+    width: 72
+    height: 36
+  - x: 393
+    y: 599
+    width: 72
+    height: 44
+  - x: 471
+    y: 603
+    width: 72
+    height: 36
+  - x: 549
+    y: 603
+    width: 72
+    height: 36
+  - x: 627
+    y: 602
+    width: 72
+    height: 38
+  - x: 708
+    y: 597
+    width: 66
+    height: 48
+  - x: 783
+    y: 597
+    width: 72
+    height: 48
+  - x: 865
+    y: 597
+    width: 64
+    height: 48
+  - x: 939
+    y: 603
+    width: 72
+    height: 36
+  - x: 1017
+    y: 600
+    width: 72
+    height: 43
+  - x: 1095
+    y: 597
+    width: 72
+    height: 48
+  - x: 1173
+    y: 597
+    width: 72
+    height: 48
+  - x: 3
+    y: 543
+    width: 72
+    height: 48
+  - x: 81
+    y: 543
+    width: 72
+    height: 48
+  - x: 159
+    y: 549
+    width: 72
+    height: 36
+  - x: 237
+    y: 543
+    width: 72
+    height: 48
+  - x: 315
+    y: 543
+    width: 72
+    height: 48
+  - x: 393
+    y: 543
+    width: 72
+    height: 48
+  - x: 471
+    y: 543
+    width: 72
+    height: 48
+  - x: 549
+    y: 543
+    width: 72
+    height: 48
+  - x: 627
+    y: 543
+    width: 72
+    height: 48
+  - x: 705
+    y: 549
+    width: 72
+    height: 36
+  - x: 783
+    y: 545
+    width: 72
+    height: 45
+  - x: 861
+    y: 548
+    width: 72
+    height: 39
+  - x: 939
+    y: 549
+    width: 72
+    height: 36
+  - x: 1017
+    y: 546
+    width: 72
+    height: 43
+  - x: 1095
+    y: 543
+    width: 72
+    height: 48
+  - x: 1173
+    y: 549
+    width: 72
+    height: 36
+  - x: 3
+    y: 495
+    width: 72
+    height: 36
+  - x: 81
+    y: 495
+    width: 72
+    height: 36
+  - x: 159
+    y: 492
+    width: 72
+    height: 43
+  - x: 237
+    y: 495
+    width: 72
+    height: 36
+  - x: 315
+    y: 489
+    width: 72
+    height: 48
+  - x: 393
+    y: 495
+    width: 72
+    height: 36
+  - x: 474
+    y: 489
+    width: 66
+    height: 48
+  - x: 549
+    y: 495
+    width: 72
+    height: 36
+  - x: 627
+    y: 489
+    width: 72
+    height: 48
+  - x: 705
+    y: 495
+    width: 72
+    height: 36
+  - x: 783
+    y: 489
+    width: 72
+    height: 48
+  - x: 861
+    y: 493
+    width: 72
+    height: 41
+  - x: 941
+    y: 489
+    width: 67
+    height: 48
+  - x: 1017
+    y: 489
+    width: 72
+    height: 48
+  - x: 1095
+    y: 492
+    width: 72
+    height: 43
+  - x: 1173
+    y: 495
+    width: 72
+    height: 36
+  - x: 3
+    y: 441
+    width: 72
+    height: 36
+  - x: 81
+    y: 435
+    width: 72
+    height: 48
+  - x: 159
+    y: 435
+    width: 72
+    height: 48
+  - x: 237
+    y: 438
+    width: 72
+    height: 43
+  - x: 315
+    y: 436
+    width: 72
+    height: 46
+  - x: 393
+    y: 441
+    width: 72
+    height: 36
+  - x: 471
+    y: 438
+    width: 72
+    height: 43
+  - x: 549
+    y: 435
+    width: 72
+    height: 48
+  - x: 627
+    y: 441
+    width: 72
+    height: 36
+  - x: 705
+    y: 435
+    width: 72
+    height: 48
+  - x: 783
+    y: 441
+    width: 72
+    height: 36
+  - x: 861
+    y: 441
+    width: 72
+    height: 36
+  - x: 939
+    y: 441
+    width: 72
+    height: 36
+  - x: 1017
+    y: 435
+    width: 72
+    height: 48
+  - x: 1095
+    y: 435
+    width: 72
+    height: 48
+  - x: 1173
+    y: 441
+    width: 72
+    height: 36
+  - x: 3
+    y: 384
+    width: 72
+    height: 43
+  - x: 81
+    y: 387
+    width: 72
+    height: 36
+  - x: 159
+    y: 386
+    width: 72
+    height: 38
+  - x: 237
+    y: 381
+    width: 72
+    height: 48
+  - x: 315
+    y: 384
+    width: 72
+    height: 43
+  - x: 393
+    y: 384
+    width: 72
+    height: 43
+  - x: 471
+    y: 387
+    width: 72
+    height: 36
+  - x: 549
+    y: 387
+    width: 72
+    height: 36
+  - x: 627
+    y: 381
+    width: 72
+    height: 48
+  - x: 711
+    y: 381
+    width: 60
+    height: 48
+  - x: 783
+    y: 387
+    width: 72
+    height: 36
+  - x: 861
+    y: 387
+    width: 72
+    height: 36
+  - x: 939
+    y: 381
+    width: 72
+    height: 48
+  - x: 1017
+    y: 381
+    width: 72
+    height: 48
+  - x: 1095
+    y: 386
+    width: 72
+    height: 38
+  - x: 1173
+    y: 387
+    width: 72
+    height: 36
+  - x: 3
+    y: 327
+    width: 72
+    height: 48
+  - x: 81
+    y: 327
+    width: 72
+    height: 48
+  - x: 159
+    y: 333
+    width: 72
+    height: 36
+  - x: 237
+    y: 327
+    width: 72
+    height: 48
+  - x: 315
+    y: 333
+    width: 72
+    height: 36
+  - x: 393
+    y: 333
+    width: 72
+    height: 36
+  - x: 471
+    y: 327
+    width: 72
+    height: 48
+  - x: 549
+    y: 333
+    width: 72
+    height: 36
+  - x: 627
+    y: 327
+    width: 72
+    height: 48
+  - x: 705
+    y: 327
+    width: 72
+    height: 48
+  - x: 783
+    y: 327
+    width: 72
+    height: 48
+  - x: 861
+    y: 327
+    width: 72
+    height: 48
+  - x: 939
+    y: 331
+    width: 72
+    height: 41
+  - x: 1017
+    y: 333
+    width: 72
+    height: 36
+  - x: 1095
+    y: 327
+    width: 72
+    height: 48
+  - x: 1173
+    y: 327
+    width: 72
+    height: 48
+  - x: 3
+    y: 279
+    width: 72
+    height: 36
+  - x: 89
+    y: 273
+    width: 56
+    height: 48
+  - x: 159
+    y: 279
+    width: 72
+    height: 36
+  - x: 237
+    y: 279
+    width: 72
+    height: 36
+  - x: 315
+    y: 276
+    width: 72
+    height: 43
+  - x: 393
+    y: 273
+    width: 72
+    height: 48
+  - x: 474
+    y: 273
+    width: 66
+    height: 48
+  - x: 565
+    y: 273
+    width: 39
+    height: 48
+  - x: 627
+    y: 279
+    width: 72
+    height: 36
+  - x: 705
+    y: 279
+    width: 72
+    height: 36
+  - x: 783
+    y: 279
+    width: 72
+    height: 36
+  - x: 861
+    y: 279
+    width: 72
+    height: 36
+  - x: 939
+    y: 273
+    width: 72
+    height: 48
+  - x: 1017
+    y: 273
+    width: 72
+    height: 48
+  - x: 1095
+    y: 273
+    width: 72
+    height: 48
+  - x: 1177
+    y: 273
+    width: 64
+    height: 48
+  - x: 3
+    y: 225
+    width: 72
+    height: 36
+  - x: 81
+    y: 219
+    width: 72
+    height: 48
+  - x: 159
+    y: 221
+    width: 72
+    height: 45
+  - x: 237
+    y: 219
+    width: 72
+    height: 48
+  - x: 315
+    y: 225
+    width: 72
+    height: 36
+  - x: 393
+    y: 219
+    width: 72
+    height: 48
+  - x: 471
+    y: 225
+    width: 72
+    height: 36
+  - x: 549
+    y: 219
+    width: 72
+    height: 48
+  - x: 627
+    y: 221
+    width: 72
+    height: 45
+  - x: 705
+    y: 223
+    width: 72
+    height: 40
+  - x: 783
+    y: 229
+    width: 72
+    height: 28
+  - x: 861
+    y: 219
+    width: 72
+    height: 48
+  - x: 939
+    y: 219
+    width: 72
+    height: 48
+  - x: 1017
+    y: 219
+    width: 72
+    height: 48
+  - x: 1095
+    y: 219
+    width: 72
+    height: 48
+  - x: 1173
+    y: 219
+    width: 72
+    height: 48
+  - x: 3
+    y: 165
+    width: 72
+    height: 48
+  - x: 81
+    y: 171
+    width: 72
+    height: 36
+  - x: 159
+    y: 171
+    width: 72
+    height: 36
+  - x: 237
+    y: 171
+    width: 72
+    height: 36
+  - x: 315
+    y: 167
+    width: 72
+    height: 45
+  - x: 393
+    y: 165
+    width: 72
+    height: 48
+  - x: 471
+    y: 171
+    width: 72
+    height: 36
+  - x: 549
+    y: 171
+    width: 72
+    height: 36
+  - x: 630
+    y: 165
+    width: 66
+    height: 48
+  - x: 705
+    y: 165
+    width: 72
+    height: 48
+  - x: 783
+    y: 165
+    width: 72
+    height: 48
+  - x: 865
+    y: 165
+    width: 64
+    height: 48
+  - x: 939
+    y: 165
+    width: 72
+    height: 48
+  - x: 1017
+    y: 165
+    width: 72
+    height: 48
+  - x: 1095
+    y: 165
+    width: 72
+    height: 48
+  - x: 1173
+    y: 171
+    width: 72
+    height: 36
+  - x: 3
+    y: 117
+    width: 72
+    height: 36
+  - x: 81
+    y: 115
+    width: 72
+    height: 41
+  - x: 159
+    y: 111
+    width: 72
+    height: 48
+  - x: 237
+    y: 111
+    width: 72
+    height: 48
+  - x: 315
+    y: 111
+    width: 72
+    height: 48
+  - x: 393
+    y: 117
+    width: 72
+    height: 36
+  - x: 471
+    y: 111
+    width: 72
+    height: 48
+  - x: 549
+    y: 111
+    width: 72
+    height: 48
+  - x: 627
+    y: 113
+    width: 72
+    height: 44
+  - x: 705
+    y: 111
+    width: 72
+    height: 48
+  - x: 783
+    y: 117
+    width: 72
+    height: 36
+  - x: 861
+    y: 117
+    width: 72
+    height: 36
+  - x: 939
+    y: 117
+    width: 72
+    height: 36
+  - x: 1017
+    y: 111
+    width: 72
+    height: 48
+  - x: 1095
+    y: 111
+    width: 72
+    height: 48
+  - x: 1173
+    y: 117
+    width: 72
+    height: 36
+  - x: 3
+    y: 57
+    width: 72
+    height: 48
+  - x: 81
+    y: 60
+    width: 72
+    height: 43
+  - x: 159
+    y: 63
+    width: 72
+    height: 36
+  - x: 237
+    y: 57
+    width: 72
+    height: 48
+  - x: 315
+    y: 57
+    width: 72
+    height: 48
+  - x: 393
+    y: 57
+    width: 72
+    height: 48
+  - x: 471
+    y: 57
+    width: 72
+    height: 48
+  - x: 549
+    y: 62
+    width: 72
+    height: 38
+  - x: 627
+    y: 62
+    width: 72
+    height: 38
+  - x: 705
+    y: 57
+    width: 72
+    height: 48
+  - x: 783
+    y: 63
+    width: 72
+    height: 36
+  - x: 873
+    y: 57
+    width: 48
+    height: 48
+  - x: 939
+    y: 57
+    width: 72
+    height: 48
+  - x: 1017
+    y: 57
+    width: 72
+    height: 48
+  - x: 1095
+    y: 63
+    width: 72
+    height: 36
+  - x: 1173
+    y: 57
+    width: 72
+    height: 48
+  - x: 3
+    y: 3
+    width: 72
+    height: 48
+  - x: 81
+    y: 6
+    width: 72
+    height: 43
+  - x: 159
+    y: 3
+    width: 72
+    height: 48
+  - x: 237
+    y: 9
+    width: 72
+    height: 36
+  - x: 317
+    y: 3
+    width: 67
+    height: 48
+  - x: 393
+    y: 3
+    width: 72
+    height: 48
+  - x: 471
+    y: 3
+    width: 72
+    height: 48
+  - x: 549
+    y: 3
+    width: 72
+    height: 48
+  - x: 627
+    y: 3
+    width: 72
+    height: 48
+  - x: 705
+    y: 9
+    width: 72
+    height: 36

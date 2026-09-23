@@ -1,0 +1,52 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cabe85d0a656b064bbb2296b462eb9e7, type: 3}
+  m_Name: RewardConfig
+  m_EditorClassIdentifier: Ludo.Online::Ludo.Online.RewardConfig
+  settings:
+    startRankPoints: 0
+    minRankPoints: 0
+    matchmakingBandWidth: 250
+    tiers:
+    - name: Bronze
+      minPoints: 0
+    - name: Silver
+      minPoints: 500
+    - name: Gold
+      minPoints: 1000
+    - name: Platinum
+      minPoints: 2000
+    - name: Diamond
+      minPoints: 3500
+    - name: Master
+      minPoints: 5000
+    - name: Grandmaster
+      minPoints: 7500
+    winRankPoints: 25
+    lossRankPoints: 15
+    winXp: 100
+    lossXp: 25
+    participationXp: 0
+    winCoins: 50
+    lossCoins: 0
+    forfeitRankPoints: 15
+    forfeitXp: 25
+    reconnectGraceSeconds: 20
+    adRankMultiplier: 2
+    casualWinXp: 60
+    casualLossXp: 20
+    casualWinCoins: 40
+    casualLossCoins: 10
+    tournamentWinRankPoints: 40
+    tournamentWinXp: 150
+    tournamentWinCoins: 100
+    xpLossCanLowerLevel: 0
