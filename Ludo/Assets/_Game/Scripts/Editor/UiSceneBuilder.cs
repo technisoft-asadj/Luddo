@@ -846,6 +846,12 @@ namespace Ludo.EditorTools
             modeLine.raycastTarget = false;
             modeLine.gameObject.SetActive(false);
 
+            // Undo: bottom-left, out of the way of the dice tray in the middle. Hidden unless a takeback is on offer.
+            var undo = MakeButton(safe, "UndoButton", "Undo  3", "Purple", new Vector2(268f, 118f), null);   // no icon: it crowds the count
+            At((RectTransform)undo.transform, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(172f, 150f), new Vector2(268f, 118f));
+            OnClick(undo, hud.TapUndo);
+            undo.gameObject.SetActive(false);
+
             // the 3 - 2 - 1 - GO! that opens every match (hidden until the first turn is about to start)
             var countdown = AddText(safe, "Countdown", "", 260, Color.white, TextAlignmentOptions.Center, true);
             At(countdown.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(900f, 320f));
@@ -856,6 +862,8 @@ namespace Ludo.EditorTools
             var controller = Object.FindFirstObjectByType<GameController>();
             var ho = new SerializedObject(hud);
             ho.FindProperty("countdownText").objectReferenceValue = countdown;
+            ho.FindProperty("undoButton").objectReferenceValue = undo;
+            ho.FindProperty("undoLabel").objectReferenceValue = undo.transform.Find("Label").GetComponent<TMP_Text>();
             ho.FindProperty("controller").objectReferenceValue = controller;
             SetObjects(ho.FindProperty("badges"), badges);
             ho.FindProperty("pausePanel").objectReferenceValue = pause;

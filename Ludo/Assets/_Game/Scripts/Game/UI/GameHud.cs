@@ -33,6 +33,8 @@ namespace Ludo.Game
         [SerializeField] Sprite[] diceFaces;            // flat dice pictures 1..6 (index 0 = one pip)
         [SerializeField] TMP_Text modeText;             // "MASTER MODE - capture an opponent before ..." (hidden in Classic)
         [SerializeField] TMP_Text countdownText;        // the 3 - 2 - 1 - GO! that opens a match
+        [SerializeField] Button undoButton;             // offline only: take back the move just played
+        [SerializeField] TMP_Text undoLabel;            // "Undo  2"
         [SerializeField] GameObject[] offlineOnly;      // buttons that make no sense in an online match (Play Again, Restart)
 
         [SerializeField] TurnTimerBar timer;            // online: time left for the current turn
@@ -209,6 +211,30 @@ namespace Ludo.Game
             int v = chosenValue;
             chosenValue = 0;
             return v;
+        }
+
+        // ---------- undo ----------
+
+        bool undoTapped;
+
+        /// <summary>Show or hide the Undo button, with how many takebacks are left in this match.</summary>
+        public void SetUndo(bool show, int left)
+        {
+            if (undoButton == null) return;
+            undoTapped = false;
+            undoButton.gameObject.SetActive(show && left > 0);
+            if (undoLabel != null) undoLabel.text = "Undo  " + left;
+        }
+
+        /// <summary>Wired to the Undo button.</summary>
+        public void TapUndo() => undoTapped = true;
+
+        /// <summary>Was Undo tapped since the last time this was asked? (reading it clears it, like TakeChosenValue)</summary>
+        public bool TakeUndo()
+        {
+            bool tapped = undoTapped;
+            undoTapped = false;
+            return tapped;
         }
 
         public void HideValueChoice()

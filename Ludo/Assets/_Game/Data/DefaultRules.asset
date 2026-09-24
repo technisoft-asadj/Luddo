@@ -22,3 +22,7 @@ MonoBehaviour:
     CaptureOnSafeCells: 0
     RollAgainOnSix: 1
     Mode: 0
+    DiceSelection: 0
+    PendingDiceLimit: 0
+    AutoSelectSingleLegalToken: 1
+    UndosPerMatch: 3
