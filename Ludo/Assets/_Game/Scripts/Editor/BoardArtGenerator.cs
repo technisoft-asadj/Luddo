@@ -51,10 +51,9 @@ namespace Ludo.EditorTools
                 int col = (int)g.X, row = (int)g.Y;
                 int r = cell % 13, arm = cell / 13;                 // r==0 = the entrance cell, r==8 = the shared safe cell further round
                 bool tinted = r == 0 || r == 8;
-                // the entrance cell: the same full colour as the home column and the pawn's own ring (not the paler tint).
-                // the other star cell on the same arm: a lighter tint of that colour instead of plain white, so the grey
-                // star is no longer sitting on a bare white square.
-                Color fill = r == 0 ? SeatStyle.Colors[arm] : r == 8 ? Pastel(SeatStyle.Colors[arm]) : Paper;
+                // both star cells of this arm (the entrance and the shared safe cell further round) get the same full,
+                // saturated colour as the home column and the pawn's own ring.
+                Color fill = tinted ? SeatStyle.Colors[arm] : Paper;
                 PaintCell(px, col, row, fill);
                 if (Board.IsSafeCell(cell))
                     PaintStar(px, col + 0.5f, row + 0.5f, 0.32f, tinted ? Color.white : StarGrey);
