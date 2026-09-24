@@ -27,9 +27,14 @@ namespace Ludo.EditorTools
             Header(s, "Play Online", router);
             menu = s.gameObject.AddComponent<OnlineMenu>();
 
+            // the reference puts a gear opposite the back arrow; online, "settings" means your account
+            var accountGear = MakeRoundButton(s, "AccountButton", "Grey", Icon("gear"), 124f);
+            At((RectTransform)accountGear.transform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-30f, -40f), new Vector2(124f, 124f));
+            OnClick(accountGear, menu.OpenAccount);
+
             // status line under the title (tap it to retry when it says the connection failed)
             var statusRt = NewRect("StatusButton", s);
-            At(statusRt, TopCenter, TopCenter, new Vector2(0f, -185f), new Vector2(940f, 80f));
+            At(statusRt, TopCenter, TopCenter, new Vector2(0f, -172f), new Vector2(940f, 64f));
             var hit = AddImage(statusRt, null, new Color(0f, 0f, 0f, 0f)); hit.raycastTarget = true;
             var statusButton = statusRt.gameObject.AddComponent<Button>();
             statusButton.targetGraphic = hit; statusButton.transition = Selectable.Transition.None;
@@ -38,9 +43,9 @@ namespace Ludo.EditorTools
             status.enableAutoSizing = true; status.fontSizeMin = 26f; status.fontSizeMax = 44f;
             OnClick(statusButton, menu.Retry);
 
-            // profile card: picture, name, tier and rating; tap to open the profile and statistics
+            // profile card: picture, name, rank, level + XP bar and coins; tap to open the profile and statistics
             var card0 = NewRect("ProfileCard", s);
-            At(card0, TopCenter, TopCenter, new Vector2(0f, -265f), new Vector2(940f, 150f));
+            At(card0, TopCenter, TopCenter, new Vector2(0f, -238f), new Vector2(960f, 190f));
             var cardBody = AddImage(card0, Round(), DarkPanel, true, 0.5f);
             Depth(cardBody, DarkPanelLip, 10f);
             var cardButton = card0.gameObject.AddComponent<Button>();
@@ -52,23 +57,74 @@ namespace Ludo.EditorTools
             var cardPic = NewRect("Picture", cardAv); Stretch(cardPic, 8f, 8f, 8f, 8f);
             var cardPicImg = AddImage(cardPic, null, Color.white); cardPicImg.raycastTarget = false; cardPicImg.preserveAspect = true;
             var cardFlag = FlagBadge(cardAv, "Flag", new Vector2(1f, 0f), new Vector2(-22f, 10f), 50f);
-            var cardName = AddText(card0, "Name", "Player 1", 56, Color.white, TextAlignmentOptions.Left, true);
-            At(cardName.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(160f, 24f), new Vector2(600f, 70f));
-            cardName.enableAutoSizing = true; cardName.fontSizeMin = 30f; cardName.fontSizeMax = 56f;
-            var cardRating = AddText(card0, "Rating", "Bronze  1000", 42, Gold, TextAlignmentOptions.Left, true);
-            At(cardRating.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(160f, -36f), new Vector2(600f, 56f));
-            var cardArrow = NewRect("Chevron", card0);
-            At(cardArrow, new Vector2(1f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(-60f, 0f), new Vector2(54f, 54f));
-            cardArrow.localRotation = Quaternion.Euler(0f, 0f, 180f);
-            AddImage(cardArrow, Load(KenneyUi + "Icons/arrow_basic_w.png"), new Color(0.55f, 0.65f, 0.85f)).raycastTarget = false;
+            var cardName = AddText(card0, "Name", "Player 1", 52, Color.white, TextAlignmentOptions.Left, true);
+            At(cardName.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(156f, -16f), new Vector2(380f, 66f));
+            cardName.enableAutoSizing = true; cardName.fontSizeMin = 28f; cardName.fontSizeMax = 52f;
+            cardName.raycastTarget = false;
+
+            // rank pill under the name
+            var rankPill = NewRect("RankPill", card0);
+            At(rankPill, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(156f, 26f), new Vector2(250f, 58f));
+            AddImage(rankPill, Round(), new Color(0.55f, 0.34f, 0.10f), true, 1f).raycastTarget = false;
+            var rankStar = NewRect("Star", rankPill);
+            At(rankStar, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(10f, 0f), new Vector2(34f, 34f));
+            AddImage(rankStar, Ikon("star"), Gold).raycastTarget = false;
+            var cardRating = AddText(rankPill, "Value", "Bronze", 36, Gold, TextAlignmentOptions.Left);
+            At(cardRating.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(52f, 0f), new Vector2(190f, 52f));
+            cardRating.enableAutoSizing = true; cardRating.fontSizeMin = 22f; cardRating.fontSizeMax = 36f;
+            cardRating.raycastTarget = false;
+
+            // level and the bar towards the next one
+            var levelStar = NewRect("LevelStar", card0);
+            At(levelStar, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(432f, -26f), new Vector2(38f, 38f));
+            AddImage(levelStar, Ikon("star"), Gold).raycastTarget = false;
+            var cardLevel = AddText(card0, "Level", "Lv. 1", 38, Color.white, TextAlignmentOptions.Left, true);
+            At(cardLevel.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(478f, -18f), new Vector2(190f, 54f));
+            cardLevel.enableAutoSizing = true; cardLevel.fontSizeMin = 24f; cardLevel.fontSizeMax = 38f;
+            cardLevel.raycastTarget = false;
+            var xpTrack = NewRect("XpTrack", card0);
+            At(xpTrack, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(432f, -6f), new Vector2(236f, 24f));
+            AddImage(xpTrack, Round(), new Color(0.02f, 0.06f, 0.20f, 0.85f), true, 3f).raycastTarget = false;
+            var xpFillRt = NewRect("Fill", xpTrack); Stretch(xpFillRt, 3f, 3f, 3f, 3f);
+            var cardXpBar = AddImage(xpFillRt, Round(), new Color(0.35f, 0.88f, 0.42f), true, 3.4f);
+            cardXpBar.type = Image.Type.Filled; cardXpBar.fillMethod = Image.FillMethod.Horizontal;
+            cardXpBar.fillOrigin = 0; cardXpBar.fillAmount = 0f; cardXpBar.raycastTarget = false;
+            var cardXpText = AddText(card0, "XpText", "0 / 100", 28, new Color(0.62f, 0.96f, 0.68f), TextAlignmentOptions.Center);
+            At(cardXpText.rectTransform, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(432f, 24f), new Vector2(236f, 44f));
+            cardXpText.enableAutoSizing = true; cardXpText.fontSizeMin = 18f; cardXpText.fontSizeMax = 28f;
+            cardXpText.raycastTarget = false;
+
+            // coins, with a plus that opens the free chest (where coins really come from)
+            var coinIcon = NewRect("CoinIcon", card0);
+            At(coinIcon, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-248f, 0f), new Vector2(52f, 52f));
+            AddImage(coinIcon, Ikon("coin"), Gold).raycastTarget = false;
+            var cardCoins = AddText(card0, "Coins", "0", 42, Color.white, TextAlignmentOptions.Left, true);
+            At(cardCoins.rectTransform, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-92f, 0f), new Vector2(102f, 60f));
+            cardCoins.enableAutoSizing = true; cardCoins.fontSizeMin = 24f; cardCoins.fontSizeMax = 42f;
+            cardCoins.raycastTarget = false;
+            var coinPlus = MakeRoundButton(card0, "CoinPlus", "Green", Icon("plus"), 58f);
+            At((RectTransform)coinPlus.transform, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-22f, 0f), new Vector2(58f, 58f));
+            OnClick(coinPlus, menu.OpenChest);
             OnClick(cardButton, menu.OpenProfile);
+
+            // ---- "Select Mode" panel: table size, rules and entry fee, grouped as in the reference ----
+            var modePanel = NewRect("ModePanel", s);
+            At(modePanel, TopCenter, TopCenter, new Vector2(0f, -740f), new Vector2(960f, 330f));
+            AddImage(modePanel, Round(), new Color(0.03f, 0.09f, 0.28f, 0.72f), true, 0.45f).raycastTarget = false;
+
+            var sectionIcon = NewRect("SectionIcon", s);
+            At(sectionIcon, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(64f, -676f), new Vector2(44f, 44f));
+            AddImage(sectionIcon, Ikon("sliders"), Color.white).raycastTarget = false;
+            var sectionTitle = AddText(s, "SectionTitle", "Select Mode", 44, Color.white, TextAlignmentOptions.Left, true);
+            At(sectionTitle.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(120f, -668f), new Vector2(420f, 60f));
+            sectionTitle.enableAutoSizing = true; sectionTitle.fontSizeMin = 28f; sectionTitle.fontSizeMax = 44f;
 
             // how many players at the table: 2, 3 or 4 (used by Ranked, Quick Match and Create Room)
             var chips = new Image[3]; var chipLabels = new TMP_Text[3];
             for (int i = 0; i < 3; i++)
             {
-                var chip = NewRect("Size" + (i + 2), s);
-                At(chip, TopCenter, TopCenter, new Vector2((i - 1) * 315f, -440f), new Vector2(295f, 100f));
+                var chip = NewRect("Size" + (i + 2), modePanel);
+                At(chip, TopCenter, TopCenter, new Vector2((i - 1) * 306f, -14f), new Vector2(290f, 92f));
                 chips[i] = AddImage(chip, Round(), new Color(0.93f, 0.96f, 1f), true, 0.5f);
                 var chipButton = chip.gameObject.AddComponent<Button>();
                 chipButton.targetGraphic = chips[i]; chipButton.transition = Selectable.Transition.None;
@@ -80,17 +136,17 @@ namespace Ludo.EditorTools
             }
 
             // the game mode for Quick Match and Create Room (Quick Match only pairs players who chose the same mode)
-            BuildModePicker(s, -555f, withRule: false);
+            BuildModePicker(modePanel, -118f, withRule: false);
 
             // the coin table for Quick Match (entry fee; the winner takes the pot). Private rooms are always free.
             var fees = Ludo.Core.CoinTables.Fees;
             var feeChips = new Image[fees.Length]; var feeLabels = new TMP_Text[fees.Length];
-            var feeTitle = AddText(s, "EntryLabel", "Entry", 38, Color.white, TextAlignmentOptions.Left, true);
-            At(feeTitle.rectTransform, TopCenter, TopCenter, new Vector2(-400f, -675f), new Vector2(160f, 88f));
+            var feeTitle = AddText(modePanel, "EntryLabel", "Entry", 36, Color.white, TextAlignmentOptions.Left, true);
+            At(feeTitle.rectTransform, TopCenter, TopCenter, new Vector2(-402f, -230f), new Vector2(150f, 80f));
             for (int i = 0; i < fees.Length; i++)
             {
-                var chip = NewRect("Fee" + fees[i], s);
-                At(chip, TopCenter, TopCenter, new Vector2(-235f + i * 160f, -675f), new Vector2(148f, 88f));
+                var chip = NewRect("Fee" + fees[i], modePanel);
+                At(chip, TopCenter, TopCenter, new Vector2(-232f + i * 158f, -230f), new Vector2(146f, 80f));
                 feeChips[i] = AddImage(chip, Round(), new Color(0.93f, 0.96f, 1f), true, 0.5f);
                 Depth(feeChips[i], CardLip, 6f);
                 var chipButton = chip.gameObject.AddComponent<Button>();
@@ -102,45 +158,35 @@ namespace Ludo.EditorTools
                 OnClickInt(chipButton, menu.SetFee, i);
             }
 
-            // daily reward: a gift button in the corner (red dot when today's reward is waiting)
-            var gift = MakeRoundButton(s, "DailyButton", "Orange", Icon2("star"), 116f);
-            At((RectTransform)gift.transform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-30f, -36f), new Vector2(116f, 116f));
-            OnClick(gift, menu.OpenDaily);
-            var giftDot = BuildUnreadDot((RectTransform)gift.transform, out var giftDotText, new Vector2(-4f, -4f), 40f, true);
-            giftDotText.text = "!";
+            // The reference has no reward buttons on this screen: the main menu carries Rewards and Chest on its rails,
+            // with the same red dots. The daily pop-up still opens by itself here the first time each day.
 
-            // free chest: its own button under the gift, with the same "something is waiting" dot
-            var chestButton = MakeRoundButton(s, "ChestButton", "Brown", Ico("chest"), 116f);
-            At((RectTransform)chestButton.transform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-30f, -166f), new Vector2(116f, 116f));
-            OnClick(chestButton, menu.OpenChest);
-            var chestDot = BuildUnreadDot((RectTransform)chestButton.transform, out var chestDotText, new Vector2(-4f, -4f), 40f, true);
-            chestDotText.text = "!";
-
-            // the two ways to play with real players around the world
-            var quick = CardButton(s, "CardQuickMatch", -790f, Ico("flash_on"), "Quick Match", "Ranked - play right now with anyone", new Color(0.22f, 0.78f, 0.34f), true);
+            // the headline: one big banner, as in the reference
+            var quick = HeadlineCard(s, "CardQuickMatch", -452f, Ico("flash_on"), "QUICK MATCH",
+                "Ranked  \u00b7  Play with players worldwide",
+                new Color(0.24f, 0.78f, 0.33f), new Color(0.08f, 0.48f, 0.16f),
+                Color.white, new Color(0.86f, 1f, 0.88f), new Color(0.98f, 0.80f, 0.16f));
             OnClick(quick, menu.QuickMatch);
 
-            // everything else as a grid of tiles
-            var create = TileButton(s, "TileCreateRoom", -250f, -1010f, Ico("group"), "Create Room", new Color(0.22f, 0.58f, 1f));
-            var join = TileButton(s, "TileJoinRoom", 250f, -1010f, Ico("person_add"), "Join Code", new Color(1f, 0.66f, 0.14f));
-            var friends = TileButton(s, "TileFriends", -250f, -1190f, Icon("multiplayer"), "Friends", new Color(0.66f, 0.40f, 0.96f));
-            var boards = TileButton(s, "TileLeaderboards", 250f, -1190f, Icon("trophy"), "Leaderboards", new Color(0.95f, 0.72f, 0.10f));
-            var cup = TileButton(s, "TileWeeklyCup", -250f, -1370f, Icon2("star"), "Weekly Cup", new Color(0.96f, 0.30f, 0.32f));
-            var accountButton = TileButton(s, "TileAccount", 250f, -1370f, Icon("gear"), "Account", new Color(0.45f, 0.55f, 0.75f));
-            var diceTile = TileButton(s, "TileMyDice", -250f, -1550f, Ico("dice"), "My Dice", new Color(0.18f, 0.70f, 0.66f));
-            var profileTile = TileButton(s, "TileProfile", 250f, -1550f, Ico("person"), "Profile", new Color(0.36f, 0.48f, 0.90f));
-            OnClick(diceTile, menu.OpenDice);
-            OnClick(profileTile, menu.OpenProfile);
+            // four wide cards, as in the reference. Leaderboards and Profile live on the bottom bar, the account on the
+            // header gear and the dice collection on the main menu, so nothing became unreachable by trimming this grid.
+            var create = WideCard(s, "CardCreateRoom", -238f, -1116f, Ico("group"), "Create Room", new Color(0.20f, 0.56f, 1f));
+            var join = WideCard(s, "CardJoinRoom", 238f, -1116f, Ikon("key"), "Join Room", new Color(1f, 0.62f, 0.10f));
+            var friends = WideCard(s, "CardFriends", -238f, -1286f, Icon("multiplayer"), "Friends", new Color(0.60f, 0.36f, 0.95f));
+            var cup = WideCard(s, "CardTournaments", 238f, -1286f, Icon("trophy"), "Tournaments", new Color(0.93f, 0.20f, 0.36f));
             OnClick(create, menu.CreateRoom);
             OnClick(join, menu.OpenJoin);
             OnClickInt(friends, router.Show, Friends);
-            OnClick(boards, menu.OpenLeaderboards);
             OnClick(cup, menu.OpenTournament);
-            OnClick(accountButton, menu.OpenAccount);
 
-            var note = AddText(s, "SafetyNote", "Be kind! You can mute, block or report any player.", 38, new Color(1f, 1f, 1f, 0.75f), TextAlignmentOptions.Center);
-            At(note.rectTransform, BottomCenter, BottomCenter, new Vector2(0f, 110f), new Vector2(960f, 60f));
-            note.enableAutoSizing = true; note.fontSizeMin = 24f; note.fontSizeMax = 38f;
+            var shieldIc = NewRect("SafetyIcon", s);
+            At(shieldIc, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(-374f, 396f), new Vector2(32f, 32f));
+            AddImage(shieldIc, Ikon("shield"), new Color(1f, 1f, 1f, 0.6f)).raycastTarget = false;
+            var note = AddText(s, "SafetyNote", "Play fair  \u00b7  Mute, block or report players anytime.", 34, new Color(1f, 1f, 1f, 0.72f), TextAlignmentOptions.Center);
+            At(note.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(22f, 382f), new Vector2(860f, 56f));
+            note.enableAutoSizing = true; note.fontSizeMin = 22f; note.fontSizeMax = 34f;
+
+            NavBar(s, router, null, 0, Friends, Leaderboards, Profile);
 
             // ----- "Join with Code" pop-up -----
             var modal = NewRect("JoinModal", root); Stretch(modal);
@@ -187,15 +233,17 @@ namespace Ludo.EditorTools
             so.FindProperty("welcomeScreen").intValue = Welcome;
             so.FindProperty("profileName").objectReferenceValue = cardName;
             so.FindProperty("profileRating").objectReferenceValue = cardRating;
+            so.FindProperty("profileLevel").objectReferenceValue = cardLevel;
+            so.FindProperty("profileXpBar").objectReferenceValue = cardXpBar;
+            so.FindProperty("profileXpText").objectReferenceValue = cardXpText;
+            so.FindProperty("profileCoins").objectReferenceValue = cardCoins;
             so.FindProperty("profileAvatar").objectReferenceValue = cardPicImg;
             so.FindProperty("profileFlag").objectReferenceValue = cardFlag;
             SetObjects(so.FindProperty("feeChips"), feeChips);
             SetObjects(so.FindProperty("feeLabels"), feeLabels);
-            so.FindProperty("giftDot").objectReferenceValue = giftDot;
             so.FindProperty("daily").objectReferenceValue = dailyPanel;
             so.FindProperty("diceCollection").objectReferenceValue = dicePanel;
             so.FindProperty("chest").objectReferenceValue = chestPanel;
-            so.FindProperty("chestDot").objectReferenceValue = chestDot;
             so.FindProperty("statusText").objectReferenceValue = status;
             so.FindProperty("busyOverlay").objectReferenceValue = veil.gameObject;
             so.FindProperty("busyText").objectReferenceValue = busyText;

@@ -379,6 +379,37 @@ namespace Ludo.EditorTools
             return button;
         }
 
+        /// <summary>One of the reference's wide action cards on Play Online: round icon badge, label and a chevron.</summary>
+        static Button WideCard(RectTransform parent, string name, float x, float y, Sprite icon, string label, Color accent)
+        {
+            var rt = NewRect(name, parent);
+            At(rt, TopCenter, TopCenter, new Vector2(x, y), new Vector2(468f, 150f));
+            var img = AddImage(rt, Round(), Card, true, 0.45f);
+            Depth(img, CardLip, 10f);
+            var button = rt.gameObject.AddComponent<Button>();
+            button.targetGraphic = img; button.transition = Selectable.Transition.None;
+            AddButtonFx(rt.gameObject, false);
+
+            var badge = NewRect("IconBadge", rt);
+            At(badge, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(18f, 0f), new Vector2(100f, 100f));
+            var badgeImg = AddImage(badge, Circle(), accent); badgeImg.raycastTarget = false;
+            Depth(badgeImg, Color.Lerp(accent, Color.black, 0.45f), 6f, 0f);
+            var ic = NewRect("Icon", badge);
+            At(ic, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 2f), new Vector2(60f, 60f));
+            var icImg = AddImage(ic, icon, Color.white); icImg.raycastTarget = false; icImg.preserveAspect = true;
+
+            var t = AddText(rt, "Label", label, 44, Navy, TextAlignmentOptions.Left);
+            At(t.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(130f, 0f), new Vector2(276f, 90f));
+            t.enableAutoSizing = true; t.fontSizeMin = 26f; t.fontSizeMax = 44f;
+            t.raycastTarget = false;
+
+            var chev = NewRect("Chevron", rt);
+            At(chev, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-26f, 0f), new Vector2(34f, 34f));
+            var chevImg = AddImage(chev, Ikon("chevron"), new Color(0.45f, 0.56f, 0.78f));
+            chevImg.raycastTarget = false; chevImg.preserveAspect = true;
+            return button;
+        }
+
         /// <summary>
         /// The reference's bottom navigation bar. It is anchored well clear of the bottom edge on purpose: the main menu
         /// carries an ad banner down there, and the ads policy forbids putting tappable UI against it.
@@ -413,10 +444,12 @@ namespace Ludo.EditorTools
                 caps.enableAutoSizing = true; caps.fontSizeMin = 20f; caps.fontSizeMax = 30f;
                 caps.raycastTarget = false;
 
+                // from the main menu the three online destinations go through the login gate; from inside the online
+                // section the player is already signed in, so they are shown directly
                 if (i == 0) OnClickInt(button, router.ResetTo, Main);
-                else if (i == 1) OnClickInt(button, flow.OpenOnlineScreen, friendsScreen);
-                else if (i == 2) OnClickInt(button, flow.OpenOnlineScreen, boardsScreen);
-                else OnClickInt(button, flow.OpenOnlineScreen, profileScreen);
+                else if (i == 1) OnClickInt(button, flow != null ? flow.OpenOnlineScreen : router.Show, friendsScreen);
+                else if (i == 2) OnClickInt(button, flow != null ? flow.OpenOnlineScreen : router.Show, boardsScreen);
+                else OnClickInt(button, flow != null ? flow.OpenOnlineScreen : router.Show, profileScreen);
             }
         }
 

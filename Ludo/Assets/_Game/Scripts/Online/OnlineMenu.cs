@@ -22,7 +22,11 @@ namespace Ludo.Online
         [SerializeField] int quickMatchScreen = 15;
         [SerializeField] int welcomeScreen = 14;
         [SerializeField] TMP_Text profileName;           // the profile card at the top: picture, name, tier and rating
-        [SerializeField] TMP_Text profileRating;
+        [SerializeField] TMP_Text profileRating;         // the rank pill: "Bronze"
+        [SerializeField] TMP_Text profileLevel;          // "Lv. 12"
+        [SerializeField] Image profileXpBar;             // fills across the level block
+        [SerializeField] TMP_Text profileXpText;         // "720 / 1000"
+        [SerializeField] TMP_Text profileCoins;
         [SerializeField] Image profileAvatar;
         [SerializeField] Image profileFlag;              // my country (hidden if none chosen)
         [SerializeField] CountryPicker countryPicker;    // asked once per account when no country is chosen yet
@@ -178,7 +182,16 @@ namespace Ludo.Online
             profileAvatar.sprite = GameSettings.Picture(0);
             FlagLibrary.Apply(profileFlag, GameSettings.Country);
             var s = StatsService.Mine;
-            profileRating.text = s.Tier + "  " + s.rating + "     <color=#FFD426>Coins " + s.coins.ToString("N0") + "</color>";
+            profileRating.text = s.Tier;
+            if (profileLevel != null) profileLevel.text = "Lv. " + s.Level;
+            if (profileCoins != null) profileCoins.text = s.coins.ToString("N0");
+            if (profileXpText != null || profileXpBar != null)
+            {
+                long into = Ludo.Core.Progression.XpIntoLevel(s.xp);
+                long need = Ludo.Core.Progression.XpToNext(s.Level);
+                if (profileXpText != null) profileXpText.text = need > 0 ? into + " / " + need : "MAX";
+                if (profileXpBar != null) profileXpBar.fillAmount = need > 0 ? Mathf.Clamp01((float)into / need) : 1f;
+            }
             if (giftDot != null) giftDot.SetActive(DailyRewardPanel.Claimable);
             if (chestDot != null) chestDot.SetActive(ChestPanel.Claimable);
             if (daily != null && StatsService.Loaded && isActiveAndEnabled && !dailyQueued && DailyRewardPanel.Claimable)
