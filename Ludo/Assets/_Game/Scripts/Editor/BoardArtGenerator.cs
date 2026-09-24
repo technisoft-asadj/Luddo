@@ -56,12 +56,14 @@ namespace Ludo.EditorTools
                     PaintStar(px, col + 0.5f, row + 0.5f, 0.32f, seat >= 0 ? Color.white : StarGrey);
             }
 
-            // the home columns
+            // the home columns: the same full, saturated colour as the ring round each resting well (the part of the well a
+            // pawn does not cover, so it is what actually reads as "the pawn's colour" on the board) - not the paler tint
+            // used only for the small circle under the pawn itself
             for (int seat = 0; seat < 4; seat++)
                 for (int step = 0; step < 5; step++)
                 {
                     var g = BoardGrid.HomeColumn(seat, step);
-                    PaintCell(px, (int)g.X, (int)g.Y, Pastel(SeatStyle.Colors[seat]));
+                    PaintCell(px, (int)g.X, (int)g.Y, SeatStyle.Colors[seat]);
                 }
 
             // the four yards
