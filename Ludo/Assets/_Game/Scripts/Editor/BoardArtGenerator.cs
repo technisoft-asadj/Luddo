@@ -50,7 +50,9 @@ namespace Ludo.EditorTools
                 var g = BoardGrid.OuterCell(cell);
                 int col = (int)g.X, row = (int)g.Y;
                 int seat = cell % 13 == 0 ? cell / 13 : -1;
-                Color fill = seat >= 0 ? Pastel(SeatStyle.Colors[seat]) : Paper;
+                // the cell a pawn lands on the moment it leaves its yard: the same full colour as the home column and
+                // the pawn's own ring, not the paler tint
+                Color fill = seat >= 0 ? SeatStyle.Colors[seat] : Paper;
                 PaintCell(px, col, row, fill);
                 if (Board.IsSafeCell(cell))
                     PaintStar(px, col + 0.5f, row + 0.5f, 0.32f, seat >= 0 ? Color.white : StarGrey);
