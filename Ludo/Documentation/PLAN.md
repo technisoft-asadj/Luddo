@@ -434,3 +434,37 @@ P4+ progression extras: streaks, promotion/demotion notice, dice collection, che
 **P4 progression + collection (commit `5a17015`, 245/245)** — result card announces RANK DOWN as well as RANK UP; dice collection built end to end: `Prototype/make_dice_texture.py` now drives six atlases from one colour table, `Core/DiceSkins` holds the catalogue and ownership rules (Free / Level / Rank / Coins), `StatsService.BuyDiceAsync`/`EquipDiceAsync` refuse anything Core has not approved, `GameSettings.DiceSkin` keeps the local copy so the Game scene needs no online layer, `DiceSkinLibrary` hands the atlas to `DiceView` through a material instance, and "My Dice" + "Profile" tiles were added to Play Online. **The designs are cosmetic by construction** - same mesh, same physics throw, same engine-decided number - and a test plays one scripted game under two designs and asserts identical rolls.
 **P4b free chest (commit `2bf8014`, 252/252)** — `Core/Chest` uses minutes-since-2020 stamps (time-zone proof; a clock that went backwards counts as ready instead of locking the chest forever) and draws the amount from the open's stamp so reopening the screen cannot reroll it. `ChestPanel` + a chest button with its own ready dot on Play Online.
 **Phone QA 2026-09-24 (Infinix 129987049J002615, test-ads APK):** launch, main menu with banner test ad, Select Mode, vs Computer with all five mode chips, Team Up match (3-2-1-GO!, You / Your partner / Opponent badges, 8 rolls + AI turns, no exceptions, ~59 fps), pause/restart, Play Online signed in with Google, **My Dice** (bought Emerald for 500: coins 1,100 -> 600, design equipped and visibly rolling in the next match, survived a reinstall through Cloud Save), **Free Chest** (+172 coins, 600 -> 772, countdown 4h 0m, ready dot cleared).
+
+## GAME SCREENS VISUAL IMPLEMENTATION (reference images added 2026-09-24)
+Source of truth: `Game Screens/` — 3 sheets, **17 screens** total.
+`Main Manu and Select Mode page.png` (full-res Main Menu + Select Mode) · `Play Online Page.png` (full-res) · `Remaining Screens.png` (contact sheet: Main Menu, Login/Signup, Mode Selection, Global Quick Match, Pre-Game Lobby, In-Game Board, Dice Presentation, Chat & Reactions, Match Result, Player Profile, Friends, Events/Tournaments, Dice Collection, Daily Rewards, Settings, Leaderboard, Clubs).
+
+| SCREEN | REFERENCE | UNITY SCENE/PREFAB | STATUS | FUNCTIONAL | VISUAL QA |
+|---|---|---|---|---|---|
+| Main Menu | sheet 1 + 3 | Menu.unity `Screen_Main` | | | |
+| Select Mode | sheet 1 + 3 | Menu.unity `Screen_Mode` | | | |
+| Play Online | sheet 2 + 3 | Menu.unity `Screen_Online` | | | |
+| Login / Signup | sheet 3 | Menu.unity `Screen_Welcome` | | | |
+| Global Quick Match | sheet 3 | Menu.unity `Screen_QuickMatch` | | | |
+| Pre-Game Lobby | sheet 3 | Menu.unity `Screen_Room` | | | |
+| In-Game Board HUD | sheet 3 | Game.unity `HudCanvas` | | | |
+| Dice Presentation | sheet 3 | Game.unity (DiceView) | | | |
+| Chat & Reactions | sheet 3 | `ChatModal` (both scenes) | | | |
+| Match Result | sheet 3 | Game.unity result panel | | | |
+| Player Profile | sheet 3 | Menu.unity `Screen_Profile` | | | |
+| Friends | sheet 3 | Menu.unity `Screen_Friends` | | | |
+| Tournaments / Events | sheet 3 | NEW screen | | | |
+| Dice Collection | sheet 3 | `DiceCollectionModal` | | | |
+| Daily Rewards | sheet 3 | `DailyRewardModal` | | | |
+| Settings | sheet 3 | Menu.unity `Screen_Settings` | | | |
+| Leaderboard | sheet 3 | Menu.unity `Screen_Leaderboards` | | | |
+| Clubs | sheet 3 | NEW screen | | | |
+
+**Gap analysis (what the reference adds that the project does not have yet)**
+- *Structure:* a persistent **bottom navigation bar** (Home / Friends / Chat / Profile) on the menu screens; the current build has no bottom nav at all.
+- *Main Menu:* profile chip with rank pill + country flag, **coins AND gems** pills with "+" buttons, corner rails (Rewards, Events, Lucky Spin, Chest), hero board art, one big Play Online card, Play with Friends / Play with AI pair, a 4-tile row (Tournaments, Leaderboards, Clubs, More), Daily Rewards banner. The current menu is a plain Play / How to Play / Settings stack.
+- *Select Mode:* nine coloured mode rows with icon + description + player count + chevron, under a wooden plaque header. The current screen is five list rows and a separate chip row.
+- *Play Online:* one profile card carrying rank + level + XP bar + coins + flag, a large QUICK MATCH banner, a "Select Mode" panel of 3+3 chips with an Entry pill, and four action cards. The current screen is a card + tiles grid.
+- *New systems implied by the art:* **Gems** (second currency), **Lucky Spin**, **Clubs**, **Events / Season Pass**, profile **Achievements** and **Statistics** tabs. None of these exist yet — they will be built only where a real system can back them; anything that cannot be backed honestly is left out rather than faked.
+- *Assets to create:* gem, crown, star, key, house, handshake, gamepad, calendar, gift, spin-wheel, shield, sliders, medal and grid icons (procedural, in `UiArtGenerator`, same approach as the existing white shapes); no paid or third-party game art.
+- *Keep untouched (explicit instruction):* the playable Ludo board, tokens, movement, board interaction and the whole gameplay engine. The dice keeps its existing authoritative + PhysX presentation; only its skin/scale is matched to the reference.

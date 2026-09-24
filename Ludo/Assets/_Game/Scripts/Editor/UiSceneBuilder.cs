@@ -10,6 +10,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using Ludo.Core;
 using Ludo.Game;
+using Ludo.Online;
 
 namespace Ludo.EditorTools
 {
@@ -86,8 +87,14 @@ namespace Ludo.EditorTools
             var flow = systems.AddComponent<MenuFlow>();
 
             var screens = new RectTransform[16];
+            // the three reward pop-ups live above every screen, and both the main menu and Play Online open them,
+            // so they are built before either of those screens rather than owned by one of them
+            BuildDailyReward(root, out var dailyPanel);
+            BuildChest(root, out var chestPanel);
+            BuildDiceCollection(root, out var dicePanel);
+
             screens[Splash] = BuildSplash(safe, router);
-            screens[Main] = BuildMain(safe, router, flow);
+            screens[Main] = BuildMain(safe, router, flow, dailyPanel, chestPanel, dicePanel);
             screens[Mode] = BuildMode(safe, router, flow);
             var playersScreen = BuildPlayers(safe, router, flow, out var rows, out var rowNames, out var rowPawns, out var rowAvatars, out var editButtons);
             screens[Players] = playersScreen;
@@ -97,7 +104,7 @@ namespace Ludo.EditorTools
             screens[Credits] = BuildCredits(safe, router);
 
             // online: hub, waiting room, friends (+ their pop-ups, which sit above every screen)
-            screens[Online] = BuildOnline(safe, root, router, out var onlineMenu, out var joinModal, out var busyOverlay);
+            screens[Online] = BuildOnline(safe, root, router, dailyPanel, chestPanel, dicePanel, out var onlineMenu, out var joinModal, out var busyOverlay);
             screens[Room] = BuildRoom(safe, root, router, out var roomScreen, out var moreModal);
             screens[Friends] = BuildFriends(safe, router);
             screens[Account] = BuildAccount(safe, router, out var accountScreen);
@@ -207,69 +214,332 @@ namespace Ludo.EditorTools
             return s;
         }
 
-        static RectTransform BuildMain(RectTransform parent, ScreenRouter router, MenuFlow flow)
+
+        // ==================================================================================================
+        //  PIECES OF THE REFERENCE LAYOUT (Game Screens/)
+        // ==================================================================================================
+
+        /// <summary>One of the white icon silhouettes drawn by Prototype/make_ui_icons.py (crown, gem, chevron, ...).</summary>
+        static Sprite Ikon(string name) => Load(UiArtGenerator.IconFolder + name + ".png");
+
+        /// <summary>
+        /// A rounded "pill" that carries an icon and a value, like the coin counter in the reference top bar. The plus
+        /// button is optional and is a real button - it is wired to somewhere the player can actually earn that currency.
+        /// </summary>
+        static RectTransform Pill(RectTransform parent, string name, Vector2 anchor, Vector2 pivot, Vector2 position,
+            Vector2 size, Sprite icon, Color iconColour, string value, out TMP_Text valueText, out Button plus)
+        {
+            var pill = NewRect(name, parent);
+            At(pill, anchor, pivot, position, size);
+            var body = AddImage(pill, Round(), new Color(0.05f, 0.11f, 0.33f, 0.88f), true, 0.8f);
+            body.raycastTarget = false;
+            Depth(body, new Color(0.02f, 0.05f, 0.20f), 5f, 0f);
+
+            float pad = size.y * 0.12f;
+            var ic = NewRect("Icon", pill);
+            At(ic, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(pad + 4f, 0f), new Vector2(size.y - pad * 2f, size.y - pad * 2f));
+            var icImg = AddImage(ic, icon, iconColour); icImg.raycastTarget = false; icImg.preserveAspect = true;
+
+            valueText = AddText(pill, "Value", value, size.y * 0.52f, Color.white, TextAlignmentOptions.Left, true);
+            At(valueText.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(size.y + 6f, 0f), new Vector2(size.x - size.y * 2f, size.y));
+            valueText.enableAutoSizing = true; valueText.fontSizeMin = size.y * 0.30f; valueText.fontSizeMax = size.y * 0.52f;
+            valueText.raycastTarget = false;
+
+            float plusSize = size.y - pad * 2f;
+            plus = MakeRoundButton(pill, "PlusButton", "Green", Icon("plus"), plusSize);
+            At((RectTransform)plus.transform, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-pad, 0f), new Vector2(plusSize, plusSize));
+            return pill;
+        }
+
+        /// <summary>
+        /// A corner rail button from the reference main menu: a round coloured badge with an icon and a caption under it.
+        /// 'badge' adds the small red "something is waiting" dot; the GameObject is returned so a screen can show or hide it.
+        /// </summary>
+        static Button RailButton(RectTransform parent, string name, Vector2 anchor, Vector2 position, Sprite icon,
+            string caption, Color accent, out GameObject dot)
+        {
+            const float size = 132f;
+            var root = NewRect(name, parent);
+            At(root, anchor, new Vector2(anchor.x, 1f), position, new Vector2(size + 40f, size + 56f));
+
+            var badge = NewRect("Badge", root);
+            At(badge, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), Vector2.zero, new Vector2(size, size));
+            var badgeImg = AddImage(badge, Round(), accent, true, 0.5f);
+            Depth(badgeImg, Color.Lerp(accent, Color.black, 0.45f), 8f);
+            var button = badge.gameObject.AddComponent<Button>();
+            button.targetGraphic = badgeImg; button.transition = Selectable.Transition.None;
+            AddButtonFx(badge.gameObject, false);
+
+            var ic = NewRect("Icon", badge);
+            At(ic, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 2f), new Vector2(size * 0.56f, size * 0.56f));
+            var icImg = AddImage(ic, icon, Color.white); icImg.raycastTarget = false; icImg.preserveAspect = true;
+
+            var caps = AddText(root, "Caption", caption, 34, Color.white, TextAlignmentOptions.Center, true);
+            At(caps.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), Vector2.zero, new Vector2(size + 40f, 48f));
+            caps.enableAutoSizing = true; caps.fontSizeMin = 22f; caps.fontSizeMax = 34f;
+            caps.raycastTarget = false;
+
+            dot = BuildUnreadDot(badge, out var dotText, new Vector2(-2f, -2f), 44f, true);
+            dotText.text = "!";
+            return button;
+        }
+
+        /// <summary>
+        /// The big headline card of the reference main menu ("PLAY ONLINE"): a wide coloured card with a round icon
+        /// badge, a title, one line of explanation and a chevron on the right.
+        /// </summary>
+        static Button HeadlineCard(RectTransform parent, string name, float y, Sprite icon, string title, string subtitle,
+            Color face, Color lip, Color titleColour, Color subColour, Color badge)
+        {
+            var rt = NewRect(name, parent);
+            At(rt, TopCenter, TopCenter, new Vector2(0f, y), new Vector2(960f, 206f));
+            var img = AddImage(rt, Round(), face, true, 0.42f);
+            Depth(img, lip, 14f);
+            var button = rt.gameObject.AddComponent<Button>();
+            button.targetGraphic = img; button.transition = Selectable.Transition.None;
+            AddButtonFx(rt.gameObject, true);
+
+            var badgeRt = NewRect("IconBadge", rt);
+            At(badgeRt, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(28f, 0f), new Vector2(136f, 136f));
+            var badgeImg = AddImage(badgeRt, Circle(), badge); badgeImg.raycastTarget = false;
+            Depth(badgeImg, Color.Lerp(badge, Color.black, 0.45f), 7f, 0f);
+            var ic = NewRect("Icon", badgeRt);
+            At(ic, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 2f), new Vector2(84f, 84f));
+            var icImg = AddImage(ic, icon, Color.white); icImg.raycastTarget = false; icImg.preserveAspect = true;
+
+            var t = AddText(rt, "Title", title, 66, titleColour, TextAlignmentOptions.Left);
+            At(t.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(186f, 26f), new Vector2(620f, 80f));
+            t.enableAutoSizing = true; t.fontSizeMin = 38f; t.fontSizeMax = 66f;
+            t.raycastTarget = false;
+            var sub = AddText(rt, "Sub", subtitle, 38, subColour, TextAlignmentOptions.Left);
+            At(sub.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(186f, -34f), new Vector2(640f, 56f));
+            sub.enableAutoSizing = true; sub.fontSizeMin = 24f; sub.fontSizeMax = 38f;
+            sub.raycastTarget = false;
+
+            var chev = NewRect("Chevron", rt);
+            At(chev, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-34f, 0f), new Vector2(84f, 84f));
+            var chevBg = AddImage(chev, Circle(), new Color(1f, 1f, 1f, 0.85f)); chevBg.raycastTarget = false;
+            var chevIc = NewRect("Icon", chev);
+            At(chevIc, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(3f, 0f), new Vector2(40f, 40f));
+            var chevImg = AddImage(chevIc, Ikon("chevron"), lip); chevImg.raycastTarget = false; chevImg.preserveAspect = true;
+            return button;
+        }
+
+        /// <summary>One of the two side-by-side cards under the headline ("Play with Friends" / "Play with AI").</summary>
+        static Button DuoCard(RectTransform parent, string name, float x, float y, Sprite icon, string title, string subtitle, Color face)
+        {
+            var rt = NewRect(name, parent);
+            At(rt, TopCenter, TopCenter, new Vector2(x, y), new Vector2(468f, 196f));
+            var img = AddImage(rt, Round(), face, true, 0.45f);
+            Depth(img, Color.Lerp(face, Color.black, 0.42f), 12f);
+            var button = rt.gameObject.AddComponent<Button>();
+            button.targetGraphic = img; button.transition = Selectable.Transition.None;
+            AddButtonFx(rt.gameObject, false);
+
+            var badgeRt = NewRect("IconBadge", rt);
+            At(badgeRt, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(22f, -22f), new Vector2(86f, 86f));
+            var badgeImg = AddImage(badgeRt, Circle(), new Color(1f, 1f, 1f, 0.22f)); badgeImg.raycastTarget = false;
+            var ic = NewRect("Icon", badgeRt); Stretch(ic, 18f, 18f, 18f, 18f);
+            var icImg = AddImage(ic, icon, Color.white); icImg.raycastTarget = false; icImg.preserveAspect = true;
+
+            var t = AddText(rt, "Title", title, 44, Color.white, TextAlignmentOptions.Left, true);
+            At(t.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(120f, -16f), new Vector2(334f, 100f));
+            t.textWrappingMode = TextWrappingModes.Normal;
+            t.enableAutoSizing = true; t.fontSizeMin = 28f; t.fontSizeMax = 44f;
+            t.raycastTarget = false;
+            var sub = AddText(rt, "Sub", subtitle, 32, new Color(1f, 1f, 1f, 0.82f), TextAlignmentOptions.Left);
+            At(sub.rectTransform, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(24f, 22f), new Vector2(420f, 48f));
+            sub.enableAutoSizing = true; sub.fontSizeMin = 22f; sub.fontSizeMax = 32f;
+            sub.raycastTarget = false;
+            return button;
+        }
+
+        /// <summary>One of the four small tiles under the duo cards (Tournaments, Leaderboards, My Dice, More).</summary>
+        static Button SmallTile(RectTransform parent, string name, float x, float y, Sprite icon, string caption, Color accent, out GameObject dot)
+        {
+            var rt = NewRect(name, parent);
+            At(rt, TopCenter, TopCenter, new Vector2(x, y), new Vector2(228f, 186f));
+            var img = AddImage(rt, Round(), new Color(0.09f, 0.20f, 0.50f, 0.92f), true, 0.5f);
+            Depth(img, new Color(0.04f, 0.10f, 0.30f), 9f);
+            var button = rt.gameObject.AddComponent<Button>();
+            button.targetGraphic = img; button.transition = Selectable.Transition.None;
+            AddButtonFx(rt.gameObject, false);
+
+            var ic = NewRect("Icon", rt);
+            At(ic, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -22f), new Vector2(84f, 84f));
+            var icImg = AddImage(ic, icon, accent); icImg.raycastTarget = false; icImg.preserveAspect = true;
+
+            var caps = AddText(rt, "Caption", caption, 34, Color.white, TextAlignmentOptions.Center, true);
+            At(caps.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 14f), new Vector2(216f, 56f));
+            caps.enableAutoSizing = true; caps.fontSizeMin = 22f; caps.fontSizeMax = 34f;
+            caps.raycastTarget = false;
+
+            dot = BuildUnreadDot(rt, out var dotText, new Vector2(-10f, -10f), 44f, true);
+            dotText.text = "!";
+            return button;
+        }
+
+        /// <summary>
+        /// The reference's bottom navigation bar. It is anchored well clear of the bottom edge on purpose: the main menu
+        /// carries an ad banner down there, and the ads policy forbids putting tappable UI against it.
+        /// </summary>
+        static void NavBar(RectTransform parent, ScreenRouter router, MenuFlow flow, int activeIndex,
+            int friendsScreen, int boardsScreen, int profileScreen)
+        {
+            var bar = NewRect("NavBar", parent);
+            At(bar, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 196f), new Vector2(1000f, 152f));
+            var body = AddImage(bar, Round(), new Color(0.05f, 0.12f, 0.34f, 0.95f), true, 0.55f);
+            body.raycastTarget = false;
+            Depth(body, new Color(0.02f, 0.06f, 0.22f), 8f, 0f);
+
+            string[] names = { "Home", "Friends", "Leaderboard", "Profile" };
+            Sprite[] icons = { Ikon("house"), Ico("group"), Icon("trophy"), Ico("person") };
+            for (int i = 0; i < names.Length; i++)
+            {
+                var cell = NewRect("Nav" + names[i], bar);
+                At(cell, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(10f + i * 245f, 0f), new Vector2(235f, 140f));
+                var hit = AddImage(cell, Round(), new Color(1f, 1f, 1f, i == activeIndex ? 0.10f : 0f), true, 0.6f);
+                var button = cell.gameObject.AddComponent<Button>();
+                button.targetGraphic = hit; button.transition = Selectable.Transition.None;
+                AddButtonFx(cell.gameObject, false);
+
+                bool on = i == activeIndex;
+                var ic = NewRect("Icon", cell);
+                At(ic, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -16f), new Vector2(62f, 62f));
+                var icImg = AddImage(ic, icons[i], on ? Gold : new Color(0.78f, 0.86f, 1f));
+                icImg.raycastTarget = false; icImg.preserveAspect = true;
+                var caps = AddText(cell, "Caption", names[i], 30, on ? Gold : new Color(0.78f, 0.86f, 1f), TextAlignmentOptions.Center);
+                At(caps.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 12f), new Vector2(225f, 44f));
+                caps.enableAutoSizing = true; caps.fontSizeMin = 20f; caps.fontSizeMax = 30f;
+                caps.raycastTarget = false;
+
+                if (i == 0) OnClickInt(button, router.ResetTo, Main);
+                else if (i == 1) OnClickInt(button, flow.OpenOnlineScreen, friendsScreen);
+                else if (i == 2) OnClickInt(button, flow.OpenOnlineScreen, boardsScreen);
+                else OnClickInt(button, flow.OpenOnlineScreen, profileScreen);
+            }
+        }
+
+        /// <summary>
+        /// The main menu, laid out from the reference art in Game Screens/: a top bar with the player and their coins,
+        /// a rewards rail either side of the logo, the Play Online headline, the two ways to play offline, four small
+        /// tiles and the daily-reward banner, over a bottom navigation bar.
+        ///
+        /// Everything on it is wired to something that really exists. Where the reference shows a feature this game does
+        /// not have (gems, lucky spin, clubs, events) the tile is left out rather than drawn as a button that does
+        /// nothing - see PLAN.md, "GAME SCREENS VISUAL IMPLEMENTATION".
+        /// </summary>
+        static RectTransform BuildMain(RectTransform parent, ScreenRouter router, MenuFlow flow,
+            DailyRewardPanel daily, ChestPanel chest, DiceCollectionPanel dice)
         {
             var s = NewScreen("Screen_Main", parent);
-            // the logo sits well below the profile tag (top-left), so the two never touch even while the logo floats
-            Logo(s, new Vector2(0.5f, 1f), new Vector2(0f, -290f), 760f);
 
-            // "picture + name" tag (top-left): shows the saved profile of Player 1 and opens the profile editor
+            // ---- top bar: picture, name, rank, coins, settings ----
             var chip = NewRect("ProfileChip", s);
-            At(chip, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(30f, -30f), new Vector2(360f, 104f));
-            var chipBody = AddImage(chip, Round(), new Color(0.05f, 0.11f, 0.33f, 0.85f), true, 0.8f);
+            At(chip, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(26f, -26f), new Vector2(470f, 124f));
+            var chipBody = AddImage(chip, Round(), new Color(0.05f, 0.11f, 0.33f, 0.88f), true, 0.75f);
             Depth(chipBody, new Color(0.02f, 0.05f, 0.2f), 6f);
             var chipButton = chip.gameObject.AddComponent<Button>();
             chipButton.targetGraphic = chipBody;
             chipButton.transition = Selectable.Transition.None;
             AddButtonFx(chip.gameObject, false);
             OnClickInt(chipButton, flow.EditProfile, 0);
-            var chipRing = NewRect("Ring", chip); Stretch(chipRing);
-            AddImage(chipRing, Ring(), new Color(0.45f, 0.65f, 1f, 0.8f), true, 0.8f).raycastTarget = false;
-            var chipAvatarBg = NewRect("AvatarBg", chip);
-            At(chipAvatarBg, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(12f, 0f), new Vector2(82f, 82f));
-            AddImage(chipAvatarBg, Circle(), new Color(0.92f, 0.95f, 1f)).raycastTarget = false;
-            var chipAvatar = NewRect("Avatar", chipAvatarBg); Stretch(chipAvatar, 5f, 5f, 5f, 5f);
-            var chipAvatarImg = AddImage(chipAvatar, null, Color.white); chipAvatarImg.raycastTarget = false; chipAvatarImg.preserveAspect = true;
-            var chipName = AddText(chip, "Name", "Player 1", 44, Color.white, TextAlignmentOptions.Left, true);
-            Stretch(chipName.rectTransform, 108f, 0f, 20f, 4f);
-            chipName.enableAutoSizing = true; chipName.fontSizeMin = 24f; chipName.fontSizeMax = 44f;
-            var chipScript = chip.gameObject.AddComponent<ProfileChip>();
-            var cso = new SerializedObject(chipScript);
-            cso.FindProperty("player").intValue = 0;
-            cso.FindProperty("avatar").objectReferenceValue = chipAvatarImg;
-            cso.FindProperty("nameText").objectReferenceValue = chipName;
-            cso.ApplyModifiedProperties();
 
-            var play = MakeButton(s, "PlayButton", "Play", "Green", new Vector2(800f, 190f), Icon2("icon_play_light"), true);
-            // the stack starts at 43% of the screen height (leaves room for the ad banner below) and keeps fixed gaps, so tall and short phones both look balanced
-            At((RectTransform)play.transform, new Vector2(0.5f, 0.43f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(800f, 190f));
-            OnClickInt(play, router.Show, Mode);
+            var avatarBg = NewRect("AvatarBg", chip);
+            At(avatarBg, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(12f, 0f), new Vector2(100f, 100f));
+            AddImage(avatarBg, Circle(), new Color(0.92f, 0.95f, 1f)).raycastTarget = false;
+            var avatarRt = NewRect("Avatar", avatarBg); Stretch(avatarRt, 6f, 6f, 6f, 6f);
+            var avatarImg = AddImage(avatarRt, null, Color.white);
+            avatarImg.raycastTarget = false; avatarImg.preserveAspect = true;
+            var chipFlag = FlagBadge(avatarBg, "Flag", new Vector2(1f, 0f), new Vector2(-4f, 6f), 46f);
 
-            var how = MakeButton(s, "HowToPlayButton", "How to Play", "Blue", new Vector2(800f, 165f), Icon("question"));
-            At((RectTransform)how.transform, new Vector2(0.5f, 0.43f), new Vector2(0.5f, 0.5f), new Vector2(0f, -240f), new Vector2(800f, 165f));
-            OnClickInt(how, router.Show, HowTo);
+            var chipName = AddText(chip, "Name", "Player 1", 46, Color.white, TextAlignmentOptions.Left, true);
+            At(chipName.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(126f, -10f), new Vector2(330f, 60f));
+            chipName.enableAutoSizing = true; chipName.fontSizeMin = 26f; chipName.fontSizeMax = 46f;
+            chipName.raycastTarget = false;
 
-            var settings = MakeButton(s, "SettingsButton", "Settings", "Purple", new Vector2(800f, 165f), Icon("gear"));
-            At((RectTransform)settings.transform, new Vector2(0.5f, 0.43f), new Vector2(0.5f, 0.5f), new Vector2(0f, -445f), new Vector2(800f, 165f));
+            var rankPill = NewRect("RankPill", chip);
+            At(rankPill, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(126f, 14f), new Vector2(230f, 46f));
+            AddImage(rankPill, Round(), new Color(0.55f, 0.34f, 0.10f), true, 1.1f).raycastTarget = false;
+            var rankStar = NewRect("Star", rankPill);
+            At(rankStar, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(8f, 0f), new Vector2(30f, 30f));
+            AddImage(rankStar, Ikon("star"), Gold).raycastTarget = false;
+            var rankText = AddText(rankPill, "Value", "Bronze", 30, Gold, TextAlignmentOptions.Left);
+            At(rankText.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(44f, 0f), new Vector2(180f, 44f));
+            rankText.enableAutoSizing = true; rankText.fontSizeMin = 20f; rankText.fontSizeMax = 30f;
+            rankText.raycastTarget = false;
+
+            var coinPill = Pill(s, "CoinPill", new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-26f, -26f),
+                new Vector2(330f, 96f), Ikon("coin"), Gold, "0", out var coinText, out var coinPlus);
+            OnClick(coinPlus, chest.Open);                                // the free chest is where coins really come from
+
+            var settings = MakeRoundButton(s, "SettingsButton", "Grey", Icon("gear"), 108f);
+            At((RectTransform)settings.transform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-26f, -142f), new Vector2(108f, 108f));
             OnClickInt(settings, router.Show, Settings);
 
-            // quick mute buttons for music and sound effects: top-right corner, mirroring the profile tag on the left.
-            // (The bottom of the screen belongs to the ad banner, so nothing tappable sits near it.)
-            var musicBtn = MakeRoundButton(s, "MusicToggle", "Grey", Icon("musicOn"), 108f);
-            At((RectTransform)musicBtn.transform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-152f, -32f), new Vector2(108f, 108f));
-            var sfxBtn = MakeRoundButton(s, "SfxToggle", "Grey", Icon("audioOn"), 108f);
-            At((RectTransform)sfxBtn.transform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-30f, -32f), new Vector2(108f, 108f));
-            var quick = s.gameObject.AddComponent<QuickAudioToggles>();
-            var qo = new SerializedObject(quick);
-            qo.FindProperty("musicButton").objectReferenceValue = musicBtn;
-            qo.FindProperty("musicIcon").objectReferenceValue = musicBtn.transform.Find("Icon").GetComponent<Image>();
-            qo.FindProperty("sfxButton").objectReferenceValue = sfxBtn;
-            qo.FindProperty("sfxIcon").objectReferenceValue = sfxBtn.transform.Find("Icon").GetComponent<Image>();
-            qo.FindProperty("musicOn").objectReferenceValue = Icon("musicOn");
-            qo.FindProperty("musicOff").objectReferenceValue = Icon("musicOff");
-            qo.FindProperty("sfxOn").objectReferenceValue = Icon("audioOn");
-            qo.FindProperty("sfxOff").objectReferenceValue = Icon("audioOff");
-            qo.ApplyModifiedProperties();
+            var bar = s.gameObject.AddComponent<MenuTopBar>();
+            var bo = new SerializedObject(bar);
+            bo.FindProperty("avatar").objectReferenceValue = avatarImg;
+            bo.FindProperty("flag").objectReferenceValue = chipFlag;
+            bo.FindProperty("nameText").objectReferenceValue = chipName;
+            bo.FindProperty("rankPill").objectReferenceValue = rankPill.gameObject;
+            bo.FindProperty("rankText").objectReferenceValue = rankText;
+            bo.FindProperty("coinPill").objectReferenceValue = coinPill.gameObject;
+            bo.FindProperty("coinText").objectReferenceValue = coinText;
+            bo.ApplyModifiedProperties();
+
+            // ---- the rails either side of the logo ----
+            var rewards = RailButton(s, "RailRewards", new Vector2(0f, 1f), new Vector2(46f, -330f),
+                Ikon("gift"), "Rewards", new Color(0.93f, 0.26f, 0.32f), out var rewardsDot);
+            OnClick(rewards, daily.Open);
+            var chestRail = RailButton(s, "RailChest", new Vector2(1f, 1f), new Vector2(-46f, -330f),
+                Load(Generated + "chest_white.png"), "Chest", new Color(0.66f, 0.42f, 0.20f), out var chestDot);
+            OnClick(chestRail, chest.Open);
+
+            // ---- logo over the board art ----
+            Logo(s, new Vector2(0.5f, 1f), new Vector2(0f, -170f), 560f);
+
+            // ---- the one big thing to do ----
+            var online = HeadlineCard(s, "CardPlayOnline", -660f, Ico("public"), "Play Online",
+                "Play with real players worldwide",
+                new Color(0.97f, 0.76f, 0.18f), new Color(0.80f, 0.52f, 0.05f),
+                new Color(0.28f, 0.16f, 0.02f), new Color(0.42f, 0.26f, 0.04f), new Color(0.20f, 0.66f, 0.36f));
+            OnClickInt(online, router.Show, Online);
+
+            // ---- the two offline ways to play ----
+            var friends = DuoCard(s, "CardPlayFriends", -246f, -898f, Ico("person_add"), "Play with Friends",
+                "Create or join a room", new Color(0.49f, 0.31f, 0.93f));
+            OnClickInt(friends, router.Show, Online);
+            var ai = DuoCard(s, "CardPlayAi", 246f, -898f, Robot(), "Play with AI", "Practice & improve",
+                new Color(0.18f, 0.72f, 0.29f));
+            OnClick(ai, flow.ChooseVsComputer);
+
+            // ---- four small tiles ----
+            var pass = SmallTile(s, "TilePassPlay", -354f, -1126f, Icon("multiplayer"), "Pass & Play", new Color(0.42f, 0.72f, 1f), out var passDot);
+            OnClickInt(pass, router.Show, Mode);
+            var boards = SmallTile(s, "TileLeaderboards", -118f, -1126f, Icon("trophy"), "Boards", Gold, out var boardsDot);
+            OnClickInt(boards, flow.OpenOnlineScreen, Leaderboards);
+            var myDice = SmallTile(s, "TileMyDice", 118f, -1126f, Ikon("gem"), "My Dice", new Color(0.30f, 0.86f, 0.80f), out var diceDot);
+            OnClick(myDice, dice.Open);
+            var more = SmallTile(s, "TileMore", 354f, -1126f, Ikon("grid"), "More", new Color(0.80f, 0.68f, 1f), out var moreDot);
+            OnClickInt(more, router.Show, HowTo);
+            passDot.SetActive(false); boardsDot.SetActive(false); diceDot.SetActive(false); moreDot.SetActive(false);
+
+            // ---- daily rewards banner ----
+            var banner = HeadlineCard(s, "CardDailyRewards", -1344f, Ikon("calendar"), "Daily Rewards",
+                "Claim your free rewards!",
+                new Color(0.44f, 0.24f, 0.80f), new Color(0.26f, 0.12f, 0.52f),
+                Color.white, new Color(0.88f, 0.84f, 1f), new Color(0.95f, 0.72f, 0.20f));
+            OnClick(banner, daily.Open);
+
+            NavBar(s, router, flow, 0, Friends, Leaderboards, Profile);
+
+            // the red dots are driven by the same checks the online menu uses
+            var dots = s.gameObject.AddComponent<MenuAlertDots>();
+            var ado = new SerializedObject(dots);
+            ado.FindProperty("rewardsDot").objectReferenceValue = rewardsDot;
+            ado.FindProperty("chestDot").objectReferenceValue = chestDot;
+            ado.ApplyModifiedProperties();
             return s;
         }
 

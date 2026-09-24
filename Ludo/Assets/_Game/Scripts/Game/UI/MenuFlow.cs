@@ -17,6 +17,7 @@ namespace Ludo.Game
         [SerializeField] ScreenRouter router;
         [SerializeField] int playerSelectScreen = 3;
         [SerializeField] int difficultyScreen = 4;
+        [SerializeField] int welcomeScreen = 14;         // the login page, for the bottom bar's online destinations
         [SerializeField] ProfileEditor profileEditor;
 
         [Header("Select Players screen")]
@@ -104,6 +105,22 @@ namespace Ludo.Game
         // ---------- against the computer ----------
 
         public void ChooseVsComputer() => router.Show(difficultyScreen);
+
+        /// <summary>
+        /// Open one of the online screens (Friends, Leaderboards, Profile) from the main menu's bottom bar. Every one of
+        /// them needs an account, so a player who has not chosen a login is sent to the login page first - the same gate
+        /// Play Online uses, rather than a second one that could drift out of step with it.
+        /// </summary>
+        public void OpenOnlineScreen(int screen)
+        {
+            if (!LoginGate.HasChosen())
+            {
+                LoginGate.Purpose = LoginPurpose.Online;
+                router.Show(welcomeScreen);
+                return;
+            }
+            router.Show(screen);
+        }
 
         public void SetDifficulty(int index)
         {

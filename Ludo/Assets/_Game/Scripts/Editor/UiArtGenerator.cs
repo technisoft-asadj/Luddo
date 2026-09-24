@@ -35,10 +35,34 @@ namespace Ludo.EditorTools
             // online icons (Google Material Icons): white copies so they can be tinted like the other icons
             foreach (var n in new[] { "mic", "mic_off", "share", "copy", "person_add", "block", "flag", "group", "public", "flash_on", "chat", "person", "search" })
                 MakeWhiteCopy("Assets/ThirdParty/GoogleMaterial/Icons/" + n + "_black.png", n + "_white");
+            ImportIconFolder();
             MakeOutlineMaterial();
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             Debug.Log("[Ludo] UI shapes generated in " + Folder);
+        }
+
+        /// <summary>
+        /// The white icon silhouettes drawn by Prototype/make_ui_icons.py (crown, gem, star, chevron, ...). They are files
+        /// on disk rather than shapes built here because a crown is far easier to describe as polygons than as per-pixel
+        /// maths; this only makes sure Unity imports them the same way as the generated shapes.
+        /// </summary>
+        public const string IconFolder = "Assets/_Game/Art/UI/Icons/";
+
+        static void ImportIconFolder()
+        {
+            if (!Directory.Exists(IconFolder)) return;
+            foreach (var path in Directory.GetFiles(IconFolder, "*.png"))
+            {
+                var importer = AssetImporter.GetAtPath(path.Replace('\\', '/')) as TextureImporter;
+                if (importer == null) continue;
+                importer.textureType = TextureImporterType.Sprite;
+                importer.spriteImportMode = SpriteImportMode.Single;
+                importer.mipmapEnabled = false;
+                importer.filterMode = FilterMode.Bilinear;
+                importer.alphaIsTransparency = true;
+                importer.SaveAndReimport();
+            }
         }
 
         // ---------- shapes (each returns the alpha 0..1 of one pixel) ----------

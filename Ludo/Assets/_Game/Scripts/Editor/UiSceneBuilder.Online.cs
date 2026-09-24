@@ -20,6 +20,7 @@ namespace Ludo.EditorTools
         // ==================================================================================================
 
         static RectTransform BuildOnline(RectTransform parent, RectTransform root, ScreenRouter router,
+            DailyRewardPanel dailyPanel, ChestPanel chestPanel, DiceCollectionPanel dicePanel,
             out OnlineMenu menu, out GameObject joinModal, out GameObject busyOverlay)
         {
             var s = NewScreen("Screen_Online", parent);
@@ -191,11 +192,8 @@ namespace Ludo.EditorTools
             SetObjects(so.FindProperty("feeChips"), feeChips);
             SetObjects(so.FindProperty("feeLabels"), feeLabels);
             so.FindProperty("giftDot").objectReferenceValue = giftDot;
-            BuildDailyReward(root, out var dailyPanel);
             so.FindProperty("daily").objectReferenceValue = dailyPanel;
-            BuildDiceCollection(root, out var dicePanel);
             so.FindProperty("diceCollection").objectReferenceValue = dicePanel;
-            BuildChest(root, out var chestPanel);
             so.FindProperty("chest").objectReferenceValue = chestPanel;
             so.FindProperty("chestDot").objectReferenceValue = chestDot;
             so.FindProperty("statusText").objectReferenceValue = status;
