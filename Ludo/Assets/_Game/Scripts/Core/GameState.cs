@@ -78,6 +78,19 @@ namespace Ludo.Core
 
         public GameState Clone() => new GameState(this);
 
+        /// <summary>Copy every changing value back out of another state (Undo; the two must be states of the same game).</summary>
+        internal void CopyFrom(GameState other)
+        {
+            System.Array.Copy(other.progress, progress, progress.Length);
+            System.Array.Copy(other.captured, captured, captured.Length);
+            StartProgressAtReset = other.StartProgressAtReset;
+            CurrentPlayer = other.CurrentPlayer;
+            ConsecutiveSixes = other.ConsecutiveSixes;
+            LastRoll = other.LastRoll;
+            Phase = other.Phase;
+            Winner = other.Winner;
+        }
+
         internal void Reset()
         {
             for (int i = 0; i < progress.Length; i++) progress[i] = StartProgressAtReset;

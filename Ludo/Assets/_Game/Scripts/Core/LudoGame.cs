@@ -51,6 +51,47 @@ namespace Ludo.Core
             }
         }
 
+        /// <summary>
+        /// Everything a turn can change, kept together so Undo can put all of it back at once. Restoring only the pawns
+        /// would leave the numbers still to play, the consecutive-six counter and the earned bonus roll out of step with
+        /// the board - which is exactly the kind of half-undo that lets a player cheat.
+        /// </summary>
+        public sealed class Snapshot
+        {
+            internal readonly GameState state;
+            internal readonly int[] pending;
+            internal readonly bool bonusRoll;
+            internal Snapshot(GameState state, List<int> pending, bool bonusRoll)
+            {
+                this.state = state.Clone();
+                this.pending = pending.ToArray();
+                this.bonusRoll = bonusRoll;
+            }
+        }
+
+        /// <summary>The whole game as it stands, for Undo (see Snapshot).</summary>
+        public Snapshot Save() => new Snapshot(State, pending, bonusRoll);
+
+        /// <summary>
+        /// Put a saved position back. The legal moves are recalculated from the restored position rather than saved, so a
+        /// restored game can never offer a move the rules would not allow now.
+        /// </summary>
+        public void Restore(Snapshot snapshot)
+        {
+            if (snapshot == null) throw new ArgumentNullException(nameof(snapshot));
+            State.CopyFrom(snapshot.state);
+            pending.Clear();
+            pending.AddRange(snapshot.pending);
+            bonusRoll = snapshot.bonusRoll;
+            legal.Clear();
+            if (State.Phase == TurnPhase.WaitingForMove)
+            {
+                if (config.RollAgainOnSix) CollectMoves(State.CurrentPlayer);
+                else Rules.GetLegalMoves(State, config, State.CurrentPlayer, State.LastRoll, legal);
+            }
+            TurnChanged?.Invoke(State.CurrentPlayer);
+        }
+
         public void Restart()
         {
             State.Reset();

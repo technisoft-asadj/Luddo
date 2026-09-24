@@ -60,6 +60,18 @@ namespace Ludo.Core
         /// <summary>When exactly one pawn can use a number, move it without asking.</summary>
         public bool AutoSelectSingleLegalToken = true;
 
+        /// <summary>
+        /// How many times a person may take back a move in one match. 0 = no Undo at all, which is what Classic and every
+        /// ranked game use.
+        ///
+        /// Undo puts the pawn back and returns the number to the pile still to be played - it does NOT rewind past the
+        /// roll. That is deliberate: re-rolling would let a player undo their way to a six, which would make the dice
+        /// unfair, and this game promises a fair dice everywhere else. Undo fixes a mis-tap; it never buys better luck.
+        /// </summary>
+        public int UndosPerMatch = 0;
+
+        public bool UndoAllowed => UndosPerMatch > 0;
+
         /// <summary>2 vs 2: the seats facing each other are partners (see GameMode.TeamUp).</summary>
         public bool IsTeams => Mode == GameMode.TeamUp;
 
