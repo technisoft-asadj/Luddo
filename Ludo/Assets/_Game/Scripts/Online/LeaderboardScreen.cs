@@ -50,6 +50,8 @@ namespace Ludo.Online
         void OnEnable()
         {
             rowTemplate.gameObject.SetActive(false);
+            // Select Mode's Tournaments row asks for the Weekly Cup tab; that screen cannot reach this class directly
+            if (Ludo.Game.MenuFlow.WeeklyCupTab >= 0) { PendingTab = Ludo.Game.MenuFlow.WeeklyCupTab; Ludo.Game.MenuFlow.WeeklyCupTab = -1; }
             Show(Mathf.Clamp(PendingTab, 0, 2));
         }
 

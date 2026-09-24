@@ -543,20 +543,128 @@ namespace Ludo.EditorTools
             return s;
         }
 
+        /// <summary>
+        /// One row of the Select Mode list: a pale coloured card with a round icon badge, a title, one line of
+        /// explanation, a small "2 - 4 Players" line and a chevron. 'ring' is the highlight shown on the row whose rules
+        /// are currently chosen (only the rule rows use it).
+        /// </summary>
+        static Button ModeRow(RectTransform parent, string name, float y, Sprite icon, string title, string blurb,
+            string players, Color face, Color accent, out GameObject ring)
+        {
+            var rt = NewRect(name, parent);
+            At(rt, TopCenter, TopCenter, new Vector2(0f, y), new Vector2(980f, 152f));
+            var img = AddImage(rt, Round(), face, true, 0.42f);
+            Depth(img, Color.Lerp(accent, Color.black, 0.35f), 9f);
+            var button = rt.gameObject.AddComponent<Button>();
+            button.targetGraphic = img; button.transition = Selectable.Transition.None;
+            AddButtonFx(rt.gameObject, false);
+
+            var ringRt = NewRect("Ring", rt); Stretch(ringRt, -6f, -6f, -6f, -6f);
+            var ringImg = AddImage(ringRt, Ring(), accent, true, 0.42f);
+            ringImg.raycastTarget = false;
+            ring = ringRt.gameObject;
+            ring.SetActive(false);
+
+            var badge = NewRect("IconBadge", rt);
+            At(badge, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(20f, 0f), new Vector2(112f, 112f));
+            var badgeImg = AddImage(badge, Round(), accent, true, 0.6f); badgeImg.raycastTarget = false;
+            Depth(badgeImg, Color.Lerp(accent, Color.black, 0.45f), 6f, 0f);
+            var ic = NewRect("Icon", badge);
+            At(ic, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 2f), new Vector2(68f, 68f));
+            var icImg = AddImage(ic, icon, Color.white); icImg.raycastTarget = false; icImg.preserveAspect = true;
+
+            var dark = Color.Lerp(accent, new Color(0.04f, 0.08f, 0.22f), 0.68f);
+            var t = AddText(rt, "Title", title, 50, dark, TextAlignmentOptions.Left);
+            At(t.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(150f, -12f), new Vector2(660f, 60f));
+            t.enableAutoSizing = true; t.fontSizeMin = 30f; t.fontSizeMax = 50f;
+            t.raycastTarget = false;
+            var b = AddText(rt, "Blurb", blurb, 34, Color.Lerp(dark, Color.white, 0.25f), TextAlignmentOptions.Left);
+            At(b.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(150f, -68f), new Vector2(680f, 44f));
+            b.enableAutoSizing = true; b.fontSizeMin = 22f; b.fontSizeMax = 34f;
+            b.raycastTarget = false;
+
+            var peopleIc = NewRect("PeopleIcon", rt);
+            At(peopleIc, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(152f, 16f), new Vector2(34f, 34f));
+            AddImage(peopleIc, Ico("person"), Color.Lerp(dark, Color.white, 0.35f)).raycastTarget = false;
+            var pl = AddText(rt, "Players", players, 32, Color.Lerp(dark, Color.white, 0.25f), TextAlignmentOptions.Left);
+            At(pl.rectTransform, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(194f, 12f), new Vector2(400f, 42f));
+            pl.enableAutoSizing = true; pl.fontSizeMin = 22f; pl.fontSizeMax = 32f;
+            pl.raycastTarget = false;
+
+            var chev = NewRect("Chevron", rt);
+            At(chev, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-24f, 0f), new Vector2(66f, 66f));
+            var chevBg = AddImage(chev, Round(), accent, true, 1.1f); chevBg.raycastTarget = false;
+            var chevIc = NewRect("Icon", chev);
+            At(chevIc, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(2f, 0f), new Vector2(30f, 30f));
+            var chevImg = AddImage(chevIc, Ikon("chevron"), Color.white); chevImg.raycastTarget = false; chevImg.preserveAspect = true;
+            return button;
+        }
+
+        /// <summary>
+        /// Select Mode, laid out from the reference art: nine coloured rows. The first four choose the RULES for the next
+        /// game (they light up to show which is chosen and stay on the screen); the last five choose the TABLE and
+        /// navigate. That split is what the reference's own grouping shows, and it keeps this screen honest about the two
+        /// different things it is really asking.
+        ///
+        /// The reference has no row for Arrow mode, which this game also has; Arrow stays selectable on the mode chips of
+        /// Play Online and the vs Computer screen.
+        /// </summary>
         static RectTransform BuildMode(RectTransform parent, ScreenRouter router, MenuFlow flow)
         {
             var s = NewScreen("Screen_Mode", parent);
             Header(s, "Select Mode", router);
-            var online = CardButton(s, "CardOnline", -300f, Ico("public"), "Play Online", "Friends, voice chat & quick match", new Color(0.96f, 0.30f, 0.32f), true);
-            var two = CardButton(s, "Card2Players", -535f, Icon("multiplayer"), "2 Players", "Local (Pass & Play)", new Color(0.22f, 0.58f, 1f), true);
-            var three = CardButton(s, "Card3Players", -770f, Icon("multiplayer"), "3 Players", "Local (Pass & Play)", new Color(1f, 0.66f, 0.14f), true);
-            var four = CardButton(s, "Card4Players", -1005f, Icon("multiplayer"), "4 Players", "Local (Pass & Play)", new Color(0.66f, 0.40f, 0.96f), true);
-            var ai = CardButton(s, "CardVsComputer", -1240f, Robot(), "vs Computer", "Play against the computer", new Color(0.22f, 0.78f, 0.34f), true);
-            // (the "Play Online" card is wired after the login page exists: see BuildMenuScene)
-            OnClickInt(two, flow.ChooseLocal, 2);
-            OnClickInt(three, flow.ChooseLocal, 3);
-            OnClickInt(four, flow.ChooseLocal, 4);
-            OnClick(ai, flow.ChooseVsComputer);
+            var hint = AddText(s, "Hint", "Choose your game mode", 36, new Color(1f, 1f, 1f, 0.85f), TextAlignmentOptions.Center, true);
+            At(hint.rectTransform, TopCenter, TopCenter, new Vector2(0f, -166f), new Vector2(800f, 50f));
+            hint.enableAutoSizing = true; hint.fontSizeMin = 24f; hint.fontSizeMax = 36f;
+
+            const float top = -238f, step = 162f;
+            var rings = new GameObject[4];
+
+            var classic = ModeRow(s, "RowClassic", top, Load(Generated + "dice_white.png"), "Classic", "The original Ludo experience",
+                "2 - 4 Players", new Color(1f, 0.93f, 0.74f), new Color(0.95f, 0.70f, 0.13f), out rings[0]);
+            var master = ModeRow(s, "RowMaster", top - step, Ikon("crown"), "Master", "Advanced rules & more strategy",
+                "2 - 4 Players", new Color(0.90f, 0.85f, 1f), new Color(0.53f, 0.34f, 0.93f), out rings[1]);
+            var blitz = ModeRow(s, "RowBlitz", top - step * 2f, Ico("flash_on"), "Quick / Blitz", "Fast paced, exciting matches",
+                "2 - 4 Players", new Color(0.83f, 0.97f, 0.85f), new Color(0.18f, 0.72f, 0.31f), out rings[2]);
+            var team = ModeRow(s, "RowTeamUp", top - step * 3f, Ikon("shield"), "Team Up", "2 vs 2  |  Team Battles",
+                "4 Players", new Color(1f, 0.85f, 0.89f), new Color(0.93f, 0.26f, 0.42f), out rings[3]);
+
+            var oneVsOne = ModeRow(s, "RowOneVsOne", top - step * 4f, Ico("group"), "1 vs 1", "Challenge a single player",
+                "2 Players", new Color(0.83f, 0.92f, 1f), new Color(0.20f, 0.56f, 1f), out _);
+            var four = ModeRow(s, "RowFourPlayer", top - step * 5f, Icon("multiplayer"), "4 Player", "Play with 4 players online",
+                "4 Players", new Color(0.82f, 0.97f, 1f), new Color(0.13f, 0.72f, 0.85f), out _);
+            var room = ModeRow(s, "RowPrivateRoom", top - step * 6f, Ikon("house"), "Private Room", "Create or join with room code",
+                "2 - 4 Players", new Color(0.97f, 0.85f, 1f), new Color(0.82f, 0.28f, 0.80f), out _);
+            var offline = ModeRow(s, "RowOffline", top - step * 7f, Ikon("gamepad"), "Offline", "Play without internet",
+                "2 - 4 Players", new Color(0.86f, 0.92f, 1f), new Color(0.30f, 0.45f, 0.86f), out _);
+            var cups = ModeRow(s, "RowTournaments", top - step * 8f, Icon("trophy"), "Tournaments", "Compete & win rewards",
+                "1 - 4 Players", new Color(1f, 0.93f, 0.76f), new Color(0.93f, 0.68f, 0.10f), out _);
+
+            var picker = s.gameObject.AddComponent<ModeRowHighlight>();
+            var po = new SerializedObject(picker);
+            SetObjects(po.FindProperty("rings"), rings);
+            var modes = po.FindProperty("modes");
+            modes.arraySize = 4;
+            modes.GetArrayElementAtIndex(0).intValue = (int)GameMode.Classic;
+            modes.GetArrayElementAtIndex(1).intValue = (int)GameMode.Master;
+            modes.GetArrayElementAtIndex(2).intValue = (int)GameMode.Blitz;
+            modes.GetArrayElementAtIndex(3).intValue = (int)GameMode.TeamUp;
+            po.ApplyModifiedProperties();
+
+            OnClickInt(classic, picker.Choose, (int)GameMode.Classic);
+            OnClickInt(master, picker.Choose, (int)GameMode.Master);
+            OnClickInt(blitz, picker.Choose, (int)GameMode.Blitz);
+            OnClickInt(team, picker.Choose, (int)GameMode.TeamUp);
+
+            OnClickInt(oneVsOne, flow.PlayOnlineAtSize, 2);
+            OnClickInt(four, flow.PlayOnlineAtSize, 4);
+            OnClickInt(room, router.Show, Online);
+            OnClickInt(offline, flow.ChooseLocal, 4);
+            OnClickInt(cups, flow.OpenWeeklyCup, Leaderboards);
+
+            var footer = AddText(s, "Footer", "Play  \u00b7  Win  \u00b7  Be the Champion", 34, new Color(1f, 1f, 1f, 0.7f), TextAlignmentOptions.Center);
+            At(footer.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 60f), new Vector2(900f, 50f));
+            footer.enableAutoSizing = true; footer.fontSizeMin = 22f; footer.fontSizeMax = 34f;
             return s;
         }
 

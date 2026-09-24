@@ -17,6 +17,7 @@ namespace Ludo.Game
         [SerializeField] ScreenRouter router;
         [SerializeField] int playerSelectScreen = 3;
         [SerializeField] int difficultyScreen = 4;
+        [SerializeField] int onlineScreen = 8;
         [SerializeField] int welcomeScreen = 14;         // the login page, for the bottom bar's online destinations
         [SerializeField] ProfileEditor profileEditor;
 
@@ -121,6 +122,31 @@ namespace Ludo.Game
             }
             router.Show(screen);
         }
+
+        /// <summary>
+        /// Select Mode's "1 vs 1" and "4 Player" rows: remember the table size the player asked for and open Play Online,
+        /// which is the screen that actually runs matchmaking. The size is stored where the online menu already reads it,
+        /// so the two screens can never disagree about it.
+        /// </summary>
+        public void PlayOnlineAtSize(int players)
+        {
+            PlayerPrefs.SetInt("ludo.online.size", Mathf.Clamp(players, 2, 4));
+            PlayerPrefs.Save();
+            OpenOnlineScreen(onlineScreen);
+        }
+
+        /// <summary>Select Mode's "Tournaments" row: the Weekly Cup, which lives on the leaderboards screen's second tab.</summary>
+        public void OpenWeeklyCup(int screen)
+        {
+            WeeklyCupTab = 1;
+            OpenOnlineScreen(screen);
+        }
+
+        /// <summary>
+        /// Which tab the leaderboards screen should open on (1 = Weekly Cup). The online code copies it into
+        /// LeaderboardScreen.PendingTab; this side cannot see that class, so it leaves the number here instead.
+        /// </summary>
+        public static int WeeklyCupTab = -1;
 
         public void SetDifficulty(int index)
         {
