@@ -49,13 +49,15 @@ namespace Ludo.EditorTools
             {
                 var g = BoardGrid.OuterCell(cell);
                 int col = (int)g.X, row = (int)g.Y;
-                int seat = cell % 13 == 0 ? cell / 13 : -1;
-                // the cell a pawn lands on the moment it leaves its yard: the same full colour as the home column and
-                // the pawn's own ring, not the paler tint
-                Color fill = seat >= 0 ? SeatStyle.Colors[seat] : Paper;
+                int r = cell % 13, arm = cell / 13;                 // r==0 = the entrance cell, r==8 = the shared safe cell further round
+                bool tinted = r == 0 || r == 8;
+                // the entrance cell: the same full colour as the home column and the pawn's own ring (not the paler tint).
+                // the other star cell on the same arm: a lighter tint of that colour instead of plain white, so the grey
+                // star is no longer sitting on a bare white square.
+                Color fill = r == 0 ? SeatStyle.Colors[arm] : r == 8 ? Pastel(SeatStyle.Colors[arm]) : Paper;
                 PaintCell(px, col, row, fill);
                 if (Board.IsSafeCell(cell))
-                    PaintStar(px, col + 0.5f, row + 0.5f, 0.32f, seat >= 0 ? Color.white : StarGrey);
+                    PaintStar(px, col + 0.5f, row + 0.5f, 0.32f, tinted ? Color.white : StarGrey);
             }
 
             // the home columns: the same full, saturated colour as the ring round each resting well (the part of the well a
