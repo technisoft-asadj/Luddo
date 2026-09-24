@@ -108,6 +108,13 @@ namespace Ludo.EditorTools
             var giftDot = BuildUnreadDot((RectTransform)gift.transform, out var giftDotText, new Vector2(-4f, -4f), 40f, true);
             giftDotText.text = "!";
 
+            // free chest: its own button under the gift, with the same "something is waiting" dot
+            var chestButton = MakeRoundButton(s, "ChestButton", "Brown", Ico("chest"), 116f);
+            At((RectTransform)chestButton.transform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-30f, -166f), new Vector2(116f, 116f));
+            OnClick(chestButton, menu.OpenChest);
+            var chestDot = BuildUnreadDot((RectTransform)chestButton.transform, out var chestDotText, new Vector2(-4f, -4f), 40f, true);
+            chestDotText.text = "!";
+
             // the two ways to play with real players around the world
             var quick = CardButton(s, "CardQuickMatch", -790f, Ico("flash_on"), "Quick Match", "Ranked - play right now with anyone", new Color(0.22f, 0.78f, 0.34f), true);
             OnClick(quick, menu.QuickMatch);
@@ -188,6 +195,9 @@ namespace Ludo.EditorTools
             so.FindProperty("daily").objectReferenceValue = dailyPanel;
             BuildDiceCollection(root, out var dicePanel);
             so.FindProperty("diceCollection").objectReferenceValue = dicePanel;
+            BuildChest(root, out var chestPanel);
+            so.FindProperty("chest").objectReferenceValue = chestPanel;
+            so.FindProperty("chestDot").objectReferenceValue = chestDot;
             so.FindProperty("statusText").objectReferenceValue = status;
             so.FindProperty("busyOverlay").objectReferenceValue = veil.gameObject;
             so.FindProperty("busyText").objectReferenceValue = busyText;
@@ -678,6 +688,83 @@ namespace Ludo.EditorTools
             return modal.gameObject;
         }
 
+
+
+        /// <summary>
+        /// The free chest pop-up: a drawn treasure chest, the countdown to the next one, Open and an optional "Watch ad x2".
+        /// The chest art is built from the same rounded shapes as the rest of the UI - no outside artwork.
+        /// </summary>
+        static GameObject BuildChest(RectTransform root, out ChestPanel panel)
+        {
+            var modal = NewRect("ChestModal", root); Stretch(modal);
+            AddImage(modal, null, new Color(0f, 0f, 0.05f, 0.78f)).raycastTarget = true;
+            var card = NewRect("Card", modal);
+            At(card, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(920f, 1000f));
+            Depth(AddImage(card, Round(), Card, true, 0.45f), CardLip, 14f);
+            var title = AddText(card, "Title", "Free Chest", 70, Navy, TextAlignmentOptions.Center);
+            At(title.rectTransform, TopCenter, TopCenter, new Vector2(0f, -30f), new Vector2(800f, 95f));
+            var sub = AddText(card, "Sub", "A free pile of coins every " + Ludo.Core.Chest.IntervalHours + " hours. Always free.", 36, SubText, TextAlignmentOptions.Center);
+            At(sub.rectTransform, TopCenter, TopCenter, new Vector2(0f, -122f), new Vector2(860f, 50f));
+            sub.enableAutoSizing = true; sub.fontSizeMin = 24f; sub.fontSizeMax = 36f;
+
+            // the chest itself: a lid, a body, a gold band and a lock, all from the generated rounded shapes
+            var art = NewRect("ChestArt", card);
+            At(art, TopCenter, TopCenter, new Vector2(0f, -210f), new Vector2(360f, 320f));
+            var glow = NewRect("Glow", art);
+            At(glow, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 0f), new Vector2(420f, 420f));
+            AddImage(glow, Load(UiArtGenerator.Folder + "glow_radial.png"), new Color(1f, 0.85f, 0.35f, 0.5f)).raycastTarget = false;
+            var body = NewRect("Body", art);
+            At(body, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 20f), new Vector2(300f, 170f));
+            var bodyImg = AddImage(body, Round(), new Color(0.55f, 0.32f, 0.16f), true, 0.35f); bodyImg.raycastTarget = false;
+            Depth(bodyImg, new Color(0.34f, 0.19f, 0.08f), 10f);
+            var lid = NewRect("Lid", art);
+            At(lid, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 185f), new Vector2(320f, 120f));
+            var lidImg = AddImage(lid, Round(), new Color(0.66f, 0.40f, 0.20f), true, 0.5f); lidImg.raycastTarget = false;
+            Depth(lidImg, new Color(0.40f, 0.23f, 0.10f), 10f);
+            var band = NewRect("Band", art);
+            At(band, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 125f), new Vector2(340f, 34f));
+            AddImage(band, Round(), new Color(1f, 0.82f, 0.18f), true, 0.9f).raycastTarget = false;
+            var latch = NewRect("Latch", art);
+            At(latch, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 110f), new Vector2(70f, 70f));
+            AddImage(latch, Circle(), new Color(1f, 0.74f, 0.10f)).raycastTarget = false;
+            var latchHole = NewRect("Hole", latch);
+            At(latchHole, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(24f, 24f));
+            AddImage(latchHole, Circle(), new Color(0.35f, 0.22f, 0.05f)).raycastTarget = false;
+
+            var timer = AddText(card, "Timer", "Ready!", 62, Navy, TextAlignmentOptions.Center, false);
+            At(timer.rectTransform, TopCenter, TopCenter, new Vector2(0f, -560f), new Vector2(760f, 90f));
+            timer.enableAutoSizing = true; timer.fontSizeMin = 34f; timer.fontSizeMax = 62f;
+
+            var status = AddText(card, "Status", "", 38, new Color(0.15f, 0.55f, 0.25f), TextAlignmentOptions.Center);
+            At(status.rectTransform, TopCenter, TopCenter, new Vector2(0f, -660f), new Vector2(840f, 120f));
+            status.textWrappingMode = TextWrappingModes.Normal;
+            status.enableAutoSizing = true; status.fontSizeMin = 24f; status.fontSizeMax = 38f;
+
+            var open = MakeButton(card, "OpenButton", "Open", "Green", new Vector2(340f, 130f), Icon("checkmark"));
+            At((RectTransform)open.transform, BottomCenter, BottomCenter, new Vector2(-190f, 50f), new Vector2(340f, 130f));
+            var openLabel = open.transform.Find("Label").GetComponent<TMP_Text>();
+            var ad = MakeButton(card, "AdButton", "Watch Ad x2", "Orange", new Vector2(400f, 130f), null);   // no icon: the label already fills the button
+            At((RectTransform)ad.transform, BottomCenter, BottomCenter, new Vector2(200f, 50f), new Vector2(400f, 130f));
+            var close = MakeRoundButton(card, "CloseButton", "Red", Icon("cross"), 96f);
+            At((RectTransform)close.transform, new Vector2(1f, 1f), new Vector2(0.5f, 0.5f), new Vector2(-30f, -30f), new Vector2(96f, 96f));
+
+            panel = modal.gameObject.AddComponent<ChestPanel>();
+            var so = new SerializedObject(panel);
+            so.FindProperty("panel").objectReferenceValue = modal.gameObject;
+            so.FindProperty("chestArt").objectReferenceValue = art;
+            so.FindProperty("timerText").objectReferenceValue = timer;
+            so.FindProperty("statusText").objectReferenceValue = status;
+            so.FindProperty("openButton").objectReferenceValue = open;
+            so.FindProperty("openLabel").objectReferenceValue = openLabel;
+            so.FindProperty("adButton").objectReferenceValue = ad;
+            so.ApplyModifiedProperties();
+            OnClick(open, panel.Claim);
+            OnClick(ad, panel.WatchAd);
+            OnClick(close, panel.Close);
+            PopIn(modal, card);
+            modal.gameObject.SetActive(false);
+            return modal.gameObject;
+        }
 
         /// <summary>
         /// The dice collection pop-up: a tile per design in Ludo.Core.DiceSkins showing that design's real "5" face, its

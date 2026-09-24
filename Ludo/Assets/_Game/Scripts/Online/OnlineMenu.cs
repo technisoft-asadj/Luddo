@@ -38,6 +38,8 @@ namespace Ludo.Online
         [SerializeField] TMP_Text[] feeLabels;
         [SerializeField] DailyRewardPanel daily;
         [SerializeField] DiceCollectionPanel diceCollection;
+        [SerializeField] ChestPanel chest;
+        [SerializeField] GameObject chestDot;            // red dot on the chest button: a free chest is ready
         [SerializeField] GameObject giftDot;             // red dot on the gift button: a daily reward is waiting
 
         const string SizeKey = "ludo.online.size";
@@ -156,6 +158,9 @@ namespace Ludo.Online
         /// <summary>The dice collection: wear or unlock a dice design (cosmetic only).</summary>
         public void OpenDice() { if (diceCollection != null) diceCollection.Open(); }
 
+        /// <summary>The free chest that fills up again every few hours.</summary>
+        public void OpenChest() { if (chest != null) chest.Open(); }
+
         bool dailyQueued;
 
         System.Collections.IEnumerator OpenDailyNextFrame()
@@ -175,6 +180,7 @@ namespace Ludo.Online
             var s = StatsService.Mine;
             profileRating.text = s.Tier + "  " + s.rating + "     <color=#FFD426>Coins " + s.coins.ToString("N0") + "</color>";
             if (giftDot != null) giftDot.SetActive(DailyRewardPanel.Claimable);
+            if (chestDot != null) chestDot.SetActive(ChestPanel.Claimable);
             if (daily != null && StatsService.Loaded && isActiveAndEnabled && !dailyQueued && DailyRewardPanel.Claimable)
             {
                 dailyQueued = true;

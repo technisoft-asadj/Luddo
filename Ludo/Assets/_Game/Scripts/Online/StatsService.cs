@@ -31,6 +31,7 @@ namespace Ludo.Online
         public bool starter;                    // the starter coins were given (once per profile)
         public int dailyDay;                    // the day (yyyyMMdd) the daily reward was last claimed
         public int dailyStreak;                 // which day of the 7-day calendar that was (1..7)
+        public int chestAt;                     // Chest.Stamp of the last free chest opened (0 = never)
         public string diceSkin = "";            // the dice design in use ("" = the default Classic)
         public string diceOwned = "";           // ids of the designs bought with coins (level/rank ones open by themselves)
 
@@ -296,6 +297,31 @@ namespace Ludo.Online
             int amount = DailyReward.AmountFor(day) * (doubled ? 2 : 1);
             Mine.dailyDay = DailyReward.DayKey(today);
             Mine.dailyStreak = day;
+            Mine.coins += amount;
+            Changed?.Invoke();
+            await SaveMineAsync();
+            return amount;
+        }
+
+        // ---------- free chest ----------
+
+        /// <summary>Is the free chest ready to open right now?</summary>
+        public static bool ChestReady => Loaded && Chest.IsReady(Mine.chestAt, DateTime.UtcNow);
+
+        /// <summary>
+        /// Open the free chest. Returns the coins it held (0 = it was not ready). The amount is drawn from the stamp of
+        /// this open, so it cannot be rerolled by closing and reopening the screen. 'doubled' is only ever passed after
+        /// the ads SDK has confirmed a finished rewarded ad - the ad is a bonus, never a condition.
+        /// </summary>
+        public static async Task<int> OpenChestAsync(bool doubled)
+        {
+            await LoadMineAsync();
+            if (!Loaded) return 0;
+            var now = DateTime.UtcNow;
+            if (!Chest.IsReady(Mine.chestAt, now)) return 0;
+            int stamp = Chest.Stamp(now);
+            int amount = Chest.CoinsFor(stamp) * (doubled ? 2 : 1);
+            Mine.chestAt = stamp;
             Mine.coins += amount;
             Changed?.Invoke();
             await SaveMineAsync();

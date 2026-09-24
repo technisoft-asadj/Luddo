@@ -30,6 +30,7 @@ namespace Ludo.EditorTools
             Save("glow_radial", 256, 256, 100f, 0, (x, y, w, h) => Glow(x, y, w, h));
             Save("rays", 512, 512, 100f, 0, (x, y, w, h) => Rays(x, y, w, h, 16));
             Save("dice_white", 128, 128, 100f, 0, (x, y, w, h) => DiceIcon(x, y, w, h));   // the dice collection tile
+            Save("chest_white", 128, 128, 100f, 0, (x, y, w, h) => ChestIcon(x, y, w, h));  // the free-chest button
             MakeWhiteCopy("Assets/ThirdParty/GoogleMaterial/Icons/ai_robot_black.png", "ai_robot_white");
             // online icons (Google Material Icons): white copies so they can be tinted like the other icons
             foreach (var n in new[] { "mic", "mic_off", "share", "copy", "person_add", "block", "flag", "group", "public", "flash_on", "chat", "person", "search" })
@@ -86,6 +87,16 @@ namespace Ludo.EditorTools
                 pip = Mathf.Max(pip, Coverage(d));
             }
             return Mathf.Clamp01(body - pip);
+        }
+
+        /// <summary>A treasure chest: a rounded body with the lid line and the keyhole punched out of it.</summary>
+        static float ChestIcon(float x, float y, float w, float h)
+        {
+            float px = x + 0.5f, py = y + 0.5f;
+            float body = Coverage(Sdf(px, py, w, h, w * 0.14f, w * 0.14f));
+            float lidLine = Coverage(Mathf.Abs(py - h * 0.56f) - h * 0.035f) * Coverage(Mathf.Abs(px - w * 0.5f) - w * 0.36f);
+            float hole = Coverage(new Vector2(px - w * 0.5f, py - h * 0.56f).magnitude - w * 0.075f);
+            return Mathf.Clamp01(body - Mathf.Max(lidLine, hole));
         }
 
         static float Circle(float x, float y, float w, float h)

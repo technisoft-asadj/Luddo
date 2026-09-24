@@ -54,6 +54,7 @@ namespace Ludo.EditorTools
                 case "Purple": return new ButtonStyle(new Color(0.66f, 0.40f, 0.96f), new Color(0.38f, 0.17f, 0.64f));
                 case "Orange": return new ButtonStyle(new Color(1f, 0.68f, 0.14f), new Color(0.78f, 0.38f, 0.04f));
                 case "Red": return new ButtonStyle(new Color(0.96f, 0.30f, 0.32f), new Color(0.62f, 0.10f, 0.14f));
+                case "Brown": return new ButtonStyle(new Color(0.66f, 0.42f, 0.20f), new Color(0.38f, 0.22f, 0.08f));   // the treasure chest
                 default: return new ButtonStyle(new Color(0.90f, 0.94f, 1f), new Color(0.55f, 0.64f, 0.82f), true);   // Grey
             }
         }
