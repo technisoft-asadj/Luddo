@@ -6,7 +6,7 @@ using Ludo.Core;
 namespace Ludo.Game
 {
     /// <summary>
-    /// The row of game-mode chips (Classic / Master / Arrow / Blitz) with one line explaining the chosen mode. Every picker in
+    /// The row of game-mode chips (Classic / Master / Arrow / Blitz / Team Up) with one line explaining the chosen mode. Every picker in
     /// the menus shows and changes the same saved choice, which becomes GameSession.Mode for the next offline game and the mode
     /// of the next room / Quick Match search.
     /// </summary>
@@ -22,7 +22,8 @@ namespace Ludo.Game
         [SerializeField] Color selectedText = new Color(0.08f, 0.18f, 0.45f);
         [SerializeField] Color normalText = new Color(0.08f, 0.18f, 0.45f);
 
-        static event System.Action Changed;
+        /// <summary>Raised whenever the saved mode changes, so other screens (table size, room) can follow it.</summary>
+        public static event System.Action Changed;
 
         /// <summary>The saved mode choice.</summary>
         public static GameMode Current
@@ -30,7 +31,7 @@ namespace Ludo.Game
             get
             {
                 int v = PlayerPrefs.GetInt(Key, 0);
-                return v >= 0 && v <= (int)GameMode.Blitz ? (GameMode)v : GameMode.Classic;
+                return v >= 0 && v <= (int)GameMode.TeamUp ? (GameMode)v : GameMode.Classic;
             }
             set
             {
@@ -51,7 +52,7 @@ namespace Ludo.Game
         /// <summary>A chip was tapped (wired with the mode number).</summary>
         public void Choose(int mode)
         {
-            if (mode < 0 || mode > (int)GameMode.Blitz) return;
+            if (mode < 0 || mode > (int)GameMode.TeamUp) return;
             Current = (GameMode)mode;
         }
 

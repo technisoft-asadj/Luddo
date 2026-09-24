@@ -51,7 +51,7 @@ namespace Ludo.Game
 
         public void ChooseLocal(int count)
         {
-            players = count;
+            players = GameSession.NeedsFourPlayers(ModePicker.Current) ? 4 : count;   // Team Up is 2 vs 2
             RefreshPlayerRows();
             router.Show(playerSelectScreen);
         }
@@ -69,8 +69,8 @@ namespace Ludo.Game
 
         public void StartLocalGame()
         {
-            GameSession.ConfigureLocal(players);
-            GameSession.Mode = ModePicker.Current;
+            GameSession.Mode = ModePicker.Current;                 // the seat plan below depends on the mode
+            GameSession.ConfigureLocal(GameSession.NeedsFourPlayers(GameSession.Mode) ? 4 : players);
             SceneLoader.Load(SceneLoader.Game);
         }
 
@@ -98,14 +98,14 @@ namespace Ludo.Game
 
         public void SetOpponents(int count)
         {
-            opponents = Mathf.Clamp(count, 1, 3);
+            opponents = GameSession.NeedsFourPlayers(ModePicker.Current) ? 3 : Mathf.Clamp(count, 1, 3);
             RefreshDifficulty();
         }
 
         public void StartComputerGame()
         {
-            GameSession.ConfigureVsAi(opponents, level);
-            GameSession.Mode = ModePicker.Current;
+            GameSession.Mode = ModePicker.Current;                 // Team Up seats a computer partner next to the player
+            GameSession.ConfigureVsAi(GameSession.NeedsFourPlayers(GameSession.Mode) ? 3 : opponents, level);
             SceneLoader.Load(SceneLoader.Game);
         }
 

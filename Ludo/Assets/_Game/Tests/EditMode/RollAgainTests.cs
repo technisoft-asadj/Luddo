@@ -135,5 +135,75 @@ namespace Ludo.Tests
                 Assert.AreEqual(host.State.Winner, copy.State.Winner);
             }
         }
+        // ---------- DiceSelectionPolicy / PendingDiceLimit (RulesConfig) ----------
+
+        [Test]
+        public void FifoOffersOnlyTheOldestWaitingNumber()
+        {
+            var c = Cfg(); c.DiceSelection = DiceSelectionPolicy.Fifo;
+            var g = T.Game(2, new ScriptedDice(6, 5), c);
+            T.Put(g, 0, 0, 10);
+            g.Roll();
+            var roll = g.Roll();
+            Assert.IsTrue(roll.LegalMoves.All(m => m.Roll == 6), "the 6 was rolled first, so it must be played first");
+            CollectionAssert.AreEqual(new[] { 6, 5 }, roll.Pending, "the 5 is still waiting, just not selectable yet");
+        }
+
+        [Test]
+        public void LifoOffersOnlyTheNewestWaitingNumber()
+        {
+            var c = Cfg(); c.DiceSelection = DiceSelectionPolicy.Lifo;
+            var g = T.Game(2, new ScriptedDice(6, 5), c);
+            T.Put(g, 0, 0, 10);
+            g.Roll();
+            var roll = g.Roll();
+            Assert.IsTrue(roll.LegalMoves.All(m => m.Roll == 5));
+        }
+
+        [Test]
+        public void AnOrderedPolicySkipsANumberNobodyCanPlay()
+        {
+            var c = Cfg(); c.DiceSelection = DiceSelectionPolicy.Fifo;
+            var g = T.Game(2, new ScriptedDice(6, 3), c);
+            T.Put(g, 0, 0, Board.FinishProgress - 3);                 // exactly 3 from home; 6 would overshoot
+            for (int t = 1; t < Board.TokensPerPlayer; t++) T.Put(g, 0, t, Board.FinishProgress);
+            g.Roll();
+            var roll = g.Roll();
+            Assert.IsTrue(roll.LegalMoves.All(m => m.Roll == 3), "no pawn can use the 6, so the turn falls through to the 3");
+        }
+
+        [Test]
+        public void FreeChoiceIsTheDefault()
+        {
+            Assert.AreEqual(DiceSelectionPolicy.FreeChoice, new RulesConfig().DiceSelection);
+            Assert.AreEqual(0, new RulesConfig().PendingDiceLimit, "0 = no limit");
+            Assert.IsTrue(new RulesConfig().AutoSelectSingleLegalToken);
+        }
+
+        [Test]
+        public void PendingDiceLimitStopsTheExtraRollButKeepsTheSix()
+        {
+            var c = Cfg(); c.PendingDiceLimit = 1;
+            var g = T.Game(2, new ScriptedDice(6, 5), c);
+            T.Put(g, 0, 0, 10);
+            var roll = g.Roll();
+            Assert.IsFalse(roll.RollAgain, "one number is already waiting: no extra roll");
+            CollectionAssert.AreEqual(new[] { 6 }, roll.Pending, "the six is never thrown away");
+            Assert.AreEqual(TurnPhase.WaitingForMove, g.Phase);
+            Assert.IsTrue(roll.LegalMoves.All(m => m.Roll == 6));
+        }
+
+        [Test]
+        public void ALimitOfTwoAllowsExactlyOneExtraRoll()
+        {
+            var c = Cfg(); c.PendingDiceLimit = 2;
+            var g = T.Game(2, new ScriptedDice(6, 6, 4), c);
+            T.Put(g, 0, 0, 10);
+            Assert.IsTrue(g.Roll().RollAgain);
+            var second = g.Roll();
+            Assert.IsFalse(second.RollAgain, "two numbers waiting is the limit");
+            CollectionAssert.AreEqual(new[] { 6, 6 }, second.Pending);
+        }
+
     }
 }

@@ -44,6 +44,7 @@ namespace Ludo.Core
             seats = other.seats; // seats never change, safe to share
             progress = (int[])other.progress.Clone();
             captured = (bool[])other.captured.Clone();
+            Teams = other.Teams;
             StartProgressAtReset = other.StartProgressAtReset;
             CurrentPlayer = other.CurrentPlayer;
             ConsecutiveSixes = other.ConsecutiveSixes;
@@ -53,6 +54,15 @@ namespace Ludo.Core
         }
 
         public int SeatOf(int player) => seats[player];
+
+        /// <summary>2 vs 2 (GameMode.TeamUp). Set once by LudoGame from the rules; never changes during a game.</summary>
+        public bool Teams { get; internal set; }
+
+        /// <summary>Which side a player is on: 0 or 1 in a team game, otherwise the player is their own side.</summary>
+        public int TeamOf(int player) => Teams ? seats[player] % 2 : player;
+
+        /// <summary>Are these two players on the same side? (A player is always on their own side.)</summary>
+        public bool SameTeam(int a, int b) => a == b || (Teams && seats[a] % 2 == seats[b] % 2);
 
         public int GetProgress(int player, int token) => progress[player * Board.TokensPerPlayer + token];
 

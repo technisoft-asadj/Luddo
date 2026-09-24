@@ -72,7 +72,7 @@ namespace Ludo.Core
                 {
                     for (int p = 0; p < state.PlayerCount; p++)
                     {
-                        if (p == move.Player) continue;
+                        if (state.SameTeam(p, move.Player)) continue;      // never your own pawns, nor your partner's (TeamUp)
                         for (int t = 0; t < Board.TokensPerPlayer; t++)
                         {
                             if (Board.ToOuterCell(state.SeatOf(p), state.GetProgress(p, t)) != cell) continue;
@@ -94,14 +94,27 @@ namespace Ludo.Core
             return true;
         }
 
-        /// <summary>Has this player won under the mode's rules? (Blitz: one token home is enough.)</summary>
+        /// <summary>
+        /// Has this player won under the mode's rules? Blitz: one token home is enough. TeamUp: the move only wins the game
+        /// once BOTH partners have all four pawns home (a lone finisher waits for their partner - see LudoGame.NextTurn,
+        /// which skips a player who has nothing left to move).
+        /// </summary>
         public static bool HasWon(GameState state, RulesConfig config, int player)
         {
-            if (config.Mode != GameMode.Blitz) return HasWon(state, player);
-            for (int t = 0; t < Board.TokensPerPlayer; t++)
-                if (Board.IsFinished(state.GetProgress(player, t))) return true;
-            return false;
+            if (config.Mode == GameMode.Blitz)
+            {
+                for (int t = 0; t < Board.TokensPerPlayer; t++)
+                    if (Board.IsFinished(state.GetProgress(player, t))) return true;
+                return false;
+            }
+            if (!state.Teams) return HasWon(state, player);
+            for (int p = 0; p < state.PlayerCount; p++)
+                if (state.SameTeam(p, player) && !HasWon(state, p)) return false;
+            return true;
         }
+
+        /// <summary>TeamUp: has this player brought all four of their own pawns home (their partner may still be playing)?</summary>
+        public static bool IsDone(GameState state, int player) => HasWon(state, player);
 
         /// <summary>
         /// Every position the token passes through for this move, in order (for the animation): one step per pip, round the

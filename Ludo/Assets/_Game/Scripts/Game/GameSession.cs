@@ -42,8 +42,20 @@ namespace Ludo.Game
         /// <summary>The game mode of the next game (Classic / Master / Arrow / Blitz). Online it comes from the host's room.</summary>
         public static Ludo.Core.GameMode Mode { get; set; } = Ludo.Core.GameMode.Classic;
 
-        public static string ModeName(Ludo.Core.GameMode mode) =>
-            mode == Ludo.Core.GameMode.Master ? "Master" : mode == Ludo.Core.GameMode.Arrow ? "Arrow" : mode == Ludo.Core.GameMode.Blitz ? "Blitz" : "Classic";
+        public static string ModeName(Ludo.Core.GameMode mode)
+        {
+            switch (mode)
+            {
+                case Ludo.Core.GameMode.Master: return "Master";
+                case Ludo.Core.GameMode.Arrow: return "Arrow";
+                case Ludo.Core.GameMode.Blitz: return "Blitz";
+                case Ludo.Core.GameMode.TeamUp: return "Team Up";
+                default: return "Classic";
+            }
+        }
+
+        /// <summary>Team Up is always a four-seat table; the other modes take 2, 3 or 4.</summary>
+        public static bool NeedsFourPlayers(Ludo.Core.GameMode mode) => mode == Ludo.Core.GameMode.TeamUp;
 
         /// <summary>One line that explains a mode (menus, room, game screen).</summary>
         public static string ModeRule(Ludo.Core.GameMode mode)
@@ -53,9 +65,17 @@ namespace Ludo.Game
                 case Ludo.Core.GameMode.Master: return "Capture an opponent before your pawns can go home.";
                 case Ludo.Core.GameMode.Arrow: return "Stop on an arrow to slide 6 cells ahead.";
                 case Ludo.Core.GameMode.Blitz: return "Pawns start out. First pawn home wins!";
+                case Ludo.Core.GameMode.TeamUp: return "2 vs 2. Red+Yellow against Green+Blue. Both partners must finish.";
                 default: return "Standard Ludo rules. All 4 pawns home wins.";
             }
         }
+
+        /// <summary>Team Up: the two seats facing each other are partners. Elsewhere every seat plays for itself.</summary>
+        public static bool ArePartners(int seatA, int seatB) =>
+            Mode == Ludo.Core.GameMode.TeamUp && seatA % 2 == seatB % 2;
+
+        /// <summary>Team Up: the name of a side, for the turn banner and the result screen.</summary>
+        public static string TeamName(int seat) => seat % 2 == 0 ? "RED + YELLOW" : "GREEN + BLUE";
         public static int PlayerCount { get; private set; } = 4;
         public static PlayerSlot[] Slots { get; private set; } =
             { PlayerSlot.Human, PlayerSlot.Human, PlayerSlot.Human, PlayerSlot.Human };
@@ -136,6 +156,21 @@ namespace Ludo.Game
 
         public static string SubtitleOf(PlayerSlot slot) =>
             slot.isAi ? "Computer - " + slot.difficulty : slot.isRemote ? "Online" : LocalPeople() == 1 ? "You" : "Pass & Play";
+
+        /// <summary>
+        /// Team Up: the badge says which side a seat is on instead of how it is played, because in a 2 vs 2 match knowing your
+        /// partner matters more. 'mySeat' is the seat of the person holding this phone (-1 offline / pass and play).
+        /// </summary>
+        public static string SubtitleOf(PlayerSlot slot, int seat, int mySeat)
+        {
+            if (Mode != Ludo.Core.GameMode.TeamUp) return SubtitleOf(slot);
+            if (mySeat >= 0)
+            {
+                if (seat == mySeat) return "You";
+                return ArePartners(seat, mySeat) ? "Your partner" : "Opponent";
+            }
+            return TeamName(seat);
+        }
 
         static int LocalPeople()
         {

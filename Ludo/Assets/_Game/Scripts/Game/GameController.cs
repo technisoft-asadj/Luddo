@@ -136,7 +136,7 @@ namespace Ludo.Game
             {
                 PlayerSlot slot = p < slots.Length ? slots[p] : PlayerSlot.Human;
                 if (slot.isAi) ais[p] = AiFactory.Create(slot.difficulty, Environment.TickCount + p);   // same engine, same legal moves as a human
-                hud.SetBadge(game.State.SeatOf(p), GameSession.NameOf(slot, p), GameSession.SubtitleOf(slot), GameSession.AvatarOf(slot, p), GameSession.FlagOf(slot));
+                hud.SetBadge(game.State.SeatOf(p), GameSession.NameOf(slot, p), GameSession.SubtitleOf(slot, game.State.SeatOf(p), MySeat()), GameSession.AvatarOf(slot, p), GameSession.FlagOf(slot));
             }
             board.Bind(game);
             hud.HideResult();
@@ -196,7 +196,7 @@ namespace Ludo.Game
             slots[player] = PlayerSlot.OnlineCpu(name, AiDifficulty.Easy);
             slots[player].onlineCountry = country;                // the seat still shows whose place it was
             ais[player] = AiFactory.Create(AiDifficulty.Easy, Environment.TickCount + player);
-            hud.SetBadge(game.State.SeatOf(player), name, GameSession.SubtitleOf(slots[player]), GameSession.AvatarOf(slots[player], player), GameSession.FlagOf(slots[player]));
+            hud.SetBadge(game.State.SeatOf(player), name, GameSession.SubtitleOf(slots[player], game.State.SeatOf(player), MySeat()), GameSession.AvatarOf(slots[player], player), GameSession.FlagOf(slots[player]));
             Log("player " + player + " left: the computer plays for them");
 
             if (wasMe && !leftForInactivity)
@@ -328,16 +328,50 @@ namespace Ludo.Game
             StopTimer();
             hud.SetStatus("");
             PlayerSlot winnerSlot = winner < slots.Length ? slots[winner] : PlayerSlot.Human;
+            int partner = TeamPartner(winner);
+            bool teams = partner >= 0;
+            int me = LocalPlayer();
+            bool mineWon = me >= 0 && (me == winner || me == partner);
+            // Team Up: everything below is decided per side, so each phone reports its OWN result (won if its team won)
+            int settleWinner = teams && mineWon ? me : winner;
+            bool winnerIsPerson = !winnerSlot.isAi || (teams && !slots[partner].isAi);
             MatchSummary summary = null;
             var settler = GameSession.Settler;
             if (settler != null)
             {
-                var task = settler.Finished(winner, !winnerSlot.isAi, byForfeit);
+                var task = settler.Finished(settleWinner, winnerIsPerson, byForfeit);
                 while (!task.IsCompleted) yield return null;
                 if (!task.IsFaulted) summary = task.Result;
                 else Log("settling the match failed: " + task.Exception?.GetBaseException().Message);
             }
-            hud.ShowResult(GameSession.NameOf(winnerSlot, winner), SeatStyle.Colors[game.State.SeatOf(winner)], GameSession.AvatarOf(winnerSlot, winner), summary, IsLocalHuman(winner), byForfeit, GameSession.FlagOf(winnerSlot));
+            string title = teams
+                ? GameSession.NameOf(winnerSlot, winner) + " + " + GameSession.NameOf(slots[partner], partner)
+                : GameSession.NameOf(winnerSlot, winner);
+            hud.ShowResult(title, SeatStyle.Colors[game.State.SeatOf(winner)], GameSession.AvatarOf(winnerSlot, winner), summary,
+                teams ? mineWon : IsLocalHuman(winner), byForfeit, GameSession.FlagOf(winnerSlot));
+        }
+
+        /// <summary>The board seat of the person holding this phone (-1 in an offline pass-and-play game).</summary>
+        int MySeat()
+        {
+            int me = LocalPlayer();
+            return me >= 0 && game != null ? game.State.SeatOf(me) : -1;
+        }
+
+        /// <summary>The lowest-numbered seat still played by a person (-1 if none).</summary>
+        int FirstHuman()
+        {
+            for (int p = 0; p < slots.Length && p < playerCount; p++) if (!slots[p].isAi) return p;
+            return -1;
+        }
+
+        /// <summary>Team Up: the player sharing this player's side (-1 in every other mode).</summary>
+        int TeamPartner(int player)
+        {
+            if (game == null || !game.State.Teams) return -1;
+            for (int p = 0; p < game.State.PlayerCount; p++)
+                if (p != player && game.State.SameTeam(p, player)) return p;
+            return -1;
         }
 
         /// <summary>My own player number in an online match (-1 if none).</summary>
@@ -357,6 +391,8 @@ namespace Ludo.Game
             int humans = 0, last = -1;
             for (int p = 0; p < slots.Length && p < playerCount; p++)
                 if (!slots[p].isAi) { humans++; last = p; }
+            // Team Up: two people still playing are only "the last one standing" if they are partners
+            if (humans == 2 && game != null && game.State.Teams && game.State.SameTeam(FirstHuman(), last)) humans = 1;
             if (humans != 1) return;
             Log("only player " + last + " is left: wins by forfeit");
             StopAllCoroutines();

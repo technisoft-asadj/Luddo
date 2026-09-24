@@ -59,7 +59,7 @@ namespace Ludo.AI
                 int attackers = 0;
                 for (int q = 0; q < s.PlayerCount; q++)
                 {
-                    if (q == player) continue;
+                    if (s.SameTeam(q, player)) continue;                   // TeamUp: a partner is not an attacker
                     for (int u = 0; u < Board.TokensPerPlayer; u++)
                         if (CanReach(s, q, u, cell)) attackers++;
                 }
@@ -74,7 +74,7 @@ namespace Ludo.AI
             double total = 0;
             for (int q = 0; q < s.PlayerCount; q++)
             {
-                if (q == player) continue;
+                if (s.SameTeam(q, player)) continue;                       // TeamUp: never aim at a partner
                 for (int t = 0; t < Board.TokensPerPlayer; t++)
                 {
                     int progress = s.GetProgress(q, t);

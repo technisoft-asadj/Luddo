@@ -43,7 +43,7 @@ namespace Ludo.Core
         {
             this.config = config ?? throw new ArgumentNullException(nameof(config));
             this.dice = dice ?? throw new ArgumentNullException(nameof(dice));
-            State = new GameState(seatPerPlayer);
+            State = new GameState(seatPerPlayer) { Teams = config.IsTeams };
             if (config.Mode == GameMode.Blitz)
             {
                 State.StartProgressAtReset = Board.StartProgress;     // Blitz: every pawn starts on its start cell
@@ -78,7 +78,7 @@ namespace Ludo.Core
             if (config.RollAgainOnSix)
             {
                 pending.Add(value);
-                if (value == 6)                                         // roll again before anything moves
+                if (value == 6 && CanHoldAnother)                        // roll again before anything moves
                 {
                     legal.Clear();
                     var again = new RollResult(player, value, Array.Empty<Move>(), PassReason.None, rollAgain: true, pending: pending.ToArray());
@@ -98,15 +98,35 @@ namespace Ludo.Core
             return result;
         }
 
-        /// <summary>Ludo Star rule: the moves of every number still to be played (each Move carries its number in Move.Roll).</summary>
+        /// <summary>May another number be added to the waiting list? (RulesConfig.PendingDiceLimit; 0 = no limit.)</summary>
+        bool CanHoldAnother => config.PendingDiceLimit <= 0 || pending.Count < config.PendingDiceLimit;
+
+        /// <summary>
+        /// Ludo Star rule: the moves of the numbers still to be played (each Move carries its number in Move.Roll).
+        /// FreeChoice offers every waiting number at once; Fifo/Lifo offer only the first playable one from their end, so
+        /// a number that no pawn can use never blocks the turn.
+        /// </summary>
         void CollectMoves(int player)
         {
             legal.Clear();
-            for (int i = 0; i < pending.Count; i++)
+            if (config.DiceSelection == DiceSelectionPolicy.FreeChoice)
             {
-                if (pending.IndexOf(pending[i]) != i) continue;          // the same number twice gives the same moves
+                for (int i = 0; i < pending.Count; i++)
+                {
+                    if (pending.IndexOf(pending[i]) != i) continue;      // the same number twice gives the same moves
+                    Rules.GetLegalMoves(State, config, player, pending[i], scratch);
+                    legal.AddRange(scratch);
+                }
+                return;
+            }
+            bool oldestFirst = config.DiceSelection == DiceSelectionPolicy.Fifo;
+            for (int n = 0; n < pending.Count; n++)
+            {
+                int i = oldestFirst ? n : pending.Count - 1 - n;
                 Rules.GetLegalMoves(State, config, player, pending[i], scratch);
+                if (scratch.Count == 0) continue;
                 legal.AddRange(scratch);
+                return;
             }
         }
 
@@ -198,7 +218,14 @@ namespace Ludo.Core
             State.ConsecutiveSixes = 0;
             pending.Clear();
             bonusRoll = false;
-            State.CurrentPlayer = (State.CurrentPlayer + 1) % State.PlayerCount;
+            int next = State.CurrentPlayer;
+            for (int i = 0; i < State.PlayerCount; i++)
+            {
+                next = (next + 1) % State.PlayerCount;
+                // TeamUp: a partner who is already home has nothing to roll for - hand the dice straight on
+                if (!State.Teams || !Rules.IsDone(State, next)) break;
+            }
+            State.CurrentPlayer = next;
             State.Phase = TurnPhase.WaitingForRoll;
             TurnChanged?.Invoke(State.CurrentPlayer);
         }

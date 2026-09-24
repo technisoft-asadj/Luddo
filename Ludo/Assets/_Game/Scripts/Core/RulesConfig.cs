@@ -10,8 +10,19 @@ namespace Ludo.Core
     ///   Arrow   - four arrow cells (2 cells after each start cell): a pawn that stops on one slides along the arrow 6 cells
     ///             forward to the next star cell.
     ///   Blitz   - every pawn starts on its start cell (not in base) and the first player to bring ONE pawn home wins.
+    ///   TeamUp  - 2 vs 2 on the classic rules: the two seats facing each other are partners (Red+Yellow against
+    ///             Green+Blue). Partners never capture each other, a partner who has finished is skipped, and a team
+    ///             wins only when BOTH of its players have all four pawns home. Always four players.
     /// </summary>
-    public enum GameMode { Classic = 0, Master = 1, Arrow = 2, Blitz = 3 }
+    public enum GameMode { Classic = 0, Master = 1, Arrow = 2, Blitz = 3, TeamUp = 4 }
+
+    /// <summary>
+    /// Which of the numbers a player has rolled and not yet played may be used next.
+    ///   FreeChoice - any of them, in the order the player likes (the default, Ludo Star style).
+    ///   Fifo       - the oldest number first.
+    ///   Lifo       - the newest number first.
+    /// </summary>
+    public enum DiceSelectionPolicy { FreeChoice = 0, Fifo = 1, Lifo = 2 }
 
     /// <summary>House-rule switches. Defaults = the rules agreed in PLAN.md (Decision 2).</summary>
     [Serializable]
@@ -39,6 +50,18 @@ namespace Ludo.Core
 
         /// <summary>Which game mode the rules follow (see GameMode).</summary>
         public GameMode Mode = GameMode.Classic;
+
+        /// <summary>Which of the numbers still waiting may be played next (Ludo Star style = the player's free choice).</summary>
+        public DiceSelectionPolicy DiceSelection = DiceSelectionPolicy.FreeChoice;
+
+        /// <summary>How many rolled numbers may wait to be played at once. 0 = no limit (the three-sixes rule caps it anyway).</summary>
+        public int PendingDiceLimit = 0;
+
+        /// <summary>When exactly one pawn can use a number, move it without asking.</summary>
+        public bool AutoSelectSingleLegalToken = true;
+
+        /// <summary>2 vs 2: the seats facing each other are partners (see GameMode.TeamUp).</summary>
+        public bool IsTeams => Mode == GameMode.TeamUp;
 
         /// <summary>A copy with another mode (the shared rules asset is never changed).</summary>
         public RulesConfig WithMode(GameMode mode)

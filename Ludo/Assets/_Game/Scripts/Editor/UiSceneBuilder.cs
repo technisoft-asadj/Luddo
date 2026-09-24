@@ -1678,7 +1678,7 @@ namespace Ludo.EditorTools
         }
 
         /// <summary>
-        /// The game-mode chips (Classic / Master / Arrow / Blitz, like Ludo Star) at height 'y' (from the top), with a title and,
+        /// The game-mode chips (Classic / Master / Arrow / Blitz / Team Up, like Ludo Star) at height 'y' (from the top), with a title and,
         /// if 'withRule', a line explaining the chosen mode. Every picker shares the saved choice (ModePicker.Current).
         /// </summary>
         static ModePicker BuildModePicker(RectTransform screen, float y, bool withRule, bool darkText = false)
@@ -1686,12 +1686,12 @@ namespace Ludo.EditorTools
             var root = NewRect("ModePicker", screen);
             At(root, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, y), new Vector2(960f, withRule ? 230f : 110f));
             var picker = root.gameObject.AddComponent<ModePicker>();
-            string[] names = { "Classic", "Master", "Arrow", "Blitz" };
-            var chips = new Image[4]; var labels = new TMP_Text[4];
-            for (int i = 0; i < 4; i++)
+            string[] names = { "Classic", "Master", "Arrow", "Blitz", "Team Up" };
+            var chips = new Image[names.Length]; var labels = new TMP_Text[names.Length];
+            for (int i = 0; i < names.Length; i++)
             {
-                var chip = NewRect("Mode" + names[i], root);
-                At(chip, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2((i - 1.5f) * 238f, 0f), new Vector2(222f, 100f));
+                var chip = NewRect("Mode" + names[i].Replace(" ", ""), root);
+                At(chip, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2((i - (names.Length - 1) * 0.5f) * 192f, 0f), new Vector2(180f, 100f));
                 chips[i] = AddImage(chip, Round(), new Color(0.93f, 0.96f, 1f), true, 0.5f);
                 Depth(chips[i], CardLip, 6f);
                 var button = chip.gameObject.AddComponent<Button>();
@@ -1699,7 +1699,7 @@ namespace Ludo.EditorTools
                 AddButtonFx(chip.gameObject, false);
                 labels[i] = AddText(chip, "Label", names[i], 42, Navy, TextAlignmentOptions.Center, false);
                 Stretch(labels[i].rectTransform, 6f, 0f, 6f, 6f);
-                labels[i].enableAutoSizing = true; labels[i].fontSizeMin = 26f; labels[i].fontSizeMax = 42f;
+                labels[i].enableAutoSizing = true; labels[i].fontSizeMin = 22f; labels[i].fontSizeMax = 38f;
                 OnClickInt(button, picker.Choose, i);
             }
             TMP_Text rule = null;

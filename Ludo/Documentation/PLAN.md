@@ -384,3 +384,45 @@ Not started. Not release-ready.
 - [ ] AdMob integration
 - [~] Android build (settings + platform switch done; real build in Phase 9)
 - [~] Performance profiling (60 fps set, memory sampled; deeper profiling optional)
+
+## Ludo STAR Feature Parity / Feature Gap (audit 2026-09-24, baseline 218/218 tests)
+Audited: every scene/script/asmdef listed above + `Core` (Board, Rules, LudoGame, RulesConfig, Progression, Rating, RewardRules, Coins, Countries, ChatRules, MatchReplay, MatchmakingRules), `Game` (GameController, GameHud, DiceView/Mesh/Simulator, BoardView, ModePicker, badges, ResultCard), `Online` (OnlineService/RoomService/MatchLink/MatchStarter/QuickMatchScreen/SocialService/VoiceService/StatsService/LeaderboardService/PhotoService/SafetyService/PendingOutcomes/MatchRecorder), `Services` (AdsService/AdPolicy/AdsConfig), Editor scene builders. **The project already covers most of the target feature set** — this section lists only what is genuinely missing or partial, so nothing working gets rebuilt.
+
+| FEATURE | CURRENT STATUS | REQUIRED CHANGE | IMPL | TEST |
+|---|---|---|---|---|
+| One engine + configurable rules | EXISTS (`RulesConfig`, `GameMode`, `Rules`, `LudoGame`; AI/online/local all use it) | none | — | 218/218 |
+| Classic / Master / Arrow / Blitz | EXISTS (`ModePicker`, online session prop `gmode`) | none | — | ✅ |
+| **Team Up (2v2)** | **MISSING** | real teams in Core: no friendly capture, team win, team colours in HUD/result; online table size 4 + team flag | | |
+| 1 vs 1 / 4 player | EXISTS (table-size chips 2/3/4, Quick Match filter) | none | — | ✅ |
+| Private Room | EXISTS (code, ready, host start, errors, chat, voice) | none | — | ✅ |
+| Offline / Local / vs AI | EXISTS (Pass & Play 2-4, Easy/Medium/Hard, no login) | none | — | ✅ |
+| Global Quick Match (real players) | EXISTS + cloud-verified (4 real accounts, merge rule, 60 s honest timeout, never bots) | none | — | ✅ |
+| **Tournaments (brackets)** | **MISSING** (Weekly Cup = leaderboard only; documented as such) | pure-C# bracket + list/join/advance; needs a real player pool | | |
+| Pending dice stack, free choice | EXISTS (`RollAgainOnSix`: 6 → roll again, all numbers kept in `LudoGame.PendingRolls`, every pending number's moves offered at once, player picks number+pawn, consumed only after the move, 3 sixes = turn lost, bonus roll after capture/home; online = host-authoritative indexes into the same deterministic list; `MatchReplay` proves replay equality) | **PARTIAL:** no `DiceSelectionPolicy` (FIFO/LIFO/FreeChoice — today always free choice), no `PendingDiceLimit`, no `AutoSelectSingleLegalToken` switch (auto-move is hard-coded), pending row is display-only (cannot tap a number to filter pawns) | | |
+| Physical 3D dice, suspense curve | EXISTS (PhysX throw in an isolated scene, relabelled to the authoritative value, shake + 0.8-2.6 s roll, tray return, pause-safe) | none | — | ✅ |
+| Online dice authority | EXISTS (host rolls, guests receive; physics never decides) | none | — | ✅ |
+| Turn indicator / player cards / flags | EXISTS (badges with avatar+photo+flag+level, active ring, turn timer on the tag, dice glides to the active player) | none | — | ✅ |
+| Chat / emoji / voice / friends / block-report | EXISTS (`ChatRules` filter+throttle, Noto emoji, Vivox, UGS Friends, `SafetyService`) | **PARTIAL:** no one-tap quick-message/reaction bar (chat needs typing) | | |
+| **Gifts (rose/car/…)** | **MISSING** | optional; lowest priority | | |
+| Profile / country / stats / provider | EXISTS (name, avatar, gallery photo, country picker, level, XP, rank, coins, W/L, streak-less stats, Cloud Save, account switching clears country) | **PARTIAL:** no current/best streak | | |
+| XP vs Rank Points separation | EXISTS (`Progression` = XP/level, `Rating` = Rank Points + configurable tiers) | none | — | ✅ |
+| League / leaderboard | EXISTS (Ranked + Weekly Cup + Friends boards, tiers Bronze→Grandmaster configurable) | **PARTIAL:** no promotion/demotion notice, no season period reset | | |
+| Rewarded ad doubles Rank Points only | EXISTS (`RewardRules.AdBonus`, `BonusLedger` once per match, pays only on the SDK's reward callback) | none | — | ✅ |
+| Coins economy + daily reward | EXISTS (starter 1 000, coin tables Free/100/500/1K/5K, winner takes pot, 7-day daily reward, Watch-Ad x2) | none | — | ✅ |
+| **Magic chest / lucky dice** | **MISSING** | optional on top of the daily reward | | |
+| **Season pass / event framework** | **MISSING** | data-driven; lowest priority | | |
+| **Dice collection (cosmetic)** | **MISSING** | atlas already supports per-face cells; must stay cosmetic (no probability change) | | |
+| **Undo** | **MISSING** | needs authoritative rewind online; Classic must stay unaffected | | |
+| Result screen + rewards animation | EXISTS (`ResultCard`: Rank Points/XP/coins/rank/level, RANK UP + LEVEL UP, ad button, forfeit wording) | none | — | ✅ |
+| Reconnect / disconnect / forfeit | EXISTS (30 s grace, host plays the seat, `MatchReplay` resync, `PendingOutcomes` anti-abuse, last-person-standing win) | **PARTIAL:** replay is unit-tested, never proven over a real dropped network | | |
+| Auth: guest / Google / delete account | EXISTS + phone-verified | none | — | ✅ |
+| Facebook | **PENDING** — not required for this version | keep hidden (`LUDO_FACEBOOK` off), no work | N/A | N/A |
+| Ads placement discipline | EXISTS (never during play; interstitial only from the result screen, caps; rewarded only on explicit tap) | none | — | ✅ |
+| Server-authoritative results | **PARTIAL/known** (client-written stats; Cloud Code T1/T2 designed, not built) | unchanged honesty note | | |
+| Pre-game intro + countdown | **PARTIAL** (Match Found list 2.5 s, no 3-2-1) | small polish | | |
+| Safe areas / aspect ratios | EXISTS (`SafeAreaFitter`, portrait lock) | **PARTIAL:** tablet/16:9 room screen unverified | | |
+
+**Order of work (follows the stated priority: stability → core gameplay → mobile → online authority → … → cosmetics):**
+P2 rules/modes: pending-dice config knobs + tap-to-select pending number; **Team Up 2v2**; per-mode tempo so Blitz is genuinely faster.
+P3 presentation: pre-match 3-2-1 countdown, quick-reaction bar.
+P4+ progression extras: streaks, promotion/demotion notice, dice collection, chest, tournaments, season/events — only after P2/P3 are phone-tested.

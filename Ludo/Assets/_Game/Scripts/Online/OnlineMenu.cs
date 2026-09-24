@@ -64,6 +64,7 @@ namespace Ludo.Online
             busyOverlay.SetActive(false);
             StatsService.Changed += RefreshProfile;
             GameSettings.Changed += RefreshProfile;
+            ModePicker.Changed += RefreshSize;
             RefreshProfile();
             Connect();
             AskCountryOnce();
@@ -91,6 +92,7 @@ namespace Ludo.Online
         {
             StatsService.Changed -= RefreshProfile;
             GameSettings.Changed -= RefreshProfile;
+            ModePicker.Changed -= RefreshSize;
         }
 
         System.Collections.IEnumerator ToLoginNextFrame()
@@ -100,23 +102,29 @@ namespace Ludo.Online
             router.Replace(welcomeScreen);
         }
 
-        /// <summary>The 2 / 3 / 4 player buttons.</summary>
+        /// <summary>The 2 / 3 / 4 player buttons. Team Up is 2 vs 2, so its table is always four.</summary>
         public void SetSize(int players)
         {
+            if (GameSession.NeedsFourPlayers(ModePicker.Current)) { RefreshSize(); return; }
             size = Mathf.Clamp(players, RoomService.MinSize, RoomService.MaxSize);
             PlayerPrefs.SetInt(SizeKey, size);
             PlayerPrefs.Save();
             RefreshSize();
         }
 
+        /// <summary>The table size the next room / search really uses (Team Up forces four seats).</summary>
+        int TableSize => GameSession.NeedsFourPlayers(ModePicker.Current) ? RoomService.MaxSize : size;
+
         void RefreshSize()
         {
             if (sizeChips == null) return;
+            bool locked = GameSession.NeedsFourPlayers(ModePicker.Current);
             for (int i = 0; i < sizeChips.Length; i++)
             {
-                bool on = i + RoomService.MinSize == size;
-                sizeChips[i].color = on ? ChipOn : ChipOff;
-                if (sizeLabels != null && i < sizeLabels.Length) sizeLabels[i].color = on ? Color.white : new Color(0.10f, 0.16f, 0.35f);
+                bool on = i + RoomService.MinSize == TableSize;
+                sizeChips[i].color = on ? ChipOn : locked ? new Color(0.86f, 0.89f, 0.95f) : ChipOff;
+                if (sizeLabels != null && i < sizeLabels.Length)
+                    sizeLabels[i].color = on ? Color.white : new Color(0.10f, 0.16f, 0.35f, locked ? 0.45f : 1f);
             }
         }
 
@@ -215,7 +223,7 @@ namespace Ludo.Online
         {
             if (working) return;
             QuickMatchScreen.PendingRanked = ranked;
-            QuickMatchScreen.PendingSize = size;
+            QuickMatchScreen.PendingSize = TableSize;
             QuickMatchScreen.PendingMode = ModePicker.Current;
             QuickMatchScreen.PendingFee = fee;
             if (fee > 0 && StatsService.Loaded && !Ludo.Core.CoinTables.CanAfford(StatsService.Mine.coins, fee))
@@ -242,7 +250,7 @@ namespace Ludo.Online
 
         public void OpenProfile() => router.Show(profileScreen);
 
-        public void CreateRoom() { int n = size; var m = ModePicker.Current; Enter("Creating your room...", () => RoomService.CreatePrivateAsync(n, m)); }
+        public void CreateRoom() { int n = TableSize; var m = ModePicker.Current; Enter("Creating your room...", () => RoomService.CreatePrivateAsync(n, m)); }
 
         public void OpenJoin()
         {
