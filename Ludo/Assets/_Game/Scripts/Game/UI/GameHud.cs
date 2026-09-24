@@ -125,11 +125,14 @@ namespace Ludo.Game
             }
         }
 
-        /// <summary>The numbers rolled this turn that still have to be played, as small dice next to the big one (hidden when 0 or 1).</summary>
-        public void ShowPendingRolls(System.Collections.Generic.IReadOnlyList<int> values, Vector3 diceWorld)
+        /// <summary>
+        /// The numbers rolled this turn that still have to be played, as small dice next to the PLAYER whose turn it is (not
+        /// the dice tray - the tray stays in its own fixed spot; this follows whichever badge is glowing).
+        /// </summary>
+        public void ShowPendingRolls(System.Collections.Generic.IReadOnlyList<int> values, int seat)
         {
             if (pendingRow == null) return;
-            bool show = values != null && values.Count > 1;
+            bool show = values != null && values.Count > 1 && seat >= 0 && seat < badges.Length;
             pendingRow.gameObject.SetActive(show);
             if (!show) return;
             for (int i = 0; i < pendingDice.Length; i++)
@@ -138,9 +141,17 @@ namespace Ludo.Game
                 pendingDice[i].gameObject.SetActive(used);
                 if (used) pendingDice[i].sprite = diceFaces[Mathf.Clamp(values[i], 1, 6) - 1];
             }
-            // beside the dice, on the side towards the middle of the screen
-            float side = diceWorld.x <= 0f ? 2.35f : -2.35f;
-            PlaceAt(pendingRow, diceWorld, new Vector2(side, 0f));
+            // just outside the player's own badge (above it for the top two seats, below it for the bottom two). Both rects'
+            // sizes are in local (pixel) units, but .position is world space - a Screen Space Camera canvas's own transform
+            // is scaled way down (pixels -> world units), so the pixel offset must be scaled the same way before it is added.
+            var badgeRt = (RectTransform)badges[seat].transform;
+            Vector3 centre = badgeRt.TransformPoint(badgeRt.rect.center);   // badges pivot on a corner, not their middle
+            bool top = seat == (int)Seat.Red || seat == (int)Seat.Green;
+            float dir = top ? -1f : 1f;
+            float gap = 34f;
+            float scale = badgeRt.lossyScale.y;
+            Vector3 offset = new Vector3(0f, dir * (badgeRt.rect.height * 0.5f + pendingRow.rect.height * 0.5f + gap) * scale, 0f);
+            pendingRow.position = centre + offset;
         }
 
         /// <summary>A pawn can move with more than one of the numbers: ask which (shown above the pawn).</summary>

@@ -9,7 +9,7 @@ namespace Ludo.Game
     public sealed class DicePhysicsSettings
     {
         [Tooltip("Edge length of the dice on the board, in board cells.")] public float edge = 1.45f;
-        [Tooltip("Half size of the square the dice may roll in (invisible walls), from the board centre.")] public float arenaHalf = 5.4f;
+        [Tooltip("Half size of the square the dice may roll in (invisible walls), from the board centre.")] public float arenaHalf = 6.0f;
         public float gravity = 40f;
         public float mass = 1f;
         [Range(0f, 1f)] public float bounciness = 0.3f;

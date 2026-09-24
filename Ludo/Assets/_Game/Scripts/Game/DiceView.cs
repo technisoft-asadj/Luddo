@@ -30,9 +30,9 @@ namespace Ludo.Game
 
         [Header("Throw (board cells, seconds)")]
         [SerializeField] DicePhysicsSettings physics = new DicePhysicsSettings();
-        [SerializeField] float startDistance = 4.3f;         // how far from the centre (towards the roller's corner) the throw starts
-        [SerializeField] float startHeight = 2.4f;
-        [SerializeField] Vector2 throwSpeed = new Vector2(6.5f, 8.5f);
+        [SerializeField] float startDistance = 5.2f;         // how far from the centre (towards the roller's corner) the throw starts
+        [SerializeField] float startHeight = 2.6f;
+        [SerializeField] Vector2 throwSpeed = new Vector2(8f, 11f);          // faster/further: a longer, more visible tumble across the board
         [SerializeField] Vector2 spinSpeed = new Vector2(14f, 24f);   // radians per second
         [SerializeField] float spreadDegrees = 22f;          // random change of direction, so no two throws look the same
         [SerializeField] float heightScale = 0.09f;          // a dice higher above the board is drawn a little bigger
@@ -53,7 +53,6 @@ namespace Ludo.Game
         bool rolling;
         bool pawnFaceActive;                                // true while the "1" face shows the pawn glyph instead of its pip
         MeshFilter bodyFilter;
-        Material bodyMaterial;
 
         public bool IsRolling => rolling;
 
@@ -62,7 +61,6 @@ namespace Ludo.Game
             bodyT = body.transform;
             bodyFilter = body.GetComponent<MeshFilter>();
             bodyFilter.sharedMesh = DiceMesh.Build(chamfer);
-            bodyMaterial = body.material;                       // an instance copy: safe to tint without touching the shared asset
             if (shadow != null) baseShadowScale = shadow.transform.localScale;
             Rest(shownValue);
         }
@@ -97,7 +95,7 @@ namespace Ludo.Game
                 DiceMesh.SetFaceCell(bodyFilter.sharedMesh, 1, DiceMesh.PawnCell);
                 pawnFaceActive = true;
             }
-            if (bodyMaterial != null) bodyMaterial.color = seat >= 0 && seat < 4 ? SeatStyle.Colors[seat] : Color.white;
+            // the die itself stays its normal white/ivory (no per-seat tint) - only the face picture changes to the pawn glyph
             if (!rolling) bodyT.rotation = TrayRotation(1);         // the pawn glyph lives on face "1": always show that face while waiting
         }
 
@@ -108,7 +106,6 @@ namespace Ludo.Game
                 DiceMesh.SetFaceCell(bodyFilter.sharedMesh, 1, 0);  // "1"'s own pip back - the physics relabelling needs every face correct
                 pawnFaceActive = false;
             }
-            if (bodyMaterial != null) bodyMaterial.color = Color.white;
         }
 
         /// <summary>Pulse while waiting for the player to tap the dice.</summary>

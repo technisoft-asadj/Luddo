@@ -103,7 +103,6 @@ namespace Ludo.EditorTools
             }
             material.shader = Shader.Find(ShaderName);
             material.SetTexture("_MainTex", AssetDatabase.LoadAssetAtPath<Texture2D>(TexturePath));
-            if (material.HasProperty("_Color")) material.SetColor("_Color", Color.white);
             EditorUtility.SetDirty(material);
             AssetDatabase.SaveAssets();
             return material;

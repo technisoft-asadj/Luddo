@@ -247,11 +247,11 @@ namespace Ludo.Game
                 roll = game.Roll();
                 Log(SeatStyle.Names[seat] + " rolled " + roll.Value + " pass=" + roll.Pass + " legal=" + roll.LegalMoves.Length + (roll.RollAgain ? " again" : ""));
                 yield return dice.PlayRoll(roll.Value, seat);        // thrown from the roller's corner; shows the engine's value
-                hud.ShowPendingRolls(game.PendingRolls, dice.transform.position);
+                hud.ShowPendingRolls(game.PendingRolls, seat);
 
                 if (roll.Pass != PassReason.None)
                 {
-                    hud.ShowPendingRolls(null, dice.transform.position);
+                    hud.ShowPendingRolls(null, seat);
                     hud.ShowToast(roll.Pass == PassReason.ThreeSixes ? ToastKind.ThreeSixes : ToastKind.NoMoves, 1.3f);
                     yield return new WaitForSeconds(1.3f);
                     continue;   // the engine already passed the turn
@@ -303,11 +303,11 @@ namespace Ludo.Game
                     State = FlowState.Moving;
                     MoveResult result = game.Play(chosen);
                     Log("moved token " + chosen.Token + " " + chosen.From + "->" + chosen.To + " with " + chosen.Roll + " captured=" + result.Captured.Length + " extra=" + result.ExtraTurn + " more=" + result.MoreMoves);
-                    hud.ShowPendingRolls(game.PendingRolls, dice.transform.position);
+                    hud.ShowPendingRolls(game.PendingRolls, seat);
                     if (result.Captured.Length > 0) hud.ShowToast(ToastKind.Captured, 1.1f);
                     yield return new WaitWhile(() => board.IsAnimating);
                 }
-                hud.ShowPendingRolls(null, dice.transform.position);
+                hud.ShowPendingRolls(null, seat);
             }
 
             // game over: the result screen has its own buttons (Play Again / Main Menu)
