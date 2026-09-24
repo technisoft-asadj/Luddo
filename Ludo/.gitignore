@@ -43,3 +43,4 @@ keystore.properties
 
 # Claude/MCP local tooling
 /.claude/
+Assets/_Recovery/
