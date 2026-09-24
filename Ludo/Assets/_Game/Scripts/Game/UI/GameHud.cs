@@ -110,40 +110,6 @@ namespace Ludo.Game
 
         // ---------- called by GameController ----------
 
-        readonly Vector3[] corners = new Vector3[4];
-
-        /// <summary>
-        /// Where the dice waits for this seat's player (like Ludo Star: next to the player): above the name tag of the two top
-        /// seats, below it for the two bottom seats. 'half' = half the dice tray's size in world units.
-        /// </summary>
-        public Vector3 DiceSpot(int seat, float half)
-        {
-            var rt = (RectTransform)badges[seat].transform;
-            rt.GetWorldCorners(corners);                          // bottom-left, top-left, top-right, bottom-right
-            float x = (corners[0].x + corners[3].x) * 0.5f;
-            bool top = seat == (int)Seat.Red || seat == (int)Seat.Green;
-            float gap = 0.25f;
-            float y = top ? corners[1].y + gap + half : corners[0].y - gap - half;
-            var cam = Camera.main;
-            if (cam != null)                                      // never off the screen, never over the turn banner and the mode line
-            {
-                float highest = cam.transform.position.y + cam.orthographicSize - TopReserve() - half;
-                float lowest = cam.transform.position.y - cam.orthographicSize + half + 0.1f;
-                y = Mathf.Clamp(y, lowest, highest);
-            }
-            return new Vector3(x, y, 0f);
-        }
-
-        /// <summary>World height taken at the top of the screen by the turn banner and the mode line.</summary>
-        float TopReserve()
-        {
-            var line = modeText != null && modeText.gameObject.activeSelf ? modeText.rectTransform : turnText != null ? turnText.rectTransform.parent as RectTransform : null;
-            var cam = Camera.main;
-            if (line == null || cam == null) return 2.6f;
-            line.GetWorldCorners(corners);
-            return Mathf.Max(0f, cam.transform.position.y + cam.orthographicSize - corners[0].y) + 0.15f;
-        }
-
         // ---------- Ludo Star rule: several numbers per turn ----------
 
         int chosenValue;

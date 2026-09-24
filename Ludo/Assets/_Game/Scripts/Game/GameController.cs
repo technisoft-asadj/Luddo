@@ -143,17 +143,15 @@ namespace Ludo.Game
             StartCoroutine(Flow());
         }
 
-        [SerializeField] float diceTrayHalf = 1.45f;               // half the dice tray's size (world units), to keep it clear of the name tag
-        bool dicePlaced;
-
-        /// <summary>The dice waits next to the player whose turn it is (above / below their name tag) and glides to the next one.</summary>
+        /// <summary>Keep the dice's tray in the open space between the board and the bottom edge, whatever the phone's shape.
+        /// A fixed spot (rather than one that hunts for room next to whichever badge is on top) can never collide with the
+        /// turn banner or the mode line above the board; whose turn it is shows on the dice itself (see DiceView.ShowSeatIcon).</summary>
         void LateUpdate()
         {
-            if (cam == null || game == null || hud == null) return;
-            int seat = game.State.SeatOf(game.CurrentPlayer);
-            Vector3 target = hud.DiceSpot(seat, diceTrayHalf);
-            if (!dicePlaced) { dice.transform.position = target; dicePlaced = true; return; }
-            dice.transform.position = Vector3.Lerp(dice.transform.position, target, 1f - Mathf.Exp(-10f * Time.unscaledDeltaTime));
+            if (cam == null) return;
+            float half = BoardGrid.Size * 0.5f;
+            float middle = (half + 2f + cam.orthographicSize) * 0.5f;
+            dice.transform.position = new Vector3(0f, -middle, 0f);
         }
 
         /// <summary>Online: hand a player who left over to the computer, on every phone at the same moment.</summary>
@@ -226,11 +224,13 @@ namespace Ludo.Game
                 int player = game.CurrentPlayer;
                 int seat = game.State.SeatOf(player);
                 hud.SetTurnSeat(seat);
-                dice.Show(Mathf.Max(1, game.LastRoll));
-                Log("turn " + SeatStyle.Names[seat] + (IsLocalHuman(player) ? " human" : slots[player].isAi ? " cpu" : " remote"));
 
                 RollResult roll = resume;                    // after a reconnect the turn may already be rolled: go straight to choosing
                 resume = null;
+                if (roll != null) dice.Show(roll.Value);      // already rolled (a reconnect): show it, ready to choose a pawn
+                else dice.ShowSeatIcon(seat);                 // waiting for this player's roll: their own colour, not a leftover number
+                Log("turn " + SeatStyle.Names[seat] + (IsLocalHuman(player) ? " human" : slots[player].isAi ? " cpu" : " remote"));
+
                 if (roll == null)
                 {
                 // 1. a person taps the dice; the computer just waits a moment and rolls; a remote player's phone tells the host

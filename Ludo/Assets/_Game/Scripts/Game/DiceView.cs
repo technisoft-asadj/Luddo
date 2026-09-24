@@ -19,6 +19,7 @@ namespace Ludo.Game
         [Header("Look")]
         [SerializeField] MeshRenderer body;                // the dice model (DiceMesh), child of this object
         [SerializeField] SpriteRenderer shadow;             // soft shadow under the dice
+        [SerializeField] SpriteRenderer seatIcon;           // covers the dice with a coloured pawn while it is not this player's roll yet
         [SerializeField] float trayEdge = 1.6f;             // edge length while resting in the tray (world units)
         [SerializeField] float chamfer = 0.13f;
         [SerializeField] Vector3 trayTilt = new Vector3(-18f, 16f, 0f);   // resting pose: turned a little so it reads as 3D
@@ -37,6 +38,7 @@ namespace Ludo.Game
         [SerializeField] float settlePause = 0.35f;          // the number stays visible on the board this long
         [SerializeField] float returnSeconds = 0.32f;        // then the dice slides back to the tray
         [SerializeField] float scriptedSeconds = 1.1f;       // length of the fallback tumble
+        [SerializeField] Vector2 shakeSeconds = new Vector2(0.55f, 0.85f);   // suspense: shaken in the tray before it is thrown
 
         // physics space (Y up, board = XZ plane) -> world (board in XY, the camera looks along +Z)
         static readonly Quaternion ToWorld = Quaternion.Euler(-90f, 0f, 0f);
@@ -48,6 +50,7 @@ namespace Ludo.Game
         int shownValue = 1;
         bool ready;
         bool rolling;
+        int iconSeat = -1;                                  // the seat currently shown as a coloured pawn (-1 = none)
 
         public bool IsRolling => rolling;
 
@@ -64,11 +67,16 @@ namespace Ludo.Game
         void LateUpdate()
         {
             if (rolling) return;
-            // the tray follows this object (GameController keeps it between the badges and the bottom edge)
+            // the tray follows this object (GameController keeps it next to the player whose turn it is)
             float pulse = ready ? 1f + 0.07f * Mathf.Sin(Time.time * 6f) : 1f;      // "tap me"
             bodyT.position = transform.position;
             bodyT.localScale = Vector3.one * trayEdge * pulse;
             PlaceShadow(transform.position, 0f, trayEdge * pulse);
+            if (seatIcon != null && seatIcon.gameObject.activeSelf)
+            {
+                seatIcon.transform.position = transform.position + Vector3.back * 0.05f;
+                seatIcon.transform.localScale = Vector3.one * trayEdge * 1.05f * pulse;
+            }
         }
 
         /// <summary>Show a value at rest in the tray (also cancels a roll that was cut short: a restart, a reconnect).</summary>
@@ -76,6 +84,26 @@ namespace Ludo.Game
         {
             if (rolling) AudioService.Stop(SfxId.DiceRoll);
             Rest(value);
+        }
+
+        /// <summary>
+        /// A new player's turn has begun and they have not rolled yet: cover the dice with their own pawn colour (like Ludo
+        /// Star's coloured dice cup) instead of leaving the last number showing. Cleared automatically once they roll.
+        /// </summary>
+        public void ShowSeatIcon(int seat)
+        {
+            iconSeat = seat;
+            if (body != null) body.enabled = false;                 // the icon REPLACES the dice, it does not sit half over it
+            if (seatIcon == null) return;
+            seatIcon.color = seat >= 0 && seat < 4 ? SeatStyle.Colors[seat] : Color.white;
+            seatIcon.gameObject.SetActive(true);
+        }
+
+        void HideSeatIcon()
+        {
+            iconSeat = -1;
+            if (body != null) body.enabled = true;
+            if (seatIcon != null) seatIcon.gameObject.SetActive(false);
         }
 
         /// <summary>Pulse while waiting for the player to tap the dice.</summary>
@@ -88,11 +116,14 @@ namespace Ludo.Game
         {
             ready = false;
             rolling = true;
+            HideSeatIcon();
             finalValue = Mathf.Clamp(finalValue, 1, 6);
             Plan(seat);
             Quaternion relabel = DiceMesh.Relabel(finalValue, record.upAxis);
             SetOrder(rollingOrder);
-            AudioService.Play(SfxId.DiceRoll);
+
+            // suspense: shake it in the tray first, like rattling a dice cup, before it is thrown onto the board
+            yield return Shake(Random.Range(shakeSeconds.x, shakeSeconds.y));
 
             // play the recorded throw back (game time: pausing the game pauses the dice)
             float t = 0f, duration = record.Duration;
@@ -130,6 +161,28 @@ namespace Ludo.Game
         }
 
         // ---------- the throw ----------
+
+        /// <summary>Rattle the dice in place before the throw, building suspense (does not touch the physics result).</summary>
+        IEnumerator Shake(float seconds)
+        {
+            Vector3 basePos = transform.position;
+            AudioService.Play(SfxId.DiceRoll);
+            float t = 0f;
+            while (t < seconds)
+            {
+                t += Time.deltaTime;
+                float k = Mathf.Clamp01(t / seconds);
+                float intensity = Mathf.Lerp(0.05f, 0.16f, k);          // builds up towards the throw
+                Vector3 jitter = new Vector3(Random.Range(-1f, 1f), Random.Range(-1f, 1f), 0f) * intensity;
+                bodyT.position = basePos + jitter;
+                bodyT.rotation = Quaternion.Euler(Random.Range(-40f, 40f), Random.Range(-40f, 40f), Random.Range(-180f, 180f));
+                float scale = trayEdge * (1f + 0.06f * Mathf.Sin(t * 46f));
+                bodyT.localScale = Vector3.one * scale;
+                PlaceShadow(bodyT.position, 0f, scale);
+                yield return null;
+            }
+            bodyT.position = basePos;
+        }
 
         /// <summary>Record a throw: real physics first, the scripted tumble only if physics keeps ending badly.</summary>
         void Plan(int seat)
@@ -194,6 +247,7 @@ namespace Ludo.Game
         void Rest(int value)
         {
             rolling = false;
+            HideSeatIcon();
             shownValue = Mathf.Clamp(value, 1, 6);
             SetOrder(trayOrder);
             bodyT.SetPositionAndRotation(transform.position, TrayRotation(shownValue));

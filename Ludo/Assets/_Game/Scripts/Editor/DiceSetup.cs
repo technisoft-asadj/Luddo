@@ -17,6 +17,7 @@ namespace Ludo.EditorTools
         const string MaterialPath = Folder + "Dice.mat";
         const string ShaderName = "Ludo/DiceShaded";
         const string ShadowSprite = "Assets/_Game/Art/UI/Generated/shadow_soft.png";
+        const string PawnSprite = "Assets/ThirdParty/Kenney/BoardGame/Pieces/pieceWhite_border00.png";   // same art as the board's own pawns
 
         [MenuItem("Ludo/Setup 3D Dice")]
         public static void SetupInOpenScene()
@@ -57,9 +58,17 @@ namespace Ludo.EditorTools
             float spriteWidth = shadow.sprite != null ? shadow.sprite.bounds.size.x : 1f;
             shadowT.localScale = Vector3.one * (1.6f * 1.45f / Mathf.Max(0.01f, spriteWidth));   // a little wider than the dice in the tray
 
+            var iconT = Child(root.transform, "SeatIcon");
+            var seatIcon = Get<SpriteRenderer>(iconT.gameObject);
+            seatIcon.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(PawnSprite);
+            seatIcon.sortingOrder = 101;                                        // above the dice body, covering its face
+            iconT.localRotation = Quaternion.identity;
+            iconT.gameObject.SetActive(false);
+
             var so = new SerializedObject(dice);
             so.FindProperty("body").objectReferenceValue = renderer;
             so.FindProperty("shadow").objectReferenceValue = shadow;
+            so.FindProperty("seatIcon").objectReferenceValue = seatIcon;
             so.FindProperty("trayEdge").floatValue = 1.6f;
             var board = Object.FindFirstObjectByType<BoardView>();
             so.FindProperty("boardCentre").objectReferenceValue = board != null ? board.transform : null;

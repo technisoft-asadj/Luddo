@@ -87,7 +87,7 @@ namespace Ludo.EditorTools
             // rich colour with a soft top-to-bottom light
             Fill(px, x0, y0, size, size, (x, y) => RoundRectCoverage(x - x0, y - y0, size, size, 4f, 26f),
                  (x, y) => Color.Lerp(Color.Lerp(c, Color.white, 0.14f), Deep(c), (y - y0) / size));
-            // white inner panel
+            // white inner panel (the owner asked for this back: colour the home columns instead, not the yard)
             Fill(px, x0, y0, size, size, (x, y) => RoundRectCoverage(x - x0, y - y0, size, size, 72f, 34f), Paper);
             // the four resting wells, lined up with BoardGrid.BaseSlot
             for (int t = 0; t < 4; t++)
