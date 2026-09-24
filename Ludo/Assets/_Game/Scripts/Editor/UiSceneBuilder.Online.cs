@@ -427,6 +427,7 @@ namespace Ludo.EditorTools
         {
             var s = NewScreen("Screen_Friends", parent);
             Header(s, "Friends", router);
+            NavBar(s, router, null, 1, Friends, Leaderboards, Profile);
             var screen = s.gameObject.AddComponent<FriendsScreen>();
 
             // your own ID
@@ -935,6 +936,7 @@ namespace Ludo.EditorTools
         {
             var s = NewScreen("Screen_Leaderboards", parent);
             Header(s, "Leaderboards", router);
+            NavBar(s, router, null, 2, Friends, Leaderboards, Profile);
             var screen = s.gameObject.AddComponent<LeaderboardScreen>();
 
             // three tabs
@@ -1031,79 +1033,126 @@ namespace Ludo.EditorTools
         //  PROFILE & STATISTICS
         // ==================================================================================================
 
-        static RectTransform BuildProfile(RectTransform parent, ScreenRouter router, MenuFlow flow)
+        /// <summary>One small statistic tile: a big number over a caption.</summary>
+        static TMP_Text StatTile(RectTransform parent, string name, float x, float y, Vector2 size, string caption, float valueSize)
+        {
+            var tile = NewRect(name, parent);
+            At(tile, TopCenter, TopCenter, new Vector2(x, y), size);
+            Depth(AddImage(tile, Round(), Card, true, 0.5f), CardLip, 8f);
+            var v = AddText(tile, "Value", "0", valueSize, new Color(0.15f, 0.45f, 0.9f), TextAlignmentOptions.Center);
+            At(v.rectTransform, TopCenter, TopCenter, new Vector2(0f, -8f), new Vector2(size.x - 16f, size.y * 0.58f));
+            v.enableAutoSizing = true; v.fontSizeMin = valueSize * 0.45f; v.fontSizeMax = valueSize;
+            var l = AddText(tile, "Label", caption, 32, SubText, TextAlignmentOptions.Center);
+            At(l.rectTransform, BottomCenter, BottomCenter, new Vector2(0f, 10f), new Vector2(size.x - 12f, size.y * 0.30f));
+            l.enableAutoSizing = true; l.fontSizeMin = 18f; l.fontSizeMax = 32f;
+            return v;
+        }
+
+        /// <summary>
+        /// The profile, laid out from the reference: picture, name and country, level with its XP bar, the four headline
+        /// numbers across, the rank block, the dice collection strip, then the rest of the statistics.
+        ///
+        /// The reference's Statistics / Rewards / Achievements tabs are not built: this game has statistics and rewards
+        /// but no achievements system, and two tabs where the art shows three would be worse than one honest page.
+        /// </summary>
+        static RectTransform BuildProfile(RectTransform parent, ScreenRouter router, MenuFlow flow, DiceCollectionPanel dicePanel)
         {
             var s = NewScreen("Screen_Profile", parent);
             Header(s, "My Profile", router);
             var screen = s.gameObject.AddComponent<ProfileScreen>();
 
             var av = NewRect("AvatarBg", s);
-            At(av, TopCenter, TopCenter, new Vector2(0f, -190f), new Vector2(260f, 260f));
+            At(av, TopCenter, TopCenter, new Vector2(0f, -172f), new Vector2(206f, 206f));
             var avBg = AddImage(av, Circle(), new Color(0.22f, 0.58f, 1f));
             Depth(avBg, new Color(0.07f, 0.30f, 0.72f), 9f);
-            var pic = NewRect("Picture", av); Stretch(pic, 22f, 22f, 22f, 22f);
+            var pic = NewRect("Picture", av); Stretch(pic, 18f, 18f, 18f, 18f);
             var picImg = AddImage(pic, null, Color.white); picImg.raycastTarget = false; picImg.preserveAspect = true;
-            var profileFlag = FlagBadge(av, "Flag", new Vector2(1f, 0f), new Vector2(-24f, 30f), 104f);
+            var profileFlag = FlagBadge(av, "Flag", new Vector2(1f, 0f), new Vector2(-18f, 22f), 84f);
 
-            var nameText = AddText(s, "Name", "Player 1", 72, Color.white, TextAlignmentOptions.Center, true);
-            At(nameText.rectTransform, TopCenter, TopCenter, new Vector2(0f, -450f), new Vector2(900f, 90f));
-            nameText.enableAutoSizing = true; nameText.fontSizeMin = 36f; nameText.fontSizeMax = 72f;
-            var tierText = AddText(s, "Tier", "Level 1", 50, Gold, TextAlignmentOptions.Center, true);
-            At(tierText.rectTransform, TopCenter, TopCenter, new Vector2(0f, -535f), new Vector2(940f, 70f));
-            tierText.enableAutoSizing = true; tierText.fontSizeMin = 30f; tierText.fontSizeMax = 50f;
+            var nameText = AddText(s, "Name", "Player 1", 64, Color.white, TextAlignmentOptions.Center, true);
+            At(nameText.rectTransform, TopCenter, TopCenter, new Vector2(0f, -390f), new Vector2(900f, 84f));
+            nameText.enableAutoSizing = true; nameText.fontSizeMin = 34f; nameText.fontSizeMax = 64f;
+            var tierText = AddText(s, "Tier", "Level 1", 42, Gold, TextAlignmentOptions.Center, true);
+            At(tierText.rectTransform, TopCenter, TopCenter, new Vector2(0f, -466f), new Vector2(940f, 60f));
+            tierText.enableAutoSizing = true; tierText.fontSizeMin = 26f; tierText.fontSizeMax = 42f;
 
-            // XP bar: dark rounded track, coloured fill (its right anchor moves), the numbers on top
             var bar = NewRect("XpBar", s);
-            At(bar, TopCenter, TopCenter, new Vector2(0f, -612f), new Vector2(720f, 44f));
+            At(bar, TopCenter, TopCenter, new Vector2(0f, -530f), new Vector2(660f, 40f));
             AddImage(bar, Round(), new Color(0.05f, 0.16f, 0.45f, 0.85f)).raycastTarget = false;
             var fill = NewRect("Fill", bar); fill.anchorMin = Vector2.zero; fill.anchorMax = new Vector2(0f, 1f); fill.offsetMin = Vector2.zero; fill.offsetMax = Vector2.zero;
             AddImage(fill, Round(), new Color(0.3f, 0.85f, 0.4f)).raycastTarget = false;
-            var xpText = AddText(bar, "XpText", "0 / 100 XP", 30, Color.white, TextAlignmentOptions.Center, true);
+            var xpText = AddText(bar, "XpText", "0 / 100 XP", 28, Color.white, TextAlignmentOptions.Center, true);
             Stretch(xpText.rectTransform);
 
-            var idText = AddText(s, "FriendId", "", 32, new Color(1f, 1f, 1f, 0.8f), TextAlignmentOptions.Center);
-            At(idText.rectTransform, TopCenter, TopCenter, new Vector2(0f, -665f), new Vector2(940f, 46f));
-            idText.enableAutoSizing = true; idText.fontSizeMin = 20f; idText.fontSizeMax = 32f;
+            var idText = AddText(s, "FriendId", "", 30, new Color(1f, 1f, 1f, 0.8f), TextAlignmentOptions.Center);
+            At(idText.rectTransform, TopCenter, TopCenter, new Vector2(0f, -578f), new Vector2(940f, 44f));
+            idText.enableAutoSizing = true; idText.fontSizeMin = 18f; idText.fontSizeMax = 30f;
 
-            var edit = MakeButton(s, "EditProfileButton", "Edit Profile", "Blue", new Vector2(640f, 120f), Icon("gear"));
-            At((RectTransform)edit.transform, TopCenter, TopCenter, new Vector2(0f, -715f), new Vector2(640f, 120f));
+            var edit = MakeButton(s, "EditProfileButton", "Edit Profile", "Blue", new Vector2(520f, 104f), Icon("gear"));
+            At((RectTransform)edit.transform, TopCenter, TopCenter, new Vector2(0f, -626f), new Vector2(520f, 104f));
             OnClickInt(edit, flow.EditProfile, 0);
 
-            // the rank block: rank name, Rank Points, how far to the next rank (kept apart from Level / XP above)
+            // the four headline numbers, across, as in the reference
+            var values = new TMP_Text[10];
+            string[] headline = { "Wins", "Losses", "Games", "Win rate" };
+            int[] headlineSlot = { 2, 3, 1, 4 };                      // into ProfileScreen's statValues order
+            for (int i = 0; i < 4; i++)
+                values[headlineSlot[i]] = StatTile(s, "StatTop" + i, -354f + i * 236f, -756f, new Vector2(224f, 158f), headline[i], 60f);
+
+            // the rank block, kept apart from Level / XP above
             var rankCard = NewRect("RankCard", s);
-            At(rankCard, TopCenter, TopCenter, new Vector2(0f, -850f), new Vector2(940f, 285f));
+            At(rankCard, TopCenter, TopCenter, new Vector2(0f, -934f), new Vector2(940f, 196f));
             Depth(AddImage(rankCard, Round(), new Color(0.05f, 0.12f, 0.38f, 0.9f), true, 0.5f), new Color(0f, 0.03f, 0.18f, 0.9f), 10f);
-            var rankName = AddText(rankCard, "RankName", "BRONZE", 66, Gold, TextAlignmentOptions.Center, true);
-            At(rankName.rectTransform, TopCenter, TopCenter, new Vector2(0f, -14f), new Vector2(880f, 80f));
-            rankName.enableAutoSizing = true; rankName.fontSizeMin = 36f; rankName.fontSizeMax = 66f;
-            var rankPoints = AddText(rankCard, "RankPoints", "Rank Points  0", 44, Color.white, TextAlignmentOptions.Center, true);
-            At(rankPoints.rectTransform, TopCenter, TopCenter, new Vector2(0f, -92f), new Vector2(880f, 56f));
+            var rankName = AddText(rankCard, "RankName", "BRONZE", 52, Gold, TextAlignmentOptions.Left, true);
+            At(rankName.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(28f, -10f), new Vector2(420f, 64f));
+            rankName.enableAutoSizing = true; rankName.fontSizeMin = 30f; rankName.fontSizeMax = 52f;
+            var rankPoints = AddText(rankCard, "RankPoints", "Rank Points  0", 36, Color.white, TextAlignmentOptions.Right, true);
+            At(rankPoints.rectTransform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-28f, -14f), new Vector2(460f, 56f));
+            rankPoints.enableAutoSizing = true; rankPoints.fontSizeMin = 22f; rankPoints.fontSizeMax = 36f;
             var rankBar = NewRect("RankBar", rankCard);
-            At(rankBar, TopCenter, TopCenter, new Vector2(0f, -160f), new Vector2(800f, 42f));
+            At(rankBar, TopCenter, TopCenter, new Vector2(0f, -80f), new Vector2(880f, 38f));
             AddImage(rankBar, Round(), new Color(0.02f, 0.06f, 0.24f, 0.9f)).raycastTarget = false;
             var rankFill = NewRect("Fill", rankBar); rankFill.anchorMin = Vector2.zero; rankFill.anchorMax = new Vector2(0f, 1f); rankFill.offsetMin = Vector2.zero; rankFill.offsetMax = Vector2.zero;
             AddImage(rankFill, Round(), new Color(1f, 0.78f, 0.2f)).raycastTarget = false;
-            var rankBarText = AddText(rankBar, "BarText", "0 / 500", 28, Color.white, TextAlignmentOptions.Center, true);
+            var rankBarText = AddText(rankBar, "BarText", "0 / 500", 26, Color.white, TextAlignmentOptions.Center, true);
             Stretch(rankBarText.rectTransform);
-            var rankNext = AddText(rankCard, "RankNext", "Next rank: SILVER", 34, new Color(1f, 1f, 1f, 0.8f), TextAlignmentOptions.Center);
-            At(rankNext.rectTransform, TopCenter, TopCenter, new Vector2(0f, -218f), new Vector2(880f, 50f));
-            rankNext.enableAutoSizing = true; rankNext.fontSizeMin = 22f; rankNext.fontSizeMax = 34f;
+            var rankNext = AddText(rankCard, "RankNext", "Next rank: SILVER", 30, new Color(1f, 1f, 1f, 0.8f), TextAlignmentOptions.Center);
+            At(rankNext.rectTransform, BottomCenter, BottomCenter, new Vector2(0f, 10f), new Vector2(880f, 46f));
+            rankNext.enableAutoSizing = true; rankNext.fontSizeMin = 20f; rankNext.fontSizeMax = 30f;
 
-            // ten statistic tiles (2 columns x 5 rows)
-            string[] labels = { "Coins", "Games", "Wins", "Losses", "Win rate", "Best streak", "Ranked wins", "Weekly Cup pts", "Disconnects", "Disconnect rate" };
-            var values = new TMP_Text[10];
-            for (int i = 0; i < 10; i++)
+            // the dice collection, as the reference shows it on this screen
+            var stripTitle = AddText(s, "DiceTitle", "Dice Collection", 40, Color.white, TextAlignmentOptions.Left, true);
+            At(stripTitle.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(76f, -1152f), new Vector2(520f, 58f));
+            stripTitle.enableAutoSizing = true; stripTitle.fontSizeMin = 26f; stripTitle.fontSizeMax = 40f;
+            var stripAll = MakeButton(s, "OpenDiceButton", "View all", "Blue", new Vector2(230f, 68f), null);
+            At((RectTransform)stripAll.transform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-70f, -1146f), new Vector2(230f, 68f));
+            OnClick(stripAll, dicePanel.Open);
+
+            var skins = Ludo.Core.DiceSkins.All;
+            for (int i = 0; i < 5 && i < skins.Length; i++)
             {
-                var tile = NewRect("Stat" + i, s);
-                At(tile, TopCenter, TopCenter, new Vector2(-235f + (i % 2) * 470f, -1165f - (i / 2) * 190f), new Vector2(450f, 172f));
-                Depth(AddImage(tile, Round(), Card, true, 0.5f), CardLip, 9f);
-                var v = AddText(tile, "Value", "0", 72, new Color(0.15f, 0.45f, 0.9f), TextAlignmentOptions.Center);
-                At(v.rectTransform, TopCenter, TopCenter, new Vector2(0f, -12f), new Vector2(420f, 96f));
-                var l = AddText(tile, "Label", labels[i], 36, SubText, TextAlignmentOptions.Center);
-                At(l.rectTransform, BottomCenter, BottomCenter, new Vector2(0f, 12f), new Vector2(420f, 50f));
-                l.enableAutoSizing = true; l.fontSizeMin = 22f; l.fontSizeMax = 36f;
-                values[i] = v;
+                var cell = NewRect("Dice" + i, s);
+                At(cell, TopCenter, TopCenter, new Vector2(-368f + i * 184f, -1222f), new Vector2(164f, 164f));
+                var cellBg = AddImage(cell, Round(), Card, true, 0.6f);
+                Depth(cellBg, CardLip, 8f);
+                var cellButton = cell.gameObject.AddComponent<Button>();
+                cellButton.targetGraphic = cellBg; cellButton.transition = Selectable.Transition.None;
+                AddButtonFx(cell.gameObject, false);
+                OnClick(cellButton, dicePanel.Open);
+                var face = NewRect("Face", cell);
+                At(face, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(108f, 108f));
+                var raw = face.gameObject.AddComponent<RawImage>();
+                raw.raycastTarget = false;
+                raw.texture = Ludo.Game.DiceSkinLibrary.Faces(skins[i].Id);
+                raw.uvRect = new Rect(0f, 0f, 0.25f, 0.5f);      // the design's own "5" face out of its atlas
             }
+
+            // the rest of the numbers, three across
+            string[] rest = { "Coins", "Best streak", "Ranked wins", "Weekly Cup pts", "Disconnects", "Disc. rate" };
+            int[] restSlot = { 0, 5, 6, 7, 8, 9 };
+            for (int i = 0; i < rest.Length; i++)
+                values[restSlot[i]] = StatTile(s, "StatRest" + i, -308f + (i % 3) * 308f, -1406f - (i / 3) * 168f,
+                    new Vector2(296f, 156f), rest[i], 48f);
 
             var so = new SerializedObject(screen);
             so.FindProperty("avatar").objectReferenceValue = picImg;
@@ -1124,7 +1173,84 @@ namespace Ludo.EditorTools
             return s;
         }
 
-        /// <summary>A rounded text box in the style of the profile pop-up. Anchored top-centre.</summary>
+        /// <summary>One big event card: a coloured banner with an icon badge, a title, a live state line and an action button.</summary>
+        static Button EventCard(RectTransform parent, string name, float y, Sprite icon, string title, string action,
+            Color face, Color lip, out TMP_Text state, out GameObject dot)
+        {
+            var rt = NewRect(name, parent);
+            At(rt, TopCenter, TopCenter, new Vector2(0f, y), new Vector2(960f, 210f));
+            var img = AddImage(rt, Round(), face, true, 0.42f);
+            Depth(img, lip, 13f);
+
+            var badge = NewRect("IconBadge", rt);
+            At(badge, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(26f, 0f), new Vector2(130f, 130f));
+            var badgeImg = AddImage(badge, Round(), new Color(1f, 1f, 1f, 0.20f), true, 0.5f); badgeImg.raycastTarget = false;
+            var ic = NewRect("Icon", badge);
+            At(ic, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 2f), new Vector2(78f, 78f));
+            var icImg = AddImage(ic, icon, Color.white); icImg.raycastTarget = false; icImg.preserveAspect = true;
+
+            var t = AddText(rt, "Title", title, 50, Color.white, TextAlignmentOptions.Left, true);
+            At(t.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(178f, -22f), new Vector2(520f, 66f));
+            t.enableAutoSizing = true; t.fontSizeMin = 30f; t.fontSizeMax = 50f;
+            t.raycastTarget = false;
+            state = AddText(rt, "State", "", 32, new Color(1f, 1f, 1f, 0.88f), TextAlignmentOptions.Left);
+            At(state.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(178f, -88f), new Vector2(560f, 52f));
+            state.enableAutoSizing = true; state.fontSizeMin = 20f; state.fontSizeMax = 32f;
+            state.raycastTarget = false;
+
+            var button = MakeButton(rt, name + "Action", action, "Green", new Vector2(240f, 92f), null);
+            At((RectTransform)button.transform, new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-26f, 20f), new Vector2(240f, 92f));
+
+            dot = BuildUnreadDot(rt, out var dotText, new Vector2(-12f, -12f), 46f, true);
+            dotText.text = "!";
+            return button;
+        }
+
+        /// <summary>
+        /// The Events screen: everything a player can collect outside a match, each with its live state. Only what this
+        /// game really has is listed - see EventsScreen for why the reference's Season Pass and timed events are absent.
+        /// </summary>
+        static RectTransform BuildEvents(RectTransform parent, ScreenRouter router,
+            DailyRewardPanel dailyPanel, ChestPanel chestPanel, OnlineMenu menu)
+        {
+            var s = NewScreen("Screen_Events", parent);
+            Header(s, "Events", router);
+            NavBar(s, router, null, 0, Friends, Leaderboards, Profile);
+            var screen = s.gameObject.AddComponent<EventsScreen>();
+
+            var hint = AddText(s, "Hint", "Free rewards, every day", 36, new Color(1f, 1f, 1f, 0.85f), TextAlignmentOptions.Center, true);
+            At(hint.rectTransform, TopCenter, TopCenter, new Vector2(0f, -166f), new Vector2(800f, 50f));
+            hint.enableAutoSizing = true; hint.fontSizeMin = 24f; hint.fontSizeMax = 36f;
+
+            var daily = EventCard(s, "CardDaily", -250f, Ikon("calendar"), "Daily Rewards", "Claim",
+                new Color(0.55f, 0.28f, 0.86f), new Color(0.30f, 0.12f, 0.54f), out var dailyState, out var dailyDot);
+            OnClick(daily, dailyPanel.Open);
+
+            var chest = EventCard(s, "CardChest", -486f, Load(Generated + "chest_white.png"), "Free Chest", "Open",
+                new Color(0.72f, 0.45f, 0.18f), new Color(0.42f, 0.24f, 0.07f), out var chestState, out var chestDot);
+            OnClick(chest, chestPanel.Open);
+
+            var cup = EventCard(s, "CardWeeklyCup", -722f, Icon("trophy"), "Weekly Cup", "View",
+                new Color(0.93f, 0.55f, 0.12f), new Color(0.60f, 0.30f, 0.03f), out var cupState, out var cupDot);
+            OnClick(cup, menu.OpenTournament);
+            cupDot.SetActive(false);
+
+            var note = AddText(s, "Note", "More events are on the way. Everything here is free - coins can never be bought.",
+                32, new Color(1f, 1f, 1f, 0.62f), TextAlignmentOptions.Center);
+            At(note.rectTransform, TopCenter, TopCenter, new Vector2(0f, -980f), new Vector2(880f, 96f));
+            note.textWrappingMode = TextWrappingModes.Normal;
+            note.enableAutoSizing = true; note.fontSizeMin = 22f; note.fontSizeMax = 32f;
+
+            var so = new SerializedObject(screen);
+            so.FindProperty("dailyState").objectReferenceValue = dailyState;
+            so.FindProperty("dailyDot").objectReferenceValue = dailyDot;
+            so.FindProperty("chestState").objectReferenceValue = chestState;
+            so.FindProperty("chestDot").objectReferenceValue = chestDot;
+            so.FindProperty("cupState").objectReferenceValue = cupState;
+            so.ApplyModifiedProperties();
+            return s;
+        }
+
         static TMP_InputField MakeInput(RectTransform parent, string name, string placeholderText, Vector2 position, Vector2 size,
             int characterLimit, float fontSize, TMP_InputField.ContentType contentType)
         {

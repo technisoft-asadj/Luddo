@@ -61,7 +61,7 @@ namespace Ludo.EditorTools
         }
 
         // screen numbers (must match the buttons and MenuFlow)
-        const int Splash = 0, Main = 1, Mode = 2, Players = 3, Difficulty = 4, Settings = 5, HowTo = 6, Credits = 7, Online = 8, Room = 9, Friends = 10, Account = 11, Leaderboards = 12, Profile = 13, Welcome = 14, QuickMatch = 15;
+        const int Splash = 0, Main = 1, Mode = 2, Players = 3, Difficulty = 4, Settings = 5, HowTo = 6, Credits = 7, Online = 8, Room = 9, Friends = 10, Account = 11, Leaderboards = 12, Profile = 13, Welcome = 14, QuickMatch = 15, Events = 16;
 
         // ==================================================================================================
         //  MENU SCENE
@@ -86,7 +86,7 @@ namespace Ludo.EditorTools
             var router = systems.AddComponent<ScreenRouter>();
             var flow = systems.AddComponent<MenuFlow>();
 
-            var screens = new RectTransform[16];
+            var screens = new RectTransform[17];
             // the three reward pop-ups live above every screen, and both the main menu and Play Online open them,
             // so they are built before either of those screens rather than owned by one of them
             BuildDailyReward(root, out var dailyPanel);
@@ -109,11 +109,12 @@ namespace Ludo.EditorTools
             screens[Friends] = BuildFriends(safe, router);
             screens[Account] = BuildAccount(safe, router, out var accountScreen);
             screens[Leaderboards] = BuildLeaderboards(safe, router);
-            screens[Profile] = BuildProfile(safe, router, flow);
+            screens[Profile] = BuildProfile(safe, router, flow, dicePanel);
+            screens[Events] = BuildEvents(safe, router, dailyPanel, chestPanel, onlineMenu);
             screens[Welcome] = BuildWelcome(safe, router);
             screens[QuickMatch] = BuildQuickMatch(safe, router);
-            // "Play Online" in the mode menu opens the login page the first time, the online menu afterwards
-            OnClick(screens[Mode].Find("CardOnline").GetComponent<Button>(), accountScreen.OpenOnline);
+            // (the old Select Mode screen had a single "Play Online" card wired here; the rebuilt screen sends each of its
+            // online rows through MenuFlow.OpenOnlineScreen instead, which uses the same login gate)
             var inviteModal = BuildInviteModal(root, router);
 
             // main-menu banner: shown only while the Main screen is on show
@@ -528,6 +529,10 @@ namespace Ludo.EditorTools
             var chestRail = RailButton(s, "RailChest", new Vector2(1f, 1f), new Vector2(-46f, -330f),
                 Load(Generated + "chest_white.png"), "Chest", new Color(0.66f, 0.42f, 0.20f), out var chestDot);
             OnClick(chestRail, chest.Open);
+            var eventsRail = RailButton(s, "RailEvents", new Vector2(0f, 1f), new Vector2(46f, -530f),
+                Ikon("calendar"), "Events", new Color(0.55f, 0.28f, 0.86f), out var eventsDot);
+            OnClickInt(eventsRail, router.Show, Events);
+            eventsDot.SetActive(false);                      // the Events screen shows its own state; no dot to guess at here
 
             // ---- logo over the board art ----
             Logo(s, new Vector2(0.5f, 1f), new Vector2(0f, -170f), 560f);
@@ -691,7 +696,7 @@ namespace Ludo.EditorTools
 
             OnClickInt(oneVsOne, flow.PlayOnlineAtSize, 2);
             OnClickInt(four, flow.PlayOnlineAtSize, 4);
-            OnClickInt(room, router.Show, Online);
+            OnClickInt(room, flow.OpenOnlineScreen, Online);
             OnClickInt(offline, flow.ChooseLocal, 4);
             OnClickInt(cups, flow.OpenWeeklyCup, Leaderboards);
 
