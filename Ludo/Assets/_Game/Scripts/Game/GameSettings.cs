@@ -14,6 +14,7 @@ namespace Ludo.Game
         const string NameKey = "ludo.name.";
         const string AvatarKey = "ludo.avatar.";
         const string CountryKey = "ludo.country";
+        const string DiceSkinKey = "ludo.dice";
         const string CountryAskedKey = "ludo.country.asked";
 
         /// <summary>Raised after music, effects or vibration settings change.</summary>
@@ -101,6 +102,28 @@ namespace Ludo.Game
                 string code = Ludo.Core.Countries.Normalize(value);
                 if (code == Country) return;
                 PlayerPrefs.SetString(CountryKey, code);
+                PlayerPrefs.Save();
+                Changed?.Invoke();
+            }
+        }
+
+        /// <summary>
+        /// The dice design this phone rolls with. Which designs the player actually owns is decided by their profile
+        /// (level, rank, coins - see Ludo.Core.DiceSkins); this only remembers the choice so the Game scene can read it
+        /// without knowing anything about the online layer, and so an offline game shows the same dice.
+        /// </summary>
+        public static string DiceSkin
+        {
+            get
+            {
+                string id = PlayerPrefs.GetString(DiceSkinKey, Ludo.Core.DiceSkins.Default);
+                return Ludo.Core.DiceSkins.Exists(id) ? id : Ludo.Core.DiceSkins.Default;
+            }
+            set
+            {
+                string id = Ludo.Core.DiceSkins.Exists(value) ? value : Ludo.Core.DiceSkins.Default;
+                if (id == DiceSkin) return;
+                PlayerPrefs.SetString(DiceSkinKey, id);
                 PlayerPrefs.Save();
                 Changed?.Invoke();
             }

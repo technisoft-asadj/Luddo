@@ -61,11 +61,13 @@ namespace Ludo.Game
             levelValue.text = s.LevelAfter >= Progression.MaxLevel ? "Level " + s.LevelAfter + "  MAX"
                 : "Level " + (s.LevelUp ? s.LevelBefore + " > " + s.LevelAfter : s.LevelAfter.ToString()) + "   " + into + " / " + Progression.XpToNext(s.LevelAfter);
 
-            // two separate events: a rank up is not a level up
+            // three separate events: a rank up is not a level up, and dropping a rank deserves saying out loud
             string banner = "";
             if (s.RankUp) banner += "RANK UP!  " + s.TierAfter.ToUpperInvariant();
+            else if (s.RankDown) banner += "RANK DOWN  " + s.TierAfter.ToUpperInvariant();
             if (s.LevelUp) banner += (banner.Length > 0 ? "\n" : "") + "LEVEL UP!  " + s.LevelAfter;
             bannerText.text = banner;
+            bannerText.color = s.RankDown && !s.LevelUp ? Loss : Neutral;
             bannerText.gameObject.SetActive(banner.Length > 0);
 
             RefreshAd(s, adReady: false);

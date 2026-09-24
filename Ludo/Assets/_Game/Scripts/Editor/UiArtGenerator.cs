@@ -29,6 +29,7 @@ namespace Ludo.EditorTools
             Save("gradient_v", 4, 256, 100f, 0, (x, y, w, h) => Mathf.SmoothStep(0f, 1f, y / (h - 1f)));   // opaque at the top, clear at the bottom
             Save("glow_radial", 256, 256, 100f, 0, (x, y, w, h) => Glow(x, y, w, h));
             Save("rays", 512, 512, 100f, 0, (x, y, w, h) => Rays(x, y, w, h, 16));
+            Save("dice_white", 128, 128, 100f, 0, (x, y, w, h) => DiceIcon(x, y, w, h));   // the dice collection tile
             MakeWhiteCopy("Assets/ThirdParty/GoogleMaterial/Icons/ai_robot_black.png", "ai_robot_white");
             // online icons (Google Material Icons): white copies so they can be tinted like the other icons
             foreach (var n in new[] { "mic", "mic_off", "share", "copy", "person_add", "block", "flag", "group", "public", "flash_on", "chat", "person", "search" })
@@ -66,6 +67,25 @@ namespace Ludo.EditorTools
         {
             float d = Sdf(x + 0.5f, y + 0.5f, w, h, inset, radius);
             return 1f - Mathf.SmoothStep(-blur * 0.5f, blur * 0.5f, d);
+        }
+
+        /// <summary>A dice icon: a rounded square with five pips punched out of it (used on the dice collection tile).</summary>
+        static float DiceIcon(float x, float y, float w, float h)
+        {
+            float body = Coverage(Sdf(x + 0.5f, y + 0.5f, w, h, w * 0.08f, w * 0.20f));
+            float pip = 0f;
+            float r = w * 0.085f;
+            var spots = new[]
+            {
+                new Vector2(0.30f, 0.30f), new Vector2(0.70f, 0.30f), new Vector2(0.50f, 0.50f),
+                new Vector2(0.30f, 0.70f), new Vector2(0.70f, 0.70f)
+            };
+            foreach (var spot in spots)
+            {
+                float d = new Vector2(x + 0.5f - spot.x * w, y + 0.5f - spot.y * h).magnitude - r;
+                pip = Mathf.Max(pip, Coverage(d));
+            }
+            return Mathf.Clamp01(body - pip);
         }
 
         static float Circle(float x, float y, float w, float h)

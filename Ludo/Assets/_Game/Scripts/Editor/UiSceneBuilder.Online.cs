@@ -119,6 +119,10 @@ namespace Ludo.EditorTools
             var boards = TileButton(s, "TileLeaderboards", 250f, -1190f, Icon("trophy"), "Leaderboards", new Color(0.95f, 0.72f, 0.10f));
             var cup = TileButton(s, "TileWeeklyCup", -250f, -1370f, Icon2("star"), "Weekly Cup", new Color(0.96f, 0.30f, 0.32f));
             var accountButton = TileButton(s, "TileAccount", 250f, -1370f, Icon("gear"), "Account", new Color(0.45f, 0.55f, 0.75f));
+            var diceTile = TileButton(s, "TileMyDice", -250f, -1550f, Ico("dice"), "My Dice", new Color(0.18f, 0.70f, 0.66f));
+            var profileTile = TileButton(s, "TileProfile", 250f, -1550f, Ico("person"), "Profile", new Color(0.36f, 0.48f, 0.90f));
+            OnClick(diceTile, menu.OpenDice);
+            OnClick(profileTile, menu.OpenProfile);
             OnClick(create, menu.CreateRoom);
             OnClick(join, menu.OpenJoin);
             OnClickInt(friends, router.Show, Friends);
@@ -127,7 +131,7 @@ namespace Ludo.EditorTools
             OnClick(accountButton, menu.OpenAccount);
 
             var note = AddText(s, "SafetyNote", "Be kind! You can mute, block or report any player.", 38, new Color(1f, 1f, 1f, 0.75f), TextAlignmentOptions.Center);
-            At(note.rectTransform, BottomCenter, BottomCenter, new Vector2(0f, 150f), new Vector2(960f, 60f));
+            At(note.rectTransform, BottomCenter, BottomCenter, new Vector2(0f, 110f), new Vector2(960f, 60f));
             note.enableAutoSizing = true; note.fontSizeMin = 24f; note.fontSizeMax = 38f;
 
             // ----- "Join with Code" pop-up -----
@@ -182,6 +186,8 @@ namespace Ludo.EditorTools
             so.FindProperty("giftDot").objectReferenceValue = giftDot;
             BuildDailyReward(root, out var dailyPanel);
             so.FindProperty("daily").objectReferenceValue = dailyPanel;
+            BuildDiceCollection(root, out var dicePanel);
+            so.FindProperty("diceCollection").objectReferenceValue = dicePanel;
             so.FindProperty("statusText").objectReferenceValue = status;
             so.FindProperty("busyOverlay").objectReferenceValue = veil.gameObject;
             so.FindProperty("busyText").objectReferenceValue = busyText;
@@ -666,6 +672,99 @@ namespace Ludo.EditorTools
             so.ApplyModifiedProperties();
             OnClick(claim, panel.Claim);
             OnClick(ad, panel.WatchAd);
+            OnClick(close, panel.Close);
+            PopIn(modal, card);
+            modal.gameObject.SetActive(false);
+            return modal.gameObject;
+        }
+
+
+        /// <summary>
+        /// The dice collection pop-up: a tile per design in Ludo.Core.DiceSkins showing that design's real "5" face, its
+        /// name and what it takes to get it. Tapping an owned design wears it; tapping one for sale buys it with coins.
+        /// </summary>
+        static GameObject BuildDiceCollection(RectTransform root, out DiceCollectionPanel panel)
+        {
+            var all = Ludo.Core.DiceSkins.All;
+            var modal = NewRect("DiceCollectionModal", root); Stretch(modal);
+            AddImage(modal, null, new Color(0f, 0f, 0.05f, 0.78f)).raycastTarget = true;
+            var card = NewRect("Card", modal);
+            At(card, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(960f, 1140f));
+            Depth(AddImage(card, Round(), Card, true, 0.45f), CardLip, 14f);
+            var title = AddText(card, "Title", "My Dice", 70, Navy, TextAlignmentOptions.Center);
+            At(title.rectTransform, TopCenter, TopCenter, new Vector2(0f, -30f), new Vector2(800f, 95f));
+            var sub = AddText(card, "Sub", "Every design rolls exactly the same - they are just prettier.", 34, SubText, TextAlignmentOptions.Center);
+            At(sub.rectTransform, TopCenter, TopCenter, new Vector2(0f, -122f), new Vector2(900f, 50f));
+            sub.enableAutoSizing = true; sub.fontSizeMin = 24f; sub.fontSizeMax = 34f;
+
+            // the player's coin purse, so a price on a locked design means something
+            var purse = NewRect("Purse", card);
+            At(purse, TopCenter, TopCenter, new Vector2(0f, -178f), new Vector2(340f, 70f));
+            AddImage(purse, Round(), new Color(0.97f, 0.93f, 0.78f), true, 0.5f).raycastTarget = false;
+            var purseCoin = NewRect("Coin", purse);
+            At(purseCoin, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(40f, 0f), new Vector2(46f, 46f));
+            AddImage(purseCoin, Circle(), new Color(1f, 0.82f, 0.18f)).raycastTarget = false;
+            var coins = AddText(purse, "Coins", "0", 42, Navy, TextAlignmentOptions.Left, false);
+            Stretch(coins.rectTransform, 76f, 4f, 16f, 4f);
+
+            var tiles = new Image[all.Length];
+            var previews = new RawImage[all.Length];
+            var names = new TMP_Text[all.Length];
+            var notes = new TMP_Text[all.Length];
+            var locks = new GameObject[all.Length];
+            var buttons = new Button[all.Length];
+            for (int i = 0; i < all.Length; i++)
+            {
+                var t = NewRect("Skin" + i, card);
+                At(t, TopCenter, TopCenter, new Vector2((i % 3 - 1) * 296f, -255f - (i / 3) * 330f), new Vector2(284f, 310f));
+                tiles[i] = AddImage(t, Round(), new Color(0.93f, 0.96f, 1f), true, 0.5f);
+                Depth(tiles[i], CardLip, 8f);
+                var b = t.gameObject.AddComponent<Button>();
+                b.targetGraphic = tiles[i]; b.transition = Selectable.Transition.None;
+                AddButtonFx(t.gameObject, false);
+                buttons[i] = b;
+
+                var face = NewRect("Face", t);                                  // the design's own picture, cut from its atlas
+                At(face, TopCenter, TopCenter, new Vector2(0f, -18f), new Vector2(150f, 150f));
+                previews[i] = face.gameObject.AddComponent<RawImage>();
+                previews[i].raycastTarget = false;
+
+                var padlock = NewRect("Lock", t);
+                At(padlock, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-14f, -14f), new Vector2(56f, 56f));
+                AddImage(padlock, Circle(), new Color(0.35f, 0.40f, 0.52f, 0.92f)).raycastTarget = false;
+                var padIcon = NewRect("Icon", padlock); Stretch(padIcon, 12f, 12f, 12f, 12f);
+                AddImage(padIcon, Icon("cross"), Color.white).raycastTarget = false;
+                locks[i] = padlock.gameObject;
+
+                names[i] = AddText(t, "Name", all[i].Name, 42, Navy, TextAlignmentOptions.Center, false);
+                At(names[i].rectTransform, TopCenter, TopCenter, new Vector2(0f, -178f), new Vector2(264f, 56f));
+                names[i].enableAutoSizing = true; names[i].fontSizeMin = 26f; names[i].fontSizeMax = 42f;
+                notes[i] = AddText(t, "Note", "", 32, SubText, TextAlignmentOptions.Center, false);
+                At(notes[i].rectTransform, TopCenter, TopCenter, new Vector2(0f, -232f), new Vector2(264f, 64f));
+                notes[i].textWrappingMode = TextWrappingModes.Normal;
+                notes[i].enableAutoSizing = true; notes[i].fontSizeMin = 20f; notes[i].fontSizeMax = 32f;
+            }
+
+            var status = AddText(card, "Status", "", 38, new Color(0.15f, 0.55f, 0.25f), TextAlignmentOptions.Center);
+            At(status.rectTransform, BottomCenter, BottomCenter, new Vector2(0f, 40f), new Vector2(880f, 120f));
+            status.textWrappingMode = TextWrappingModes.Normal;
+            status.enableAutoSizing = true; status.fontSizeMin = 24f; status.fontSizeMax = 38f;
+            var close = MakeRoundButton(card, "CloseButton", "Red", Icon("cross"), 96f);
+            At((RectTransform)close.transform, new Vector2(1f, 1f), new Vector2(0.5f, 0.5f), new Vector2(-30f, -30f), new Vector2(96f, 96f));
+
+            panel = modal.gameObject.AddComponent<DiceCollectionPanel>();
+            var so = new SerializedObject(panel);
+            so.FindProperty("panel").objectReferenceValue = modal.gameObject;
+            so.FindProperty("grid").objectReferenceValue = card;
+            SetObjects(so.FindProperty("tiles"), tiles);
+            SetObjects(so.FindProperty("previews"), previews);
+            SetObjects(so.FindProperty("names"), names);
+            SetObjects(so.FindProperty("notes"), notes);
+            SetObjects(so.FindProperty("locks"), locks);
+            so.FindProperty("coinsText").objectReferenceValue = coins;
+            so.FindProperty("statusText").objectReferenceValue = status;
+            so.ApplyModifiedProperties();
+            for (int i = 0; i < buttons.Length; i++) OnClickInt(buttons[i], panel.Choose, i);
             OnClick(close, panel.Close);
             PopIn(modal, card);
             modal.gameObject.SetActive(false);

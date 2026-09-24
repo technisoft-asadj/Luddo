@@ -18,12 +18,45 @@ namespace Ludo.EditorTools
         const string ShaderName = "Ludo/DiceShaded";
         const string ShadowSprite = "Assets/_Game/Art/UI/Generated/shadow_soft.png";
 
+        const string LibraryPath = "Assets/_Game/Resources/DiceSkinLibrary.asset";
+
+        /// <summary>
+        /// (Re)builds the dice collection library from the atlases Prototype/make_dice_texture.py writes: one entry per
+        /// design in Ludo.Core.DiceSkins, pointing at dice_faces.png (Classic) or dice_faces_&lt;id&gt;.png. Run it after adding
+        /// a design. Also run by Setup 3D Dice.
+        /// </summary>
+        [MenuItem("Ludo/Setup Dice Skins")]
+        public static void SetupSkins()
+        {
+            var library = AssetDatabase.LoadAssetAtPath<DiceSkinLibrary>(LibraryPath);
+            if (library == null)
+            {
+                library = ScriptableObject.CreateInstance<DiceSkinLibrary>();
+                System.IO.Directory.CreateDirectory("Assets/_Game/Resources");
+                AssetDatabase.CreateAsset(library, LibraryPath);
+            }
+            var all = Ludo.Core.DiceSkins.All;
+            var entries = new System.Collections.Generic.List<DiceSkinLibrary.Entry>();
+            foreach (var skin in all)
+            {
+                string path = skin.Id == Ludo.Core.DiceSkins.Default ? TexturePath : Folder + "dice_faces_" + skin.Id + ".png";
+                var texture = ImportFaces(path);
+                if (texture == null) { Debug.LogWarning("[Ludo] Dice design '" + skin.Id + "' has no picture at " + path + " (run Prototype/make_dice_texture.py)."); continue; }
+                entries.Add(new DiceSkinLibrary.Entry { id = skin.Id, faces = texture });
+            }
+            library.skins = entries.ToArray();
+            EditorUtility.SetDirty(library);
+            AssetDatabase.SaveAssets();
+            Debug.Log("[Ludo] Dice designs ready: " + entries.Count + " of " + all.Length + ".");
+        }
+
         [MenuItem("Ludo/Setup 3D Dice")]
         public static void SetupInOpenScene()
         {
             var dice = Object.FindFirstObjectByType<DiceView>();
             if (dice == null) { Debug.LogError("[Ludo] No DiceView in the open scene (open Game.unity)."); return; }
             Apply(dice);
+            SetupSkins();
             EditorSceneManager.MarkSceneDirty(dice.gameObject.scene);
             EditorSceneManager.SaveScene(dice.gameObject.scene);
             Debug.Log("[Ludo] 3D dice set up.");
@@ -84,9 +117,11 @@ namespace Ludo.EditorTools
             return go.transform;
         }
 
-        static Material EnsureMaterial()
+        /// <summary>Imports one face atlas with the settings the dice shader needs, and returns it (null = no such file).</summary>
+        static Texture2D ImportFaces(string path)
         {
-            var importer = (TextureImporter)AssetImporter.GetAtPath(TexturePath);
+            var importer = AssetImporter.GetAtPath(path) as TextureImporter;
+            if (importer == null) return null;
             importer.textureType = TextureImporterType.Default;
             importer.mipmapEnabled = true;
             importer.anisoLevel = 4;
@@ -94,6 +129,12 @@ namespace Ludo.EditorTools
             importer.sRGBTexture = true;
             importer.textureCompression = TextureImporterCompression.CompressedHQ;
             importer.SaveAndReimport();
+            return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+        }
+
+        static Material EnsureMaterial()
+        {
+            ImportFaces(TexturePath);
 
             var material = AssetDatabase.LoadAssetAtPath<Material>(MaterialPath);
             if (material == null)

@@ -37,6 +37,7 @@ namespace Ludo.Online
         [SerializeField] Image[] feeChips;               // coin table for Quick Match: Free / 100 / 500 / 1K / 5K (CoinTables.Fees)
         [SerializeField] TMP_Text[] feeLabels;
         [SerializeField] DailyRewardPanel daily;
+        [SerializeField] DiceCollectionPanel diceCollection;
         [SerializeField] GameObject giftDot;             // red dot on the gift button: a daily reward is waiting
 
         const string SizeKey = "ludo.online.size";
@@ -151,6 +152,9 @@ namespace Ludo.Online
         }
 
         public void OpenDaily() { if (daily != null) daily.Open(); }
+
+        /// <summary>The dice collection: wear or unlock a dice design (cosmetic only).</summary>
+        public void OpenDice() { if (diceCollection != null) diceCollection.Open(); }
 
         bool dailyQueued;
 

@@ -61,8 +61,20 @@ namespace Ludo.Game
             bodyT = body.transform;
             bodyFilter = body.GetComponent<MeshFilter>();
             bodyFilter.sharedMesh = DiceMesh.Build(chamfer);
+            ApplySkin();
             if (shadow != null) baseShadowScale = shadow.transform.localScale;
             Rest(shownValue);
+        }
+
+        /// <summary>
+        /// Put the player's chosen dice design on the model. Only the picture changes: the same mesh is thrown by the same
+        /// physics and still shows the number the engine decided, so no design can be luckier than another. A material
+        /// instance is used so the shared Dice.mat asset on disk is never touched.
+        /// </summary>
+        public void ApplySkin()
+        {
+            var faces = DiceSkinLibrary.Equipped();
+            if (faces != null && body != null) body.material.SetTexture("_MainTex", faces);
         }
 
         void OnDestroy() => DiceSimulator.Release();

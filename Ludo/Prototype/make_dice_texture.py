@@ -1,6 +1,10 @@
-"""Draws the face atlas of the 3D dice: Assets/_Game/Art/Dice/dice_faces.png (4 x 2 cells of 256 px).
-Cells 0..5 = the faces 1..6 (ivory with sunken pips, a red 1 like a classic dice), cell 6 = plain ivory for the bevels,
-cell 7 unused. Drawn at 4x and scaled down for smooth edges. Pure code, no outside art.
+"""Draws the face atlases of the 3D dice into Assets/_Game/Art/Dice/ (4 x 2 cells of 256 px each).
+Cells 0..5 = the faces 1..6 (sunken pips, a coloured 1 like a classic dice), cell 6 = plain for the bevels,
+cell 7 = the pawn glyph shown while a player waits to roll. Drawn at 4x and scaled down for smooth edges.
+
+One atlas per dice skin (SKINS below): dice_faces.png is the default "classic" one and the rest are
+dice_faces_<id>.png. A skin only repaints the picture - the model, the physics and the numbers are identical, so no
+skin can ever change what the dice rolls. Pure code, no outside art.
 """
 import os
 from PIL import Image, ImageDraw, ImageFilter
@@ -8,10 +12,18 @@ from PIL import Image, ImageDraw, ImageFilter
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "Assets", "_Game", "Art", "Dice", "dice_faces.png")
 CELL, SS = 256, 4
-IVORY = (250, 248, 240)
-EDGE = (222, 218, 205)
-PIP = (28, 32, 52)
-RED = (214, 34, 44)
+
+# id -> (body, edge shading, pip ink, colour of the single "1" pip). Cosmetic only.
+SKINS = {
+    "classic":  ((250, 248, 240), (222, 218, 205), (28, 32, 52),    (214, 34, 44)),
+    "midnight": ((32, 38, 72),    (18, 22, 46),    (245, 208, 92),  (245, 208, 92)),
+    "ruby":     ((168, 30, 46),   (122, 18, 32),   (252, 240, 232), (252, 240, 232)),
+    "emerald":  ((26, 122, 76),   (16, 88, 54),    (240, 252, 244), (255, 214, 92)),
+    "gold":     ((228, 176, 48),  (186, 136, 26),  (58, 40, 10),    (58, 40, 10)),
+    "ice":      ((214, 236, 252), (168, 202, 228), (36, 84, 128),   (36, 84, 128)),
+}
+
+IVORY, EDGE, PIP, RED = SKINS["classic"]
 
 PIPS = {
     1: [(0.5, 0.5)],
@@ -75,8 +87,7 @@ def pawn_face():
     d.ellipse([cx - head_r * 0.4, head_cy - head_r * 0.55, cx + head_r * 0.15, head_cy - head_r * 0.05], fill=hl)
     return img.filter(ImageFilter.GaussianBlur(SS * 0.4)).resize((CELL, CELL), Image.LANCZOS)
 
-def main():
-    os.makedirs(os.path.dirname(OUT), exist_ok=True)
+def build_atlas():
     atlas = Image.new("RGB", (CELL * 4, CELL * 2), IVORY)
     for value in range(1, 7):
         i = value - 1
@@ -84,8 +95,18 @@ def main():
     plain = Image.new("RGB", (CELL, CELL), tuple(round(v * 0.97) for v in IVORY))
     atlas.paste(plain, (2 * CELL, CELL))
     atlas.paste(pawn_face(), (3 * CELL, CELL))
-    atlas.save(OUT)
-    print("saved", OUT)
+    return atlas
+
+
+def main():
+    global IVORY, EDGE, PIP, RED
+    folder = os.path.dirname(OUT)
+    os.makedirs(folder, exist_ok=True)
+    for skin, (body, edge, pip, one) in SKINS.items():
+        IVORY, EDGE, PIP, RED = body, edge, pip, one
+        path = OUT if skin == "classic" else os.path.join(folder, "dice_faces_" + skin + ".png")
+        build_atlas().save(path)
+        print("saved", path)
 
 if __name__ == "__main__":
     main()

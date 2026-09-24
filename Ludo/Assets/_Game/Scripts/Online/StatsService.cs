@@ -31,6 +31,11 @@ namespace Ludo.Online
         public bool starter;                    // the starter coins were given (once per profile)
         public int dailyDay;                    // the day (yyyyMMdd) the daily reward was last claimed
         public int dailyStreak;                 // which day of the 7-day calendar that was (1..7)
+        public string diceSkin = "";            // the dice design in use ("" = the default Classic)
+        public string diceOwned = "";           // ids of the designs bought with coins (level/rank ones open by themselves)
+
+        /// <summary>The dice design this player actually rolls with (falls back to Classic if the chosen one is not theirs).</summary>
+        public string EquippedDice => DiceSkins.Equipped(string.IsNullOrEmpty(diceSkin) ? DiceSkins.Default : diceSkin, Level, rating, diceOwned);
 
         public int WinRatePercent => games == 0 ? 0 : Mathf.RoundToInt(100f * wins / games);
         public string Tier => Rating.Tier(rating);
@@ -259,6 +264,7 @@ namespace Ludo.Online
             Mine.avatar = GameSettings.AvatarIndex(0);
             Mine.country = GameSettings.Country;
             Loaded = true;
+            GameSettings.DiceSkin = Mine.EquippedDice;           // signing in on another phone brings the chosen dice along
             if (!Mine.starter)                                   // a new profile: the starter coins, once
             {
                 Mine.starter = true;
@@ -294,6 +300,40 @@ namespace Ludo.Online
             Changed?.Invoke();
             await SaveMineAsync();
             return amount;
+        }
+
+        // ---------- dice collection ----------
+
+        /// <summary>
+        /// Buy a dice design with coins. Nothing happens - and nothing is charged - unless the design is really for sale,
+        /// not already owned and affordable, which Ludo.Core.DiceSkins decides. Returns what it cost (0 = not bought).
+        /// The design is purely a picture; see DiceSkins for why it can never change what the dice rolls.
+        /// </summary>
+        public static async Task<int> BuyDiceAsync(string id)
+        {
+            await LoadMineAsync();
+            if (!Loaded) return 0;
+            if (!DiceSkins.CanBuy(id, Mine.coins, Mine.Level, Mine.rating, Mine.diceOwned, out int price)) return 0;
+            Mine.coins -= price;
+            Mine.diceOwned = DiceSkins.Add(Mine.diceOwned, id);
+            Changed?.Invoke();
+            await SaveMineAsync();
+            return price;
+        }
+
+        /// <summary>
+        /// Wear a dice design. Only one the player owns is accepted. The choice is saved both in the profile (so another
+        /// phone sees it) and on this phone (so the Game scene can read it without the online layer).
+        /// </summary>
+        public static async Task<bool> EquipDiceAsync(string id)
+        {
+            await LoadMineAsync();
+            if (!Loaded || !DiceSkins.IsOwned(id, Mine.Level, Mine.rating, Mine.diceOwned)) return false;
+            Mine.diceSkin = id;
+            Ludo.Game.GameSettings.DiceSkin = id;
+            Changed?.Invoke();
+            await SaveMineAsync();
+            return true;
         }
 
         /// <summary>The bookkeeping of one match (pure, so it can be tested).</summary>
