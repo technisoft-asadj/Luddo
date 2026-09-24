@@ -999,7 +999,9 @@ namespace Ludo.EditorTools
         static PlayerBadge MakeBadge(RectTransform parent, string name, Vector2 anchor, Vector2 pivot, Vector2 pos)
         {
             var rt = NewRect(name, parent);
-            At(rt, anchor, pivot, pos, new Vector2(470f, 138f));
+            // 428px, not 470: the frame is exactly the board's own width, so two badges side by side used to leave only
+            // ~13px between them (they read as overlapping, especially with a longer name) - this leaves a real ~95px gap
+            At(rt, anchor, pivot, pos, new Vector2(428f, 138f));
             var bg = AddImage(rt, Round(), Color.white, true, 0.6f);
             bg.raycastTarget = false;
             Depth(bg, new Color(0f, 0f, 0f, 0.4f), 8f, 0.25f);
@@ -1035,15 +1037,17 @@ namespace Ludo.EditorTools
             var flag = FlagBadge(avatar, "Flag", new Vector2(0f, 0f), new Vector2(4f, 8f), 58f);      // online: the player's country
 
             var nameText = AddText(rt, "Name", "Player", 46, Color.white, TextAlignmentOptions.Left);
-            At(nameText.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(142f, -14f), new Vector2(305f, 66f));
-            nameText.enableAutoSizing = true; nameText.fontSizeMin = 26f; nameText.fontSizeMax = 46f;
+            At(nameText.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(142f, -14f), new Vector2(263f, 66f));
+            nameText.enableAutoSizing = true; nameText.fontSizeMin = 22f; nameText.fontSizeMax = 46f;
+            nameText.overflowMode = TextOverflowModes.Ellipsis;      // a very long name is cut with ... rather than spilling out
             var sub = AddText(rt, "Subtitle", "", 30, Color.white, TextAlignmentOptions.Left);
-            At(sub.rectTransform, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(142f, 14f), new Vector2(305f, 44f));
+            At(sub.rectTransform, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(142f, 14f), new Vector2(263f, 44f));
             sub.enableAutoSizing = true; sub.fontSizeMin = 20f; sub.fontSizeMax = 30f;
+            sub.overflowMode = TextOverflowModes.Ellipsis;
 
             // the turn timer: a bar in the place of the subtitle, shown only for the player whose turn it is (online)
             var timerRt = NewRect("Timer", rt);
-            At(timerRt, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(142f, 14f), new Vector2(305f, 40f));
+            At(timerRt, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(142f, 14f), new Vector2(263f, 40f));
             var timerBg = AddImage(timerRt, Round(), new Color(0.03f, 0.06f, 0.22f, 0.85f), true, 0.9f);
             timerBg.raycastTarget = false;
             var timerClip = NewRect("FillMask", timerRt); Stretch(timerClip, 4f, 4f, 4f, 4f);
