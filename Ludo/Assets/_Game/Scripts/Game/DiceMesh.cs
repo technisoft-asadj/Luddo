@@ -24,6 +24,10 @@ namespace Ludo.Game
         const int Columns = 4, Rows = 2;
         const int PlainCell = 6;
 
+        /// <summary>The unused 8th atlas cell: a pawn silhouette, drawn the same way as the pips. Waiting for a roll, the "1"
+        /// face is temporarily repointed here (see SetFaceCell) and the whole die is tinted the current player's colour.</summary>
+        public const int PawnCell = 7;
+
         public static Mesh Build(float chamfer = 0.12f)
         {
             float h = 0.5f, inner = h - Mathf.Clamp(chamfer, 0.01f, 0.45f);
@@ -92,6 +96,23 @@ namespace Ludo.Game
         }
 
         static Vector2 CellCentre(int cell) => CellUv(cell, new Vector2(0.5f, 0.5f));
+
+        static readonly Vector2[] QuadCorners = { new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(1f, 1f), new Vector2(0f, 1f) };
+
+        /// <summary>
+        /// Repoint one baked face's picture at a different atlas cell (built() lays the six faces out first, four vertices each,
+        /// in face order, so face 'value' always owns vertices (value-1)*4 .. +3). Used to show the pawn cell on the "1" face
+        /// while waiting to roll, and to put "1"'s own pips back before any real roll (the physics relabelling depends on every
+        /// face still showing its own number).
+        /// </summary>
+        public static void SetFaceCell(Mesh mesh, int value, int cell)
+        {
+            var uvs = new List<Vector2>();
+            mesh.GetUVs(0, uvs);
+            int start = (value - 1) * 4;
+            for (int i = 0; i < 4; i++) uvs[start + i] = CellUv(cell, QuadCorners[i]);
+            mesh.SetUVs(0, uvs);
+        }
 
         static void AddQuad(List<Vector3> v, List<Vector3> n, List<Vector2> uv, List<int> t, Vector3[] q, Vector3 normal, Vector2[] quv)
         {

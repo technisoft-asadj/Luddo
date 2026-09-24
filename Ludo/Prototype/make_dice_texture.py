@@ -47,6 +47,34 @@ def face(value):
         d.ellipse([cx - r * 0.72, cy - r * 0.72, cx + r * 0.72, cy + r * 0.62], fill=colour)
     return img.filter(ImageFilter.GaussianBlur(SS * 0.4)).resize((CELL, CELL), Image.LANCZOS)
 
+def pawn_face():
+    """Cell 7: a pawn silhouette, drawn the same way a pip is (dark ink, soft drilled-in shading) so it reads as a die
+    face rather than a sticker. DiceView tints the whole die per seat colour while this face is showing (see ShowSeatIcon)."""
+    s = CELL * SS
+    img = Image.new("RGB", (s, s), IVORY)
+    d = ImageDraw.Draw(img)
+    for i in range(24):
+        t = i / 24
+        c = tuple(round(EDGE[k] + (IVORY[k] - EDGE[k]) * t) for k in range(3))
+        m = round(i * s * 0.0035)
+        d.rectangle([m, m, s - 1 - m, s - 1 - m], outline=c, width=round(s * 0.0035) + 1)
+    cx, cy = s * 0.5, s * 0.5
+    head_r = s * 0.155
+    head_cy = cy - s * 0.20
+    body_top, body_bottom = cy - s * 0.02, cy + s * 0.30
+    body_half_top, body_half_bottom = s * 0.10, s * 0.205
+    # a soft drilled-in shadow first (like the pip's rim), then the dark pawn shape on top
+    for dy, col in ((s * 0.02, tuple(max(0, v - 40) for v in EDGE)), (0, PIP)):
+        d.ellipse([cx - head_r, head_cy - head_r + dy, cx + head_r, head_cy + head_r + dy], fill=col)
+        d.polygon([
+            (cx - body_half_top, body_top + dy), (cx + body_half_top, body_top + dy),
+            (cx + body_half_bottom, body_bottom + dy), (cx - body_half_bottom, body_bottom + dy),
+        ], fill=col)
+        d.ellipse([cx - body_half_bottom, body_bottom - s * 0.05 + dy, cx + body_half_bottom, body_bottom + s * 0.05 + dy], fill=col)
+    hl = tuple(min(255, v + 55) for v in PIP)
+    d.ellipse([cx - head_r * 0.4, head_cy - head_r * 0.55, cx + head_r * 0.15, head_cy - head_r * 0.05], fill=hl)
+    return img.filter(ImageFilter.GaussianBlur(SS * 0.4)).resize((CELL, CELL), Image.LANCZOS)
+
 def main():
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     atlas = Image.new("RGB", (CELL * 4, CELL * 2), IVORY)
@@ -55,7 +83,7 @@ def main():
         atlas.paste(face(value), ((i % 4) * CELL, (i // 4) * CELL))
     plain = Image.new("RGB", (CELL, CELL), tuple(round(v * 0.97) for v in IVORY))
     atlas.paste(plain, (2 * CELL, CELL))
-    atlas.paste(plain, (3 * CELL, CELL))
+    atlas.paste(pawn_face(), (3 * CELL, CELL))
     atlas.save(OUT)
     print("saved", OUT)
 

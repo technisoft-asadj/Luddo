@@ -6,6 +6,7 @@ Shader "Ludo/DiceShaded"
     Properties
     {
         _MainTex ("Faces", 2D) = "white" {}
+        _Color ("Tint (whole die, e.g. the waiting-to-roll player colour)", Color) = (1, 1, 1, 1)
         _LightDir ("Light direction (towards the light)", Vector) = (-0.45, 0.6, -0.65, 0)
         _Ambient ("Ambient", Range(0, 1)) = 0.55
         _Specular ("Specular", Range(0, 1)) = 0.25
@@ -33,6 +34,7 @@ Shader "Ludo/DiceShaded"
 
             CBUFFER_START(UnityPerMaterial)
                 float4 _MainTex_ST;
+                half4 _Color;
                 float4 _LightDir;
                 float _Ambient;
                 float _Specular;
@@ -53,7 +55,7 @@ Shader "Ludo/DiceShaded"
 
             half4 frag(Varyings i) : SV_Target
             {
-                half3 albedo = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv).rgb;
+                half3 albedo = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv).rgb * _Color.rgb;
                 float3 n = normalize(i.normalWS);
                 float3 l = normalize(_LightDir.xyz);
                 float3 viewDir = float3(0, 0, -1);                         // orthographic camera looking down the board

@@ -19,7 +19,8 @@ namespace Ludo.Game
         [Header("Look")]
         [SerializeField] MeshRenderer body;                // the dice model (DiceMesh), child of this object
         [SerializeField] SpriteRenderer shadow;             // soft shadow under the dice
-        [SerializeField] SpriteRenderer seatIcon;           // covers the dice with a coloured pawn while it is not this player's roll yet
+        // "waiting to roll": the "1" face is temporarily repointed at the pawn glyph (DiceMesh.PawnCell) and the whole
+        // die tinted that player's colour - a real face of the die, the same way a number is, not a separate sprite on top of it.
         [SerializeField] float trayEdge = 1.6f;             // edge length while resting in the tray (world units)
         [SerializeField] float chamfer = 0.13f;
         [SerializeField] Vector3 trayTilt = new Vector3(-18f, 16f, 0f);   // resting pose: turned a little so it reads as 3D
@@ -50,14 +51,18 @@ namespace Ludo.Game
         int shownValue = 1;
         bool ready;
         bool rolling;
-        int iconSeat = -1;                                  // the seat currently shown as a coloured pawn (-1 = none)
+        bool pawnFaceActive;                                // true while the "1" face shows the pawn glyph instead of its pip
+        MeshFilter bodyFilter;
+        Material bodyMaterial;
 
         public bool IsRolling => rolling;
 
         void Awake()
         {
             bodyT = body.transform;
-            body.GetComponent<MeshFilter>().sharedMesh = DiceMesh.Build(chamfer);
+            bodyFilter = body.GetComponent<MeshFilter>();
+            bodyFilter.sharedMesh = DiceMesh.Build(chamfer);
+            bodyMaterial = body.material;                       // an instance copy: safe to tint without touching the shared asset
             if (shadow != null) baseShadowScale = shadow.transform.localScale;
             Rest(shownValue);
         }
@@ -72,11 +77,6 @@ namespace Ludo.Game
             bodyT.position = transform.position;
             bodyT.localScale = Vector3.one * trayEdge * pulse;
             PlaceShadow(transform.position, 0f, trayEdge * pulse);
-            if (seatIcon != null && seatIcon.gameObject.activeSelf)
-            {
-                seatIcon.transform.position = transform.position + Vector3.back * 0.05f;
-                seatIcon.transform.localScale = Vector3.one * trayEdge * 1.05f * pulse;
-            }
         }
 
         /// <summary>Show a value at rest in the tray (also cancels a roll that was cut short: a restart, a reconnect).</summary>
@@ -92,18 +92,23 @@ namespace Ludo.Game
         /// </summary>
         public void ShowSeatIcon(int seat)
         {
-            iconSeat = seat;
-            if (body != null) body.enabled = false;                 // the icon REPLACES the dice, it does not sit half over it
-            if (seatIcon == null) return;
-            seatIcon.color = seat >= 0 && seat < 4 ? SeatStyle.Colors[seat] : Color.white;
-            seatIcon.gameObject.SetActive(true);
+            if (!pawnFaceActive)
+            {
+                DiceMesh.SetFaceCell(bodyFilter.sharedMesh, 1, DiceMesh.PawnCell);
+                pawnFaceActive = true;
+            }
+            if (bodyMaterial != null) bodyMaterial.color = seat >= 0 && seat < 4 ? SeatStyle.Colors[seat] : Color.white;
+            if (!rolling) bodyT.rotation = TrayRotation(1);         // the pawn glyph lives on face "1": always show that face while waiting
         }
 
         void HideSeatIcon()
         {
-            iconSeat = -1;
-            if (body != null) body.enabled = true;
-            if (seatIcon != null) seatIcon.gameObject.SetActive(false);
+            if (pawnFaceActive)
+            {
+                DiceMesh.SetFaceCell(bodyFilter.sharedMesh, 1, 0);  // "1"'s own pip back - the physics relabelling needs every face correct
+                pawnFaceActive = false;
+            }
+            if (bodyMaterial != null) bodyMaterial.color = Color.white;
         }
 
         /// <summary>Pulse while waiting for the player to tap the dice.</summary>
