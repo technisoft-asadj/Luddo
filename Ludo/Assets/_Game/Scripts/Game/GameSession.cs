@@ -76,6 +76,16 @@ namespace Ludo.Game
 
         /// <summary>Team Up: the name of a side, for the turn banner and the result screen.</summary>
         public static string TeamName(int seat) => seat % 2 == 0 ? "RED + YELLOW" : "GREEN + BLUE";
+
+        /// <summary>
+        /// How fast the match plays. Blitz is meant to be a sprint, so its pawn steps, pauses and thinking time run shorter;
+        /// every other mode keeps the timing the rest of the game was tuned with. It never touches the online turn limit -
+        /// people need the same time to think whatever the mode is.
+        /// </summary>
+        public static float Speed => Mode == Ludo.Core.GameMode.Blitz ? 1.6f : 1f;
+
+        /// <summary>A pause or animation length in seconds, shortened for the fast modes (see Speed).</summary>
+        public static float Beat(float seconds) => seconds / Speed;
         public static int PlayerCount { get; private set; } = 4;
         public static PlayerSlot[] Slots { get; private set; } =
             { PlayerSlot.Human, PlayerSlot.Human, PlayerSlot.Human, PlayerSlot.Human };

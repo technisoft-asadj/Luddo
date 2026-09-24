@@ -212,7 +212,7 @@ namespace Ludo.Game
                 var path = new List<Vector3>();
                 Rules.Path(r.Move, steps);                     // round the loop again (Master), arrow slides (Arrow)
                 foreach (int p in steps) path.Add(WorldFor(r.Move.Player, r.Move.Token, p));
-                yield return token.MoveAlong(path, secondsPerStep);
+                yield return token.MoveAlong(path, GameSession.Beat(secondsPerStep));
 
                 if (r.ReachedHome && r.Captured.Length == 0)
                 {
@@ -227,7 +227,7 @@ namespace Ludo.Game
                     Haptics.Pulse(70);
                 }
                 foreach (var c in r.Captured)
-                    yield return tokens[c.Player, c.Token].Hop(WorldFor(c.Player, c.Token, Board.BaseProgress), captureHopSeconds);
+                    yield return tokens[c.Player, c.Token].Hop(WorldFor(c.Player, c.Token, Board.BaseProgress), GameSession.Beat(captureHopSeconds));
 
                 SnapToState();   // tidy up stacks after every move
             }

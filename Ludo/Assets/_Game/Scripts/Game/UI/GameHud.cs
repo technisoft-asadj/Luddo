@@ -32,6 +32,7 @@ namespace Ludo.Game
         [SerializeField] Image[] valueDice;
         [SerializeField] Sprite[] diceFaces;            // flat dice pictures 1..6 (index 0 = one pip)
         [SerializeField] TMP_Text modeText;             // "MASTER MODE - capture an opponent before ..." (hidden in Classic)
+        [SerializeField] TMP_Text countdownText;        // the 3 - 2 - 1 - GO! that opens a match
         [SerializeField] GameObject[] offlineOnly;      // buttons that make no sense in an online match (Play Again, Restart)
 
         [SerializeField] TurnTimerBar timer;            // online: time left for the current turn
@@ -55,6 +56,38 @@ namespace Ludo.Game
         public bool ResultVisible => resultPanel != null && resultPanel.activeSelf;
 
         int turnSeat = -1;
+
+        /// <summary>
+        /// The "3 - 2 - 1 - GO!" that opens a match, so nobody is thrown straight into their first turn. Each number pops in
+        /// big and shrinks away; GO! is shorter. Unscaled time is deliberate: the board is not playing yet.
+        /// </summary>
+        public System.Collections.IEnumerator PlayCountdown()
+        {
+            if (countdownText == null) yield break;
+            string[] steps = { "3", "2", "1", "GO!" };
+            countdownText.gameObject.SetActive(true);
+            var rt = countdownText.rectTransform;
+            for (int i = 0; i < steps.Length; i++)
+            {
+                bool go = i == steps.Length - 1;
+                countdownText.text = steps[i];
+                // gold numbers, green GO!: both read over the board's white centre thanks to the font's dark outline
+                countdownText.color = go ? new Color(0.45f, 1f, 0.55f) : new Color(1f, 0.83f, 0.15f);
+                AudioService.Play(go ? SfxId.Home : SfxId.Click);
+                float hold = go ? 0.45f : 0.6f;
+                for (float t = 0f; t < hold;)
+                {
+                    t += Time.unscaledDeltaTime;
+                    float k = Mathf.Clamp01(t / hold);
+                    rt.localScale = Vector3.one * Mathf.Lerp(1.55f, 0.95f, k * k);
+                    countdownText.alpha = k > 0.75f ? Mathf.InverseLerp(1f, 0.75f, k) : 1f;
+                    yield return null;
+                }
+            }
+            countdownText.alpha = 1f;
+            rt.localScale = Vector3.one;
+            countdownText.gameObject.SetActive(false);
+        }
 
         /// <summary>The time left for the current turn, shown as a bar on that player's name tag.</summary>
         public void ShowTimer(float remaining, float total)

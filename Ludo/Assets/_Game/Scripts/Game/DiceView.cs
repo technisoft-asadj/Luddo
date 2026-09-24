@@ -125,13 +125,14 @@ namespace Ludo.Game
             SetOrder(rollingOrder);
 
             // suspense: shake it in the tray first, like rattling a dice cup, before it is thrown onto the board
-            yield return Shake(Random.Range(shakeSeconds.x, shakeSeconds.y));
+            yield return Shake(GameSession.Beat(Random.Range(shakeSeconds.x, shakeSeconds.y)));
 
-            // play the recorded throw back (game time: pausing the game pauses the dice)
+            // play the recorded throw back (game time: pausing the game pauses the dice; the fast modes play it back quicker)
+            float speed = GameSession.Speed;
             float t = 0f, duration = record.Duration;
             while (t < duration)
             {
-                t += Time.deltaTime;
+                t += Time.deltaTime * speed;
                 ApplyFrame(Mathf.Min(t, duration), relabel);
                 yield return null;
             }
@@ -140,7 +141,7 @@ namespace Ludo.Game
             AudioService.Play(SfxId.DiceLand);
             shownValue = finalValue;
 
-            yield return new WaitForSeconds(settlePause);
+            yield return new WaitForSeconds(GameSession.Beat(settlePause));
 
             // slide back to the tray, turning the number towards the player
             Vector3 fromPos = bodyT.position;
@@ -149,7 +150,7 @@ namespace Ludo.Game
             Quaternion toRot = TrayRotation(finalValue);
             for (float k = 0f; k < 1f;)
             {
-                k = Mathf.Min(1f, k + Time.deltaTime / Mathf.Max(0.01f, returnSeconds));
+                k = Mathf.Min(1f, k + Time.deltaTime / Mathf.Max(0.01f, GameSession.Beat(returnSeconds)));
                 float e = 1f - (1f - k) * (1f - k);
                 bodyT.SetPositionAndRotation(Vector3.Lerp(fromPos, transform.position, e), Quaternion.Slerp(fromRot, toRot, e));
                 float scale = Mathf.Lerp(fromScale, trayEdge, e);

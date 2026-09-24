@@ -184,7 +184,7 @@ namespace Ludo.Game
             foreach (int gone in story.takenOver) ApplyTakeover(gone);
             if (leftForInactivity) return;                               // my own seat was given away while I was gone
             hud.SetStatus("");
-            StartCoroutine(Flow(waiting));
+            StartCoroutine(Flow(waiting, opening: false));
         }
 
         void ApplyTakeover(int player)
@@ -214,9 +214,11 @@ namespace Ludo.Game
 
         // ---------- the turn, start to finish ----------
 
-        IEnumerator Flow(RollResult resume = null)
+        IEnumerator Flow(RollResult resume = null, bool opening = true)
         {
             yield return null;   // let one frame pass so the layout (dice position) is ready before the first turn
+            // open the match with 3 - 2 - 1 - GO! (never after a reconnect: the others are already playing)
+            if (opening) yield return hud.PlayCountdown();
             while (game.Phase != TurnPhase.GameOver)
             {
                 if (link != null && !link.IsConnected) { yield return ConnectionLost(); yield break; }
@@ -253,13 +255,13 @@ namespace Ludo.Game
                 {
                     hud.ShowPendingRolls(null, seat);
                     hud.ShowToast(roll.Pass == PassReason.ThreeSixes ? ToastKind.ThreeSixes : ToastKind.NoMoves, 1.3f);
-                    yield return new WaitForSeconds(1.3f);
+                    yield return new WaitForSeconds(GameSession.Beat(1.3f));
                     continue;   // the engine already passed the turn
                 }
                 if (roll.RollAgain)                                  // Ludo Star rule: a six - roll again before any pawn moves
                 {
                     hud.ShowToast(ToastKind.RollAgain, 0.9f);
-                    yield return new WaitForSeconds(0.5f);
+                    yield return new WaitForSeconds(GameSession.Beat(0.5f));
                     continue;
                 }
                 }
@@ -275,7 +277,7 @@ namespace Ludo.Game
                     if (OnlyOneChoice(options))
                     {
                         chosen = options.LegalMoves[0];
-                        yield return new WaitForSeconds(0.25f);
+                        yield return new WaitForSeconds(GameSession.Beat(0.25f));
                     }
                     else if (link != null)
                     {
@@ -290,7 +292,7 @@ namespace Ludo.Game
                         chosen = ais[player].Choose(game.State, Rules, options.LegalMoves);      // the AI may only pick from the engine's legal moves
                         var highlight = new[] { chosen };
                         board.SetSelectable(highlight, true);                             // show which pawn it picked
-                        yield return new WaitForSeconds(0.5f);
+                        yield return new WaitForSeconds(GameSession.Beat(0.5f));
                         board.SetSelectable(highlight, false);
                     }
                     else
@@ -437,7 +439,7 @@ namespace Ludo.Game
                 Vector3 diceScreen = cam.WorldToScreenPoint(dice.transform.position);
                 Log("awaiting dice tap@" + (int)diceScreen.x + "," + (int)(Screen.height - diceScreen.y));
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-                if (AutoPlay) { yield return new WaitForSeconds(0.6f); waitTimedOut = false; }
+                if (AutoPlay) { yield return new WaitForSeconds(GameSession.Beat(0.6f)); waitTimedOut = false; }
                 else
 #endif
                 yield return WaitForDiceTap(tapRadius * 1.6f);
@@ -448,7 +450,7 @@ namespace Ludo.Game
             else if (slots[player].isAi)
             {
                 dice.SetReady(false);
-                if (host) yield return new WaitForSeconds(aiThinkSeconds);
+                if (host) yield return new WaitForSeconds(GameSession.Beat(aiThinkSeconds));
             }
             else
             {
@@ -509,7 +511,7 @@ namespace Ludo.Game
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (AutoPlay)
             {
-                yield return new WaitForSeconds(0.6f);
+                yield return new WaitForSeconds(GameSession.Beat(0.6f));
                 picked = AiFor(game.CurrentPlayer).Choose(game.State, Rules, roll.LegalMoves);
                 board.SetSelectable(roll.LegalMoves, false);
                 chosenMove = picked;
@@ -597,7 +599,7 @@ namespace Ludo.Game
             {
                 if (slots[player].isAi)
                 {
-                    yield return new WaitForSeconds(0.3f);
+                    yield return new WaitForSeconds(GameSession.Beat(0.3f));
                 }
                 else
                 {
@@ -627,7 +629,7 @@ namespace Ludo.Game
             {
                 var highlight = new[] { chosen };
                 board.SetSelectable(highlight, true);                // show which pawn was picked
-                yield return new WaitForSeconds(0.5f);
+                yield return new WaitForSeconds(GameSession.Beat(0.5f));
                 board.SetSelectable(highlight, false);
             }
             chosenMove = chosen;

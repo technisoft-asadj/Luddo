@@ -153,6 +153,18 @@ namespace Ludo.Online
             else notice.text = problem;
         }
 
+        /// <summary>
+        /// A quick-reaction button ("Nice move!", "Good game!"): sends that phrase at once, through the same chat path as a
+        /// typed message, so the filter and the anti-spam throttle still apply.
+        /// </summary>
+        public void SendQuick(int index)
+        {
+            if (!QuickChat.IsValidIndex(index)) return;
+            var current = MatchLink.Current;
+            if (current == null) { notice.text = "Chat works once you are in a room."; return; }
+            notice.text = current.SendChat(QuickChat.Get(index), out string problem) ? "" : problem;
+        }
+
         /// <summary>An emoji button: sends that emoji straight away as its own message.</summary>
         public void SendEmoji(int index)
         {

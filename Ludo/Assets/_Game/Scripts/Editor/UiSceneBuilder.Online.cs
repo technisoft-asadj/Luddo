@@ -933,7 +933,7 @@ namespace Ludo.EditorTools
             var modal = NewRect("ChatModal", parent); Stretch(modal);
             AddImage(modal, null, new Color(0f, 0f, 0.05f, 0.6f)).raycastTarget = true;
             var card = NewRect("Card", modal);
-            At(card, TopCenter, TopCenter, new Vector2(0f, -140f), new Vector2(980f, 1130f));
+            At(card, TopCenter, TopCenter, new Vector2(0f, -190f), new Vector2(980f, 1320f));   // clear of the turn banner above
             Depth(AddImage(card, Round(), Card, true, 0.45f), CardLip, 14f);
 
             var title = AddText(card, "Title", "Chat", 64, Navy, TextAlignmentOptions.Center);
@@ -959,10 +959,29 @@ namespace Ludo.EditorTools
             scroll.horizontal = false; scroll.vertical = true;
             scroll.movementType = ScrollRect.MovementType.Clamped; scroll.scrollSensitivity = 40f;
 
+            // one-tap phrases (2 rows of 4): a reaction without typing, sent through the same chat rules
+            var quickRow = NewRect("QuickPhrases", card);
+            At(quickRow, TopCenter, TopCenter, new Vector2(0f, -608f), new Vector2(920f, 180f));
+            var quickButtons = new Button[Ludo.Core.QuickChat.Phrases.Length];
+            for (int i = 0; i < quickButtons.Length; i++)
+            {
+                var cell = NewRect("Quick" + i, quickRow);
+                At(cell, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2((i % 4) * 231f + 4f, -(i / 4) * 90f - 4f), new Vector2(223f, 82f));
+                var face = AddImage(cell, Round(), new Color(0.90f, 0.94f, 1f), true, 0.6f);
+                Depth(face, CardLip, 5f);
+                var qb = cell.gameObject.AddComponent<Button>();
+                qb.targetGraphic = face; qb.transition = Selectable.Transition.None;
+                AddButtonFx(cell.gameObject, false);
+                var lbl = AddText(cell, "Label", Ludo.Core.QuickChat.Phrases[i], 34, Navy, TextAlignmentOptions.Center, false);
+                Stretch(lbl.rectTransform, 8f, 4f, 8f, 6f);
+                lbl.enableAutoSizing = true; lbl.fontSizeMin = 20f; lbl.fontSizeMax = 34f;
+                quickButtons[i] = qb;
+            }
+
             // emoji buttons: 3 rows of 10, each sends its emoji at once
             var emojiSprites = EmojiSetup.Ensure();
             var grid = NewRect("Emojis", card);
-            At(grid, TopCenter, TopCenter, new Vector2(0f, -610f), new Vector2(920f, 280f));
+            At(grid, TopCenter, TopCenter, new Vector2(0f, -800f), new Vector2(920f, 280f));
             var emojiButtons = new Button[Ludo.Core.ChatEmoji.Codes.Length];
             for (int i = 0; i < emojiButtons.Length; i++)
             {
@@ -979,15 +998,16 @@ namespace Ludo.EditorTools
                 emojiButtons[i] = b;
             }
 
-            var input = MakeInput(card, "Input", "Type a message...", new Vector2(-135f, -905f), new Vector2(640f, 120f),
+            var input = MakeInput(card, "Input", "Type a message...", new Vector2(-135f, -1098f), new Vector2(640f, 120f),
                 Ludo.Core.ChatRules.MaxLength, 40f, TMP_InputField.ContentType.Standard);
             var send = MakeButton(card, "SendButton", "Send", "Green", new Vector2(250f, 120f), null);
-            At((RectTransform)send.transform, TopCenter, TopCenter, new Vector2(345f, -905f), new Vector2(250f, 120f));
+            At((RectTransform)send.transform, TopCenter, TopCenter, new Vector2(345f, -1098f), new Vector2(250f, 120f));
             var notice = AddText(card, "Notice", "", 34, new Color(0.8f, 0.2f, 0.1f), TextAlignmentOptions.Center);
-            At(notice.rectTransform, TopCenter, TopCenter, new Vector2(0f, -1040f), new Vector2(900f, 60f));
+            At(notice.rectTransform, TopCenter, TopCenter, new Vector2(0f, -1235f), new Vector2(900f, 60f));
 
             var panel = openButton.gameObject.AddComponent<ChatPanel>();
             for (int i = 0; i < emojiButtons.Length; i++) OnClickInt(emojiButtons[i], panel.SendEmoji, i);
+            for (int i = 0; i < quickButtons.Length; i++) OnClickInt(quickButtons[i], panel.SendQuick, i);
             var so = new SerializedObject(panel);
             so.FindProperty("modal").objectReferenceValue = modal.gameObject;
             so.FindProperty("log").objectReferenceValue = log;
