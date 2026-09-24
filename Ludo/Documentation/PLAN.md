@@ -404,9 +404,9 @@ Audited: every scene/script/asmdef listed above + `Core` (Board, Rules, LudoGame
 | Turn indicator / player cards / flags | EXISTS (badges with avatar+photo+flag+level, active ring, turn timer on the tag, dice glides to the active player) | none | — | ✅ |
 | Chat / emoji / voice / friends / block-report | EXISTS (`ChatRules` filter+throttle, Noto emoji, Vivox, UGS Friends, `SafetyService`) | **PARTIAL:** no one-tap quick-message/reaction bar (chat needs typing) | | |
 | **Gifts (rose/car/…)** | **MISSING** | optional; lowest priority | | |
-| Profile / country / stats / provider | EXISTS (name, avatar, gallery photo, country picker, level, XP, rank, coins, W/L, streak-less stats, Cloud Save, account switching clears country) | **PARTIAL:** no current/best streak | | |
+| Profile / country / stats / provider | EXISTS (name, avatar, gallery photo, country picker, level, XP, rank, coins, W/L, win + best streak, Cloud Save, account switching clears country) | none (streak + best streak are already saved and shown on the profile) | | |
 | XP vs Rank Points separation | EXISTS (`Progression` = XP/level, `Rating` = Rank Points + configurable tiers) | none | — | ✅ |
-| League / leaderboard | EXISTS (Ranked + Weekly Cup + Friends boards, tiers Bronze→Grandmaster configurable) | **PARTIAL:** no promotion/demotion notice, no season period reset | | |
+| League / leaderboard | EXISTS (Ranked + Weekly Cup + Friends boards, tiers Bronze→Grandmaster configurable) | **PARTIAL:** `MatchSummary.RankDown` exists but the result card only announces RANK UP; no season period reset | | |
 | Rewarded ad doubles Rank Points only | EXISTS (`RewardRules.AdBonus`, `BonusLedger` once per match, pays only on the SDK's reward callback) | none | — | ✅ |
 | Coins economy + daily reward | EXISTS (starter 1 000, coin tables Free/100/500/1K/5K, winner takes pot, 7-day daily reward, Watch-Ad x2) | none | — | ✅ |
 | **Magic chest / lucky dice** | **MISSING** | optional on top of the daily reward | | |
@@ -426,3 +426,8 @@ Audited: every scene/script/asmdef listed above + `Core` (Board, Rules, LudoGame
 P2 rules/modes: pending-dice config knobs + tap-to-select pending number; **Team Up 2v2**; per-mode tempo so Blitz is genuinely faster.
 P3 presentation: pre-match 3-2-1 countdown, quick-reaction bar.
 P4+ progression extras: streaks, promotion/demotion notice, dice collection, chest, tournaments, season/events — only after P2/P3 are phone-tested.
+
+### Parity work log
+**P1 audit (2026-09-24)** — gap table above. Baseline 218/218.
+**P2 Team Up + dice rules (commit `de05496`, 234/234)** — `GameMode.TeamUp` on the same engine: `GameState.Teams/TeamOf/SameTeam` (partners = the seats facing each other, so it works for any seat plan), `Rules.ApplyMove` never captures a partner, `Rules.HasWon` needs both partners home, `LudoGame.NextTurn` skips a finished partner, `HardAi` ignores partners as attackers and targets, `GameController` settles per side and the badges read You / Your partner / Opponent, and every table-size control locks to 4 in Team Up. `RulesConfig` gained `DiceSelection` (FreeChoice | Fifo | Lifo), `PendingDiceLimit` and `AutoSelectSingleLegalToken`, all defaulting to today's behaviour. Editor-verified: mode banner, badges, five mode chips fit.
+**P3 presentation (commit `acb522b`, 234/234)** — 3-2-1-GO! opening (`GameHud.PlayCountdown`, skipped on reconnect); `GameSession.Speed/Beat` makes Blitz 1.6x quicker across pawn steps, capture hop, dice shake/throw/settle and thinking pauses while leaving the online turn limit alone; eight one-tap chat phrases (`Core/QuickChat`) that go through `SendChat`, so the filter, length limit and 1.5 s throttle still apply. Editor-verified by screenshot: countdown over the board, chat card with phrase row clears the turn banner.

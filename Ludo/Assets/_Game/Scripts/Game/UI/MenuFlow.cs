@@ -43,9 +43,24 @@ namespace Ludo.Game
         }
 
         // a name or photo can change from outside (Google / Facebook login, the online profile): keep the rows in step
-        void OnEnable() => GameSettings.Changed += RefreshPlayerRows;
+        void OnEnable()
+        {
+            GameSettings.Changed += RefreshPlayerRows;
+            ModePicker.Changed += RefreshForMode;          // Team Up fixes the seat count: keep the chips honest
+        }
 
-        void OnDisable() => GameSettings.Changed -= RefreshPlayerRows;
+        void OnDisable()
+        {
+            GameSettings.Changed -= RefreshPlayerRows;
+            ModePicker.Changed -= RefreshForMode;
+        }
+
+        void RefreshForMode()
+        {
+            if (GameSession.NeedsFourPlayers(ModePicker.Current)) { players = 4; opponents = 3; }
+            RefreshPlayerRows();
+            RefreshDifficulty();
+        }
 
         // ---------- pass-and-play ----------
 
@@ -117,8 +132,11 @@ namespace Ludo.Game
                 difficultyCards[i].color = on ? selectedColor : normalColor;
                 difficultyChecks[i].SetActive(on);
             }
+            // Team Up is 2 vs 2, so the count is fixed at three computer players and the other chips are shown greyed out
+            int shown = GameSession.NeedsFourPlayers(ModePicker.Current) ? 3 : opponents;
+            bool locked = GameSession.NeedsFourPlayers(ModePicker.Current);
             for (int i = 0; i < opponentButtons.Length; i++)
-                opponentButtons[i].color = i + 1 == opponents ? selectedColor : normalColor;
+                opponentButtons[i].color = i + 1 == shown ? selectedColor : locked ? Color.Lerp(normalColor, Color.grey, 0.35f) : normalColor;
         }
     }
 }

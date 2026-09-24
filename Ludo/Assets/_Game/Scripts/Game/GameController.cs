@@ -116,6 +116,7 @@ namespace Ludo.Game
         public void StartGame(int players)
         {
             StopAllCoroutines();
+            dice.Cancel();                                            // a throw from the abandoned match must not tumble over the new one
             playerCount = players;
             activeRules = rules.Rules.WithMode(GameSession.Mode);
             if (link != null)
@@ -217,8 +218,14 @@ namespace Ludo.Game
         IEnumerator Flow(RollResult resume = null, bool opening = true)
         {
             yield return null;   // let one frame pass so the layout (dice position) is ready before the first turn
-            // open the match with 3 - 2 - 1 - GO! (never after a reconnect: the others are already playing)
-            if (opening) yield return hud.PlayCountdown();
+            if (opening)
+            {
+                // clear whatever the last match left on screen first: a restart would otherwise count down over the old
+                // player's banner and a dice still tumbling from the game that was just abandoned
+                dice.ShowSeatIcon(game.State.SeatOf(game.CurrentPlayer));
+                hud.SetTurnSeat(game.State.SeatOf(game.CurrentPlayer));
+                yield return hud.PlayCountdown();            // 3 - 2 - 1 - GO! (never after a reconnect: the others are already playing)
+            }
             while (game.Phase != TurnPhase.GameOver)
             {
                 if (link != null && !link.IsConnected) { yield return ConnectionLost(); yield break; }

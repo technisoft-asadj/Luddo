@@ -85,6 +85,17 @@ namespace Ludo.Game
         }
 
         /// <summary>
+        /// Drop everything and sit still in the tray. Used when a match is abandoned mid-roll (Restart, leaving to the menu):
+        /// Show() alone only clears the flag, so the throw's own coroutine has to be stopped too or the dice keeps tumbling
+        /// over the new game.
+        /// </summary>
+        public void Cancel()
+        {
+            StopAllCoroutines();
+            Show(1);
+        }
+
+        /// <summary>
         /// A new player's turn has begun and they have not rolled yet: cover the dice with their own pawn colour (like Ludo
         /// Star's coloured dice cup) instead of leaving the last number showing. Cleared automatically once they roll.
         /// </summary>
