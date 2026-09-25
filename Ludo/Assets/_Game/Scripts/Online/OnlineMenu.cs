@@ -31,6 +31,7 @@ namespace Ludo.Online
         [SerializeField] Image profileFlag;              // my country (hidden if none chosen)
         [SerializeField] CountryPicker countryPicker;    // asked once per account when no country is chosen yet
         [SerializeField] TMP_Text statusText;
+        [SerializeField] TMP_Text entryInfo;             // "Entry 100  -  winner takes 300" under the coin table
         [SerializeField] GameObject busyOverlay;         // "Connecting..." veil that blocks taps while waiting
         [SerializeField] TMP_Text busyText;
         [SerializeField] GameObject joinModal;
@@ -64,8 +65,8 @@ namespace Ludo.Online
             }
             size =Mathf.Clamp(PlayerPrefs.GetInt(SizeKey, 2), RoomService.MinSize, RoomService.MaxSize);
             RefreshSize();
-            fee = PlayerPrefs.GetInt(FeeKey, 0);
-            if (!Ludo.Core.CoinTables.IsFee(fee)) fee = 0;
+            fee = PlayerPrefs.GetInt(FeeKey, Ludo.Core.CoinTables.DefaultFee);
+            if (System.Array.IndexOf(Ludo.Core.CoinTables.OnlineFees, fee) < 0) fee = Ludo.Core.CoinTables.DefaultFee;   // online tables are never free
             RefreshFee();
             joinModal.SetActive(false);
             busyOverlay.SetActive(false);
@@ -133,28 +134,37 @@ namespace Ludo.Online
                 if (sizeLabels != null && i < sizeLabels.Length)
                     sizeLabels[i].color = on ? Color.white : new Color(0.10f, 0.16f, 0.35f, locked ? 0.45f : 1f);
             }
+            RefreshEntryInfo();
         }
 
         /// <summary>The coin table chips (index into CoinTables.Fees).</summary>
         public void SetFee(int index)
         {
-            var fees = Ludo.Core.CoinTables.Fees;
+            var fees = Ludo.Core.CoinTables.OnlineFees;
             fee = fees[Mathf.Clamp(index, 0, fees.Length - 1)];
             PlayerPrefs.SetInt(FeeKey, fee);
             PlayerPrefs.Save();
             RefreshFee();
         }
 
+        void RefreshEntryInfo()
+        {
+            if (entryInfo == null) return;
+            int seats = TableSize;
+            entryInfo.text = "Entry " + fee.ToString("N0") + "  ·  winner takes " + Ludo.Core.CoinTables.Prize(fee, seats).ToString("N0") + "  ·  " + seats + " players";
+        }
+
         void RefreshFee()
         {
             if (feeChips == null) return;
-            var fees = Ludo.Core.CoinTables.Fees;
+            var fees = Ludo.Core.CoinTables.OnlineFees;
             for (int i = 0; i < feeChips.Length && i < fees.Length; i++)
             {
                 bool on = fees[i] == fee;
                 feeChips[i].color = on ? new Color(1f, 0.82f, 0.15f) : ChipOff;
                 if (feeLabels != null && i < feeLabels.Length) feeLabels[i].color = new Color(0.10f, 0.16f, 0.35f);
             }
+            RefreshEntryInfo();
         }
 
         public void OpenDaily() { if (daily != null) daily.Open(); }
@@ -259,9 +269,15 @@ namespace Ludo.Online
             QuickMatchScreen.PendingSize = TableSize;
             QuickMatchScreen.PendingMode = ModePicker.Current;
             QuickMatchScreen.PendingFee = fee;
-            if (fee > 0 && StatsService.Loaded && !Ludo.Core.CoinTables.CanAfford(StatsService.Mine.coins, fee))
+            if (!StatsService.Loaded)
             {
-                statusText.text = "Not enough coins for the " + Ludo.Core.CoinTables.Label(fee) + " table. Claim your daily reward or pick a smaller table.";
+                statusText.text = "Loading your coins... try again in a moment.";
+                statusText.color = new Color(1f, 0.85f, 0.6f);
+                return;
+            }
+            if (!Ludo.Core.CoinTables.CanAfford(StatsService.Mine.coins, fee))
+            {
+                statusText.text = "You need " + fee.ToString("N0") + " coins to sit at this table (you have " + StatsService.Mine.coins.ToString("N0") + "). Open the free chest, claim your daily reward or pick a smaller table.";
                 statusText.color = new Color(1f, 0.75f, 0.7f);
                 return;
             }

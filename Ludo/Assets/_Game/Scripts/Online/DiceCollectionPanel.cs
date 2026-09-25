@@ -84,9 +84,10 @@ namespace Ludo.Online
         /// <summary>The design's own "5" face (atlas cell 4: column 0 of the lower row) as its picture in the list.</summary>
         static void ShowFace(RawImage image, string id)
         {
-            var faces = DiceSkinLibrary.Faces(id);
+            var icon = DiceSkinLibrary.Icon(id);
+            var faces = icon != null ? icon : DiceSkinLibrary.Faces(id);
             image.texture = faces;
-            image.uvRect = new Rect(0f, 0f, 0.25f, 0.5f);
+            image.uvRect = icon != null ? new Rect(0f, 0f, 1f, 1f) : new Rect(0f, 0f, 0.25f, 0.5f);
             image.enabled = faces != null;
         }
 

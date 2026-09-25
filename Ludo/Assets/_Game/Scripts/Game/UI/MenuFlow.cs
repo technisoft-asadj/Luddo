@@ -181,5 +181,43 @@ namespace Ludo.Game
             for (int i = 0; i < opponentButtons.Length; i++)
                 opponentButtons[i].color = i + 1 == shown ? selectedColor : locked ? Color.Lerp(normalColor, Color.grey, 0.35f) : normalColor;
         }
+
+        // ---------- Select Mode: every row leads somewhere ----------
+
+        [SerializeField] int playHowScreen = 17;
+        [SerializeField] int privateRoomScreen = 18;
+
+        /// <summary>A rule row (Classic, Master, Blitz, Team Up): remember the rules, then ask how to play them.</summary>
+        public void ChooseRule(int mode)
+        {
+            ModePicker.Current = (GameMode)mode;
+            PlayHowScreen.Heading = "";
+            PlayHowScreen.Size = 0;
+            router.Show(playHowScreen);
+        }
+
+        /// <summary>The 1 vs 1 and 4 Player rows: the table size decides, the rules stay as chosen.</summary>
+        public void ChooseTable(int players)
+        {
+            if (players == 2 && GameSession.NeedsFourPlayers(ModePicker.Current)) ModePicker.Current = GameMode.Classic;   // Team Up cannot be 1 vs 1
+            PlayHowScreen.Heading = players == 2 ? "1 vs 1" : "4 Player";
+            PlayHowScreen.Size = players;
+            router.Show(playHowScreen);
+        }
+
+        int ChosenSize => PlayHowScreen.Size > 0 ? PlayHowScreen.Size : GameSession.NeedsFourPlayers(ModePicker.Current) ? 4 : 2;
+
+        public void PlayHowOnline() => PlayOnlineAtSize(ChosenSize);
+
+        public void PlayHowFriends()
+        {
+            PlayerPrefs.SetInt("ludo.online.size", Mathf.Clamp(ChosenSize, 2, 4));
+            PlayerPrefs.Save();
+            OpenOnlineScreen(privateRoomScreen);
+        }
+
+        public void PlayHowAi() => ChooseVsComputer();
+
+        public void PlayHowLocal() => ChooseLocal(ChosenSize);
     }
 }

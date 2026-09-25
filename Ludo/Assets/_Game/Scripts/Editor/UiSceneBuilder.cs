@@ -61,7 +61,7 @@ namespace Ludo.EditorTools
         }
 
         // screen numbers (must match the buttons and MenuFlow)
-        const int Splash = 0, Main = 1, Mode = 2, Players = 3, Difficulty = 4, Settings = 5, HowTo = 6, Credits = 7, Online = 8, Room = 9, Friends = 10, Account = 11, Leaderboards = 12, Profile = 13, Welcome = 14, QuickMatch = 15, Events = 16;
+        const int Splash = 0, Main = 1, Mode = 2, Players = 3, Difficulty = 4, Settings = 5, HowTo = 6, Credits = 7, Online = 8, Room = 9, Friends = 10, Account = 11, Leaderboards = 12, Profile = 13, Welcome = 14, QuickMatch = 15, Events = 16, PlayHow = 17, PrivateRoom = 18, Tournaments = 19;
 
         // ==================================================================================================
         //  MENU SCENE
@@ -86,7 +86,7 @@ namespace Ludo.EditorTools
             var router = systems.AddComponent<ScreenRouter>();
             var flow = systems.AddComponent<MenuFlow>();
 
-            var screens = new RectTransform[17];
+            var screens = new RectTransform[20];
             // the three reward pop-ups live above every screen, and both the main menu and Play Online open them,
             // so they are built before either of those screens rather than owned by one of them
             BuildDailyReward(root, out var dailyPanel);
@@ -113,6 +113,9 @@ namespace Ludo.EditorTools
             screens[Events] = BuildEvents(safe, router, dailyPanel, chestPanel, onlineMenu);
             screens[Welcome] = BuildWelcome(safe, router);
             screens[QuickMatch] = BuildQuickMatch(safe, router);
+            screens[PlayHow] = BuildPlayHow(safe, router, flow);
+            screens[PrivateRoom] = BuildPrivateRoom(safe, router, flow);
+            screens[Tournaments] = BuildTournaments(safe, router, flow);
             // (the old Select Mode screen had a single "Play Online" card wired here; the rebuilt screen sends each of its
             // online rows through MenuFlow.OpenOnlineScreen instead, which uses the same login gate)
             var inviteModal = BuildInviteModal(root, router);
@@ -147,6 +150,8 @@ namespace Ludo.EditorTools
             fo.FindProperty("router").objectReferenceValue = router;
             fo.FindProperty("playerSelectScreen").intValue = Players;
             fo.FindProperty("difficultyScreen").intValue = Difficulty;
+            fo.FindProperty("playHowScreen").intValue = PlayHow;
+            fo.FindProperty("privateRoomScreen").intValue = PrivateRoom;
             fo.FindProperty("profileEditor").objectReferenceValue = profileEditor;
             SetObjects(fo.FindProperty("playerRows"), rows);
             SetObjects(fo.FindProperty("playerRowNames"), rowNames);
@@ -265,14 +270,14 @@ namespace Ludo.EditorTools
 
             var badge = NewRect("Badge", root);
             At(badge, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), Vector2.zero, new Vector2(size, size));
-            var badgeImg = AddImage(badge, Round(), accent, true, 0.5f);
+            var badgeImg = AddImage(badge, Round(), new Color(0.04f, 0.10f, 0.34f, 0.92f), true, 0.5f);   // dark tile, coloured art (as the reference rails)
             Depth(badgeImg, Color.Lerp(accent, Color.black, 0.45f), 8f);
             var button = badge.gameObject.AddComponent<Button>();
             button.targetGraphic = badgeImg; button.transition = Selectable.Transition.None;
             AddButtonFx(badge.gameObject, false);
 
             var ic = NewRect("Icon", badge);
-            At(ic, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 2f), new Vector2(size * 0.56f, size * 0.56f));
+            At(ic, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 2f), new Vector2(size * 0.74f, size * 0.74f));
             var icImg = AddImage(ic, icon, Color.white); icImg.raycastTarget = false; icImg.preserveAspect = true;
 
             var caps = AddText(root, "Caption", caption, 34, Color.white, TextAlignmentOptions.Center, true);
@@ -416,10 +421,10 @@ namespace Ludo.EditorTools
         /// carries an ad banner down there, and the ads policy forbids putting tappable UI against it.
         /// </summary>
         static void NavBar(RectTransform parent, ScreenRouter router, MenuFlow flow, int activeIndex,
-            int friendsScreen, int boardsScreen, int profileScreen)
+            int friendsScreen, int boardsScreen, int profileScreen, float lift = 40f)
         {
             var bar = NewRect("NavBar", parent);
-            At(bar, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 196f), new Vector2(1000f, 152f));
+            At(bar, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, lift), new Vector2(1000f, 152f));
             var body = AddImage(bar, Round(), new Color(0.05f, 0.12f, 0.34f, 0.95f), true, 0.55f);
             body.raycastTarget = false;
             Depth(body, new Color(0.02f, 0.06f, 0.22f), 8f, 0f);
@@ -524,13 +529,13 @@ namespace Ludo.EditorTools
 
             // ---- the rails either side of the logo ----
             var rewards = RailButton(s, "RailRewards", new Vector2(0f, 1f), new Vector2(46f, -282f),
-                Ikon("gift"), "Rewards", new Color(0.93f, 0.26f, 0.32f), out var rewardsDot);
+                Ikon("gift_color"), "Rewards", new Color(0.93f, 0.26f, 0.32f), out var rewardsDot);
             OnClick(rewards, daily.Open);
             var chestRail = RailButton(s, "RailChest", new Vector2(1f, 1f), new Vector2(-46f, -282f),
-                Load(Generated + "chest_white.png"), "Chest", new Color(0.66f, 0.42f, 0.20f), out var chestDot);
+                Ikon("chest_color"), "Chest", new Color(0.80f, 0.52f, 0.20f), out var chestDot);
             OnClick(chestRail, chest.Open);
             var eventsRail = RailButton(s, "RailEvents", new Vector2(0f, 1f), new Vector2(46f, -486f),
-                Ikon("calendar"), "Events", new Color(0.55f, 0.28f, 0.86f), out var eventsDot);
+                Ikon("calendar_color"), "Events", new Color(0.60f, 0.34f, 0.90f), out var eventsDot);
             OnClickInt(eventsRail, router.Show, Events);
             eventsDot.SetActive(false);                      // the Events screen shows its own state; no dot to guess at here
 
@@ -564,13 +569,19 @@ namespace Ludo.EditorTools
             passDot.SetActive(false); boardsDot.SetActive(false); diceDot.SetActive(false); moreDot.SetActive(false);
 
             // ---- daily rewards banner ----
-            var banner = HeadlineCard(s, "CardDailyRewards", -1344f, Ikon("calendar"), "Daily Rewards",
+            var banner = HeadlineCard(s, "CardDailyRewards", -1344f, Ikon("chest_color"), "Daily Rewards",
                 "Claim your free rewards!",
                 new Color(0.44f, 0.24f, 0.80f), new Color(0.26f, 0.12f, 0.52f),
                 Color.white, new Color(0.88f, 0.84f, 1f), new Color(0.95f, 0.72f, 0.20f));
             OnClick(banner, daily.Open);
 
-            NavBar(s, router, flow, 0, Friends, Leaderboards, Profile);
+            // taller phones: the buttons spread over the free height (more space between them) instead of leaving a hole
+            AddSpread(s, new[] { (RectTransform)s.Find("CardPlayOnline"), (RectTransform)s.Find("CardPlayFriends"), (RectTransform)s.Find("CardPlayAi"),
+                    (RectTransform)s.Find("TilePassPlay"), (RectTransform)s.Find("TileLeaderboards"), (RectTransform)s.Find("TileMyDice"),
+                    (RectTransform)s.Find("TileMore"), (RectTransform)s.Find("CardDailyRewards") },
+                new[] { 0.08f, 0.24f, 0.24f, 0.42f, 0.42f, 0.42f, 0.42f, 0.62f });
+
+            NavBar(s, router, flow, 0, Friends, Leaderboards, Profile, 196f);      // the only screen with an ad banner under it
 
             // the red dots are driven by the same checks the online menu uses
             var dots = s.gameObject.AddComponent<MenuAlertDots>();
@@ -590,7 +601,7 @@ namespace Ludo.EditorTools
             string players, Color face, Color accent, out GameObject ring)
         {
             var rt = NewRect(name, parent);
-            At(rt, TopCenter, TopCenter, new Vector2(0f, y), new Vector2(980f, 152f));
+            At(rt, TopCenter, TopCenter, new Vector2(0f, y), new Vector2(980f, 170f));
             var img = AddImage(rt, Round(), face, true, 0.42f);
             Depth(img, Color.Lerp(accent, Color.black, 0.35f), 9f);
             var button = rt.gameObject.AddComponent<Button>();
@@ -604,7 +615,7 @@ namespace Ludo.EditorTools
             ring.SetActive(false);
 
             var badge = NewRect("IconBadge", rt);
-            At(badge, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(20f, 0f), new Vector2(112f, 112f));
+            At(badge, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(22f, 0f), new Vector2(124f, 124f));
             var badgeImg = AddImage(badge, Round(), accent, true, 0.6f); badgeImg.raycastTarget = false;
             Depth(badgeImg, Color.Lerp(accent, Color.black, 0.45f), 6f, 0f);
             var ic = NewRect("Icon", badge);
@@ -613,19 +624,19 @@ namespace Ludo.EditorTools
 
             var dark = Color.Lerp(accent, new Color(0.04f, 0.08f, 0.22f), 0.68f);
             var t = AddText(rt, "Title", title, 50, dark, TextAlignmentOptions.Left);
-            At(t.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(150f, -12f), new Vector2(660f, 60f));
+            At(t.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(158f, -8f), new Vector2(660f, 58f));
             t.enableAutoSizing = true; t.fontSizeMin = 30f; t.fontSizeMax = 50f;
             t.raycastTarget = false;
             var b = AddText(rt, "Blurb", blurb, 34, Color.Lerp(dark, Color.white, 0.25f), TextAlignmentOptions.Left);
-            At(b.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(150f, -68f), new Vector2(680f, 44f));
+            At(b.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(158f, -66f), new Vector2(680f, 42f));
             b.enableAutoSizing = true; b.fontSizeMin = 22f; b.fontSizeMax = 34f;
             b.raycastTarget = false;
 
             var peopleIc = NewRect("PeopleIcon", rt);
-            At(peopleIc, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(152f, 16f), new Vector2(34f, 34f));
+            At(peopleIc, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(160f, 12f), new Vector2(34f, 34f));
             AddImage(peopleIc, Ico("person"), Color.Lerp(dark, Color.white, 0.35f)).raycastTarget = false;
             var pl = AddText(rt, "Players", players, 32, Color.Lerp(dark, Color.white, 0.25f), TextAlignmentOptions.Left);
-            At(pl.rectTransform, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(194f, 12f), new Vector2(400f, 42f));
+            At(pl.rectTransform, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(202f, 8f), new Vector2(400f, 42f));
             pl.enableAutoSizing = true; pl.fontSizeMin = 22f; pl.fontSizeMax = 32f;
             pl.raycastTarget = false;
 
@@ -651,16 +662,16 @@ namespace Ludo.EditorTools
         {
             var s = NewScreen("Screen_Mode", parent);
             Header(s, "Select Mode", router);
-            var hint = AddText(s, "Hint", "Choose your game mode", 36, new Color(1f, 1f, 1f, 0.85f), TextAlignmentOptions.Center, true);
-            At(hint.rectTransform, TopCenter, TopCenter, new Vector2(0f, -166f), new Vector2(800f, 50f));
-            hint.enableAutoSizing = true; hint.fontSizeMin = 24f; hint.fontSizeMax = 36f;
+            var hint = AddText(s, "Hint", "Choose your game mode", 38, new Color(1f, 1f, 1f, 0.9f), TextAlignmentOptions.Center, true);
+            At(hint.rectTransform, TopCenter, TopCenter, new Vector2(0f, -160f), new Vector2(800f, 50f));
+            hint.enableAutoSizing = true; hint.fontSizeMin = 24f; hint.fontSizeMax = 38f;
 
-            const float top = -238f, step = 162f;
+            const float top = -226f, step = 180f;
             var rings = new GameObject[4];
 
-            var classic = ModeRow(s, "RowClassic", top, Load(Generated + "dice_white.png"), "Classic", "The original Ludo experience",
+            var classic = ModeRow(s, "RowClassic", top, Load("Assets/_Game/Art/Dice/Icons/dice_icon_classic.png"), "Classic", "The original Ludo experience",
                 "2 - 4 Players", new Color(1f, 0.93f, 0.74f), new Color(0.95f, 0.70f, 0.13f), out rings[0]);
-            var master = ModeRow(s, "RowMaster", top - step, Ikon("crown"), "Master", "Advanced rules & more strategy",
+            var master = ModeRow(s, "RowMaster", top - step, Ikon("k_crown_b"), "Master", "Advanced rules & more strategy",
                 "2 - 4 Players", new Color(0.90f, 0.85f, 1f), new Color(0.53f, 0.34f, 0.93f), out rings[1]);
             var blitz = ModeRow(s, "RowBlitz", top - step * 2f, Ico("flash_on"), "Quick / Blitz", "Fast paced, exciting matches",
                 "2 - 4 Players", new Color(0.83f, 0.97f, 0.85f), new Color(0.18f, 0.72f, 0.31f), out rings[2]);
@@ -669,13 +680,13 @@ namespace Ludo.EditorTools
 
             var oneVsOne = ModeRow(s, "RowOneVsOne", top - step * 4f, Ico("group"), "1 vs 1", "Challenge a single player",
                 "2 Players", new Color(0.83f, 0.92f, 1f), new Color(0.20f, 0.56f, 1f), out _);
-            var four = ModeRow(s, "RowFourPlayer", top - step * 5f, Icon("multiplayer"), "4 Player", "Play with 4 players online",
+            var four = ModeRow(s, "RowFourPlayer", top - step * 5f, Ikon("k_pawns"), "4 Player", "Play with 4 players online",
                 "4 Players", new Color(0.82f, 0.97f, 1f), new Color(0.13f, 0.72f, 0.85f), out _);
-            var room = ModeRow(s, "RowPrivateRoom", top - step * 6f, Ikon("house"), "Private Room", "Create or join with room code",
+            var room = ModeRow(s, "RowPrivateRoom", top - step * 6f, Ikon("k_structure_house"), "Private Room", "Create or join with room code",
                 "2 - 4 Players", new Color(0.97f, 0.85f, 1f), new Color(0.82f, 0.28f, 0.80f), out _);
             var offline = ModeRow(s, "RowOffline", top - step * 7f, Ikon("gamepad"), "Offline", "Play without internet",
                 "2 - 4 Players", new Color(0.86f, 0.92f, 1f), new Color(0.30f, 0.45f, 0.86f), out _);
-            var cups = ModeRow(s, "RowTournaments", top - step * 8f, Icon("trophy"), "Tournaments", "Compete & win rewards",
+            var cups = ModeRow(s, "RowTournaments", top - step * 8f, Ikon("k_award"), "Tournaments", "Compete & win rewards",
                 "1 - 4 Players", new Color(1f, 0.93f, 0.76f), new Color(0.93f, 0.68f, 0.10f), out _);
 
             var picker = s.gameObject.AddComponent<ModeRowHighlight>();
@@ -689,21 +700,41 @@ namespace Ludo.EditorTools
             modes.GetArrayElementAtIndex(3).intValue = (int)GameMode.TeamUp;
             po.ApplyModifiedProperties();
 
-            OnClickInt(classic, picker.Choose, (int)GameMode.Classic);
-            OnClickInt(master, picker.Choose, (int)GameMode.Master);
-            OnClickInt(blitz, picker.Choose, (int)GameMode.Blitz);
-            OnClickInt(team, picker.Choose, (int)GameMode.TeamUp);
-
-            OnClickInt(oneVsOne, flow.PlayOnlineAtSize, 2);
-            OnClickInt(four, flow.PlayOnlineAtSize, 4);
-            OnClickInt(room, flow.OpenOnlineScreen, Online);
+            // every row leads somewhere: the four rule rows and the two table rows to "how do you want to play it",
+            // the others straight to their own screens
+            OnClickInt(classic, flow.ChooseRule, (int)GameMode.Classic);
+            OnClickInt(master, flow.ChooseRule, (int)GameMode.Master);
+            OnClickInt(blitz, flow.ChooseRule, (int)GameMode.Blitz);
+            OnClickInt(team, flow.ChooseRule, (int)GameMode.TeamUp);
+            OnClickInt(oneVsOne, flow.ChooseTable, 2);
+            OnClickInt(four, flow.ChooseTable, 4);
+            OnClickInt(room, flow.OpenOnlineScreen, PrivateRoom);
             OnClickInt(offline, flow.ChooseLocal, 4);
-            OnClickInt(cups, flow.OpenWeeklyCup, Leaderboards);
+            OnClickInt(cups, flow.OpenOnlineScreen, Tournaments);
 
-            var footer = AddText(s, "Footer", "Play  \u00b7  Win  \u00b7  Be the Champion", 34, new Color(1f, 1f, 1f, 0.7f), TextAlignmentOptions.Center);
-            At(footer.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 60f), new Vector2(900f, 50f));
+            var footer = AddText(s, "Footer", "Play  ·  Win  ·  Be the Champion", 34, new Color(1f, 1f, 1f, 0.7f), TextAlignmentOptions.Center);
+            At(footer.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 26f), new Vector2(900f, 50f));
             footer.enableAutoSizing = true; footer.fontSizeMin = 22f; footer.fontSizeMax = 34f;
+
+            // taller phones: the rows spread over the whole height instead of leaving a hole at the bottom
+            var rowRts = new RectTransform[9];
+            var weights = new float[9];
+            string[] rowNames = { "RowClassic", "RowMaster", "RowBlitz", "RowTeamUp", "RowOneVsOne", "RowFourPlayer", "RowPrivateRoom", "RowOffline", "RowTournaments" };
+            for (int i = 0; i < 9; i++) { rowRts[i] = (RectTransform)s.Find(rowNames[i]); weights[i] = i / 9f; }
+            AddSpread(s, rowRts, weights);
             return s;
+        }
+
+        /// <summary>Puts a VerticalSpread on a screen: the listed top-anchored items move down by weight x the spare height.</summary>
+        static void AddSpread(RectTransform screen, RectTransform[] items, float[] weights)
+        {
+            var spread = screen.gameObject.AddComponent<VerticalSpread>();
+            var so = new SerializedObject(spread);
+            SetObjects(so.FindProperty("items"), items);
+            var w = so.FindProperty("weights");
+            w.arraySize = weights.Length;
+            for (int i = 0; i < weights.Length; i++) w.GetArrayElementAtIndex(i).floatValue = weights[i];
+            so.ApplyModifiedProperties();
         }
 
         static RectTransform BuildPlayers(RectTransform parent, ScreenRouter router, MenuFlow flow,

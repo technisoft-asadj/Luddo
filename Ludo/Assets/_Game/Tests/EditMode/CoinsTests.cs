@@ -9,6 +9,17 @@ namespace Ludo.Tests
     public class CoinsTests
     {
         [Test]
+        public void OnlineTablesAreNeverFree()
+        {
+            foreach (var fee in CoinTables.OnlineFees) Assert.Greater(fee, 0);
+            Assert.IsTrue(Array.IndexOf(CoinTables.OnlineFees, CoinTables.DefaultFee) >= 0);
+            Assert.AreEqual(300, CoinTables.Prize(100, 4));
+            Assert.AreEqual(100, CoinTables.Prize(100, 2));
+            Assert.IsFalse(CoinTables.CanAfford(99, CoinTables.DefaultFee));
+            Assert.IsTrue(CoinTables.CanAfford(CoinTables.StarterCoins, CoinTables.DefaultFee));
+        }
+
+        [Test]
         public void WinnerTakesTheOtherEntries()
         {
             Assert.AreEqual(300, CoinTables.Result(100, 4, true));

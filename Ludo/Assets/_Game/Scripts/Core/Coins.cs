@@ -12,6 +12,15 @@ namespace Ludo.Core
         /// <summary>The entry fees a player can choose (0 = a free table).</summary>
         public static readonly int[] Fees = { 0, 100, 500, 1000, 5000 };
 
+        /// <summary>The tables online players can sit at: like Ludo Star every online match costs an entry, there is no free table.</summary>
+        public static readonly int[] OnlineFees = { 100, 500, 1000, 5000 };
+
+        /// <summary>The smallest entry a player can pick; what a saved "free" choice becomes.</summary>
+        public const int DefaultFee = 100;
+
+        /// <summary>What the winner of a table takes home, not counting their own entry.</summary>
+        public static int Prize(int fee, int players) => Math.Max(0, fee) * Math.Max(0, players - 1);
+
         /// <summary>Coins a new profile starts with.</summary>
         public const int StarterCoins = 1000;
 

@@ -109,14 +109,14 @@ namespace Ludo.EditorTools
 
             // ---- "Select Mode" panel: table size, rules and entry fee, grouped as in the reference ----
             var modePanel = NewRect("ModePanel", s);
-            At(modePanel, TopCenter, TopCenter, new Vector2(0f, -740f), new Vector2(960f, 330f));
+            At(modePanel, TopCenter, TopCenter, new Vector2(0f, -764f), new Vector2(960f, 330f));
             AddImage(modePanel, Round(), new Color(0.03f, 0.09f, 0.28f, 0.72f), true, 0.45f).raycastTarget = false;
 
             var sectionIcon = NewRect("SectionIcon", s);
-            At(sectionIcon, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(64f, -676f), new Vector2(44f, 44f));
+            At(sectionIcon, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(64f, -700f), new Vector2(44f, 44f));
             AddImage(sectionIcon, Ikon("sliders"), Color.white).raycastTarget = false;
             var sectionTitle = AddText(s, "SectionTitle", "Select Mode", 44, Color.white, TextAlignmentOptions.Left, true);
-            At(sectionTitle.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(120f, -668f), new Vector2(420f, 60f));
+            At(sectionTitle.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(120f, -692f), new Vector2(420f, 60f));
             sectionTitle.enableAutoSizing = true; sectionTitle.fontSizeMin = 28f; sectionTitle.fontSizeMax = 44f;
 
             // how many players at the table: 2, 3 or 4 (used by Ranked, Quick Match and Create Room)
@@ -138,15 +138,15 @@ namespace Ludo.EditorTools
             // the game mode for Quick Match and Create Room (Quick Match only pairs players who chose the same mode)
             BuildModePicker(modePanel, -118f, withRule: false);
 
-            // the coin table for Quick Match (entry fee; the winner takes the pot). Private rooms are always free.
-            var fees = Ludo.Core.CoinTables.Fees;
+            // the coin table for Quick Match (entry fee; the winner takes the pot; there is no free online table). Private rooms are free.
+            var fees = Ludo.Core.CoinTables.OnlineFees;
             var feeChips = new Image[fees.Length]; var feeLabels = new TMP_Text[fees.Length];
             var feeTitle = AddText(modePanel, "EntryLabel", "Entry", 36, Color.white, TextAlignmentOptions.Left, true);
             At(feeTitle.rectTransform, TopCenter, TopCenter, new Vector2(-402f, -230f), new Vector2(150f, 80f));
             for (int i = 0; i < fees.Length; i++)
             {
                 var chip = NewRect("Fee" + fees[i], modePanel);
-                At(chip, TopCenter, TopCenter, new Vector2(-232f + i * 158f, -230f), new Vector2(146f, 80f));
+                At(chip, TopCenter, TopCenter, new Vector2(-196f + i * 190f, -230f), new Vector2(176f, 80f));
                 feeChips[i] = AddImage(chip, Round(), new Color(0.93f, 0.96f, 1f), true, 0.5f);
                 Depth(feeChips[i], CardLip, 6f);
                 var chipButton = chip.gameObject.AddComponent<Button>();
@@ -170,14 +170,14 @@ namespace Ludo.EditorTools
 
             // four wide cards, as in the reference. Leaderboards and Profile live on the bottom bar, the account on the
             // header gear and the dice collection on the main menu, so nothing became unreachable by trimming this grid.
-            var create = WideCard(s, "CardCreateRoom", -238f, -1116f, Ico("group"), "Create Room", new Color(0.20f, 0.56f, 1f));
-            var join = WideCard(s, "CardJoinRoom", 238f, -1116f, Ikon("key"), "Join Room", new Color(1f, 0.62f, 0.10f));
-            var friends = WideCard(s, "CardFriends", -238f, -1286f, Icon("multiplayer"), "Friends", new Color(0.60f, 0.36f, 0.95f));
-            var cup = WideCard(s, "CardTournaments", 238f, -1286f, Icon("trophy"), "Tournaments", new Color(0.93f, 0.20f, 0.36f));
+            var create = WideCard(s, "CardCreateRoom", -238f, -1160f, Ico("group"), "Create Room", new Color(0.20f, 0.56f, 1f));
+            var join = WideCard(s, "CardJoinRoom", 238f, -1160f, Ikon("key"), "Join Room", new Color(1f, 0.62f, 0.10f));
+            var friends = WideCard(s, "CardFriends", -238f, -1330f, Icon("multiplayer"), "Friends", new Color(0.60f, 0.36f, 0.95f));
+            var cup = WideCard(s, "CardTournaments", 238f, -1330f, Icon("trophy"), "Tournaments", new Color(0.93f, 0.20f, 0.36f));
             OnClick(create, menu.CreateRoom);
             OnClick(join, menu.OpenJoin);
             OnClickInt(friends, router.Show, Friends);
-            OnClick(cup, menu.OpenTournament);
+            OnClickInt(cup, router.Show, Tournaments);
 
             var shieldIc = NewRect("SafetyIcon", s);
             At(shieldIc, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(-374f, 396f), new Vector2(32f, 32f));
@@ -185,6 +185,16 @@ namespace Ludo.EditorTools
             var note = AddText(s, "SafetyNote", "Play fair  \u00b7  Mute, block or report players anytime.", 34, new Color(1f, 1f, 1f, 0.72f), TextAlignmentOptions.Center);
             At(note.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(22f, 382f), new Vector2(860f, 56f));
             note.enableAutoSizing = true; note.fontSizeMin = 22f; note.fontSizeMax = 34f;
+
+            // what the chosen table costs and pays: "Entry 100 . winner takes 100 . 2 players"
+            var entryInfo = AddText(s, "EntryInfo", "", 36, new Color(1f, 0.92f, 0.55f), TextAlignmentOptions.Center, true);
+            At(entryInfo.rectTransform, TopCenter, TopCenter, new Vector2(0f, -1102f), new Vector2(940f, 50f));
+            entryInfo.enableAutoSizing = true; entryInfo.fontSizeMin = 22f; entryInfo.fontSizeMax = 36f;
+
+            AddSpread(s, new[] { (RectTransform)s.Find("CardQuickMatch"), (RectTransform)s.Find("SectionIcon"), (RectTransform)s.Find("SectionTitle"),
+                    modePanel, entryInfo.rectTransform, (RectTransform)s.Find("CardCreateRoom"), (RectTransform)s.Find("CardJoinRoom"),
+                    (RectTransform)s.Find("CardFriends"), (RectTransform)s.Find("CardTournaments") },
+                new[] { 0.06f, 0.10f, 0.10f, 0.10f, 0.13f, 0.20f, 0.20f, 0.30f, 0.30f });
 
             NavBar(s, router, null, 0, Friends, Leaderboards, Profile);
 
@@ -239,6 +249,7 @@ namespace Ludo.EditorTools
             so.FindProperty("profileCoins").objectReferenceValue = cardCoins;
             so.FindProperty("profileAvatar").objectReferenceValue = cardPicImg;
             so.FindProperty("profileFlag").objectReferenceValue = cardFlag;
+            so.FindProperty("entryInfo").objectReferenceValue = entryInfo;
             SetObjects(so.FindProperty("feeChips"), feeChips);
             SetObjects(so.FindProperty("feeLabels"), feeLabels);
             so.FindProperty("daily").objectReferenceValue = dailyPanel;
@@ -1143,8 +1154,8 @@ namespace Ludo.EditorTools
                 At(face, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(108f, 108f));
                 var raw = face.gameObject.AddComponent<RawImage>();
                 raw.raycastTarget = false;
-                raw.texture = Ludo.Game.DiceSkinLibrary.Faces(skins[i].Id);
-                raw.uvRect = new Rect(0f, 0f, 0.25f, 0.5f);      // the design's own "5" face out of its atlas
+                raw.texture = Ludo.Game.DiceSkinLibrary.Icon(skins[i].Id) ?? Ludo.Game.DiceSkinLibrary.Faces(skins[i].Id);
+                raw.uvRect = new Rect(0f, 0f, 1f, 1f);           // the rendered 3D dice
             }
 
             // the rest of the numbers, three across
@@ -1226,13 +1237,13 @@ namespace Ludo.EditorTools
                 new Color(0.55f, 0.28f, 0.86f), new Color(0.30f, 0.12f, 0.54f), out var dailyState, out var dailyDot);
             OnClick(daily, dailyPanel.Open);
 
-            var chest = EventCard(s, "CardChest", -486f, Load(Generated + "chest_white.png"), "Free Chest", "Open",
+            var chest = EventCard(s, "CardChest", -486f, Ikon("chest_color"), "Free Chest", "Open",
                 new Color(0.72f, 0.45f, 0.18f), new Color(0.42f, 0.24f, 0.07f), out var chestState, out var chestDot);
             OnClick(chest, chestPanel.Open);
 
             var cup = EventCard(s, "CardWeeklyCup", -722f, Icon("trophy"), "Weekly Cup", "View",
                 new Color(0.93f, 0.55f, 0.12f), new Color(0.60f, 0.30f, 0.03f), out var cupState, out var cupDot);
-            OnClick(cup, menu.OpenTournament);
+            OnClickInt(cup, router.Show, Tournaments);
             cupDot.SetActive(false);
 
             var note = AddText(s, "Note", "More events are on the way. Everything here is free - coins can never be bought.",

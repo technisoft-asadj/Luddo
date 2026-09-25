@@ -42,7 +42,7 @@ namespace Ludo.EditorTools
                 string path = skin.Id == Ludo.Core.DiceSkins.Default ? TexturePath : Folder + "dice_faces_" + skin.Id + ".png";
                 var texture = ImportFaces(path);
                 if (texture == null) { Debug.LogWarning("[Ludo] Dice design '" + skin.Id + "' has no picture at " + path + " (run Prototype/make_dice_texture.py)."); continue; }
-                entries.Add(new DiceSkinLibrary.Entry { id = skin.Id, faces = texture });
+                entries.Add(new DiceSkinLibrary.Entry { id = skin.Id, faces = texture, icon = AssetDatabase.LoadAssetAtPath<Texture2D>(DiceIcons.Folder + "dice_icon_" + skin.Id + ".png") });
             }
             library.skins = entries.ToArray();
             EditorUtility.SetDirty(library);

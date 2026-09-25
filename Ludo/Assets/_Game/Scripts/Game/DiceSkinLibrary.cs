@@ -17,6 +17,7 @@ namespace Ludo.Game
         {
             public string id;
             public Texture2D faces;
+            public Texture2D icon;          // the 3D model rendered as a picture (Ludo > Render Dice Icons), for the menus
         }
 
         public Entry[] skins = new Entry[0];
@@ -40,6 +41,15 @@ namespace Ludo.Game
                 if (s.id == DiceSkins.Default) fallback = s.faces;
             }
             return fallback;
+        }
+
+        /// <summary>The menu picture of a design (its 3D dice), or null if none was rendered yet.</summary>
+        public static Texture2D Icon(string id)
+        {
+            var lib = Instance;
+            if (lib == null) return null;
+            foreach (var s in lib.skins) if (s.id == id) return s.icon;
+            return null;
         }
 
         /// <summary>The atlas of the design this phone has chosen.</summary>
