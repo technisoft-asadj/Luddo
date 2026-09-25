@@ -21,6 +21,14 @@ namespace Ludo.Game
             Vector3.down       // 6
         };
 
+        /// <summary>The direction the picture's top points to on the given face (the same 'v' axis Build() uses).</summary>
+        public static Vector3 FaceUp(int value)
+        {
+            Vector3 n = FaceNormal[value - 1];
+            Vector3 u = Mathf.Abs(n.x) > 0.5f ? Vector3.forward : Vector3.right;
+            return Vector3.Cross(n, u);
+        }
+
         const int Columns = 4, Rows = 2;
         const int PlainCell = 6;
 

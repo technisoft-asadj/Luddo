@@ -709,7 +709,7 @@ namespace Ludo.EditorTools
             OnClickInt(oneVsOne, flow.ChooseTable, 2);
             OnClickInt(four, flow.ChooseTable, 4);
             OnClickInt(room, flow.OpenOnlineScreen, PrivateRoom);
-            OnClickInt(offline, flow.ChooseLocal, 4);
+            OnClick(offline, flow.ChooseOffline);
             OnClickInt(cups, flow.OpenOnlineScreen, Tournaments);
 
             var footer = AddText(s, "Footer", "Play  ·  Win  ·  Be the Champion", 34, new Color(1f, 1f, 1f, 0.7f), TextAlignmentOptions.Center);

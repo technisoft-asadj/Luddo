@@ -24,6 +24,28 @@ namespace Ludo.Game
 
         void OnEnable() => Apply(true);
 
+        /// <summary>Where item i sits before any spreading.</summary>
+        public Vector2 Home(int i)
+        {
+            if (home == null) Capture();
+            return home[i];
+        }
+
+        public float Weight(int i) => i < weights.Length ? weights[i] : 0f;
+
+        public void SetWeight(int i, float w)
+        {
+            if (i < weights.Length) weights[i] = w;
+        }
+
+        /// <summary>Move item i's starting position (the screen re-arranged its rows); the spread is applied again from there.</summary>
+        public void SetHome(int i, Vector2 position)
+        {
+            if (home == null) Capture();
+            home[i] = position;
+            Apply(true);
+        }
+
         void LateUpdate() => Apply(false);
 
         void Apply(bool force)

@@ -15,6 +15,7 @@ namespace Ludo.Game
     public sealed class MenuFlow : MonoBehaviour
     {
         [SerializeField] ScreenRouter router;
+        [SerializeField] int mainScreen = 1;
         [SerializeField] int playerSelectScreen = 3;
         [SerializeField] int difficultyScreen = 4;
         [SerializeField] int onlineScreen = 8;
@@ -48,18 +49,27 @@ namespace Ludo.Game
         void OnEnable()
         {
             GameSettings.Changed += RefreshPlayerRows;
-            ModePicker.Changed += RefreshForMode;          // Team Up fixes the seat count: keep the chips honest
+            ModePicker.Changed += RefreshForMode;
+            if (router != null) router.ScreenShown += OnScreenShown;          // Team Up fixes the seat count: keep the chips honest
         }
 
         void OnDisable()
         {
             GameSettings.Changed -= RefreshPlayerRows;
             ModePicker.Changed -= RefreshForMode;
+            if (router != null) router.ScreenShown -= OnScreenShown;
+        }
+
+        /// <summary>Back on the main menu nothing from Select Mode applies any more.</summary>
+        void OnScreenShown(int screen)
+        {
+            if (screen == mainScreen) TableChoice.Reset();
         }
 
         void RefreshForMode()
         {
-            if (GameSession.NeedsFourPlayers(ModePicker.Current)) { players = 4; opponents = 3; }
+            int fixedSeats = TableChoice.Seats(ModePicker.Current);
+            if (fixedSeats > 0) { players = fixedSeats; opponents = fixedSeats - 1; }
             RefreshPlayerRows();
             RefreshDifficulty();
         }
@@ -68,7 +78,8 @@ namespace Ludo.Game
 
         public void ChooseLocal(int count)
         {
-            players = GameSession.NeedsFourPlayers(ModePicker.Current) ? 4 : count;   // Team Up is 2 vs 2
+            int fixedSeats = TableChoice.Seats(ModePicker.Current);
+            players = fixedSeats > 0 ? fixedSeats : count;         // chosen in Select Mode (Team Up is 2 vs 2)
             RefreshPlayerRows();
             router.Show(playerSelectScreen);
         }
@@ -87,7 +98,8 @@ namespace Ludo.Game
         public void StartLocalGame()
         {
             GameSession.Mode = ModePicker.Current;                 // the seat plan below depends on the mode
-            GameSession.ConfigureLocal(GameSession.NeedsFourPlayers(GameSession.Mode) ? 4 : players);
+            int fixedSeats = TableChoice.Seats(GameSession.Mode);
+            GameSession.ConfigureLocal(fixedSeats > 0 ? fixedSeats : players);
             SceneLoader.Load(SceneLoader.Game);
         }
 
@@ -105,7 +117,13 @@ namespace Ludo.Game
 
         // ---------- against the computer ----------
 
-        public void ChooseVsComputer() => router.Show(difficultyScreen);
+        public void ChooseVsComputer()
+        {
+            int fixedSeats = TableChoice.Seats(ModePicker.Current);
+            if (fixedSeats > 0) opponents = fixedSeats - 1;
+            RefreshDifficulty();
+            router.Show(difficultyScreen);
+        }
 
         /// <summary>
         /// Open one of the online screens (Friends, Leaderboards, Profile) from the main menu's bottom bar. Every one of
@@ -156,14 +174,16 @@ namespace Ludo.Game
 
         public void SetOpponents(int count)
         {
-            opponents = GameSession.NeedsFourPlayers(ModePicker.Current) ? 3 : Mathf.Clamp(count, 1, 3);
+            int fixedSeats = TableChoice.Seats(ModePicker.Current);
+            opponents = fixedSeats > 0 ? fixedSeats - 1 : Mathf.Clamp(count, 1, 3);
             RefreshDifficulty();
         }
 
         public void StartComputerGame()
         {
             GameSession.Mode = ModePicker.Current;                 // Team Up seats a computer partner next to the player
-            GameSession.ConfigureVsAi(GameSession.NeedsFourPlayers(GameSession.Mode) ? 3 : opponents, level);
+            int fixedSeats = TableChoice.Seats(GameSession.Mode);
+            GameSession.ConfigureVsAi(fixedSeats > 0 ? fixedSeats - 1 : opponents, level);
             SceneLoader.Load(SceneLoader.Game);
         }
 
@@ -175,11 +195,14 @@ namespace Ludo.Game
                 difficultyCards[i].color = on ? selectedColor : normalColor;
                 difficultyChecks[i].SetActive(on);
             }
-            // Team Up is 2 vs 2, so the count is fixed at three computer players and the other chips are shown greyed out
-            int shown = GameSession.NeedsFourPlayers(ModePicker.Current) ? 3 : opponents;
-            bool locked = GameSession.NeedsFourPlayers(ModePicker.Current);
+            // the seat count is already decided by Select Mode (1 vs 1, 4 Player, Team Up): show only that chip
+            int seats = TableChoice.Seats(ModePicker.Current);
+            int shown = seats > 0 ? seats - 1 : opponents;
             for (int i = 0; i < opponentButtons.Length; i++)
-                opponentButtons[i].color = i + 1 == shown ? selectedColor : locked ? Color.Lerp(normalColor, Color.grey, 0.35f) : normalColor;
+            {
+                opponentButtons[i].gameObject.SetActive(seats == 0 || i + 1 == shown);
+                opponentButtons[i].color = i + 1 == shown ? selectedColor : normalColor;
+            }
         }
 
         // ---------- Select Mode: every row leads somewhere ----------
@@ -191,8 +214,10 @@ namespace Ludo.Game
         public void ChooseRule(int mode)
         {
             ModePicker.Current = (GameMode)mode;
+            TableChoice.Reset();
+            TableChoice.ModeLocked = true;
             PlayHowScreen.Heading = "";
-            PlayHowScreen.Size = 0;
+            PlayHowScreen.OfflineOnly = false;
             router.Show(playHowScreen);
         }
 
@@ -200,12 +225,28 @@ namespace Ludo.Game
         public void ChooseTable(int players)
         {
             if (players == 2 && GameSession.NeedsFourPlayers(ModePicker.Current)) ModePicker.Current = GameMode.Classic;   // Team Up cannot be 1 vs 1
+            TableChoice.Reset();
+            TableChoice.ModeLocked = true;
+            TableChoice.SizeFixed = true;
+            TableChoice.Players = players;
             PlayHowScreen.Heading = players == 2 ? "1 vs 1" : "4 Player";
-            PlayHowScreen.Size = players;
+            PlayHowScreen.OfflineOnly = false;
             router.Show(playHowScreen);
         }
 
-        int ChosenSize => PlayHowScreen.Size > 0 ? PlayHowScreen.Size : GameSession.NeedsFourPlayers(ModePicker.Current) ? 4 : 2;
+        /// <summary>The Offline row: only the two ways that need no internet, with the player count chosen on the way.</summary>
+        public void ChooseOffline()
+        {
+            TableChoice.Reset();
+            PlayHowScreen.Heading = "Offline";
+            PlayHowScreen.OfflineOnly = true;
+            router.Show(playHowScreen);
+        }
+
+        int ChosenSize
+        {
+            get { int seats = TableChoice.Seats(ModePicker.Current); return seats > 0 ? seats : 2; }
+        }
 
         public void PlayHowOnline() => PlayOnlineAtSize(ChosenSize);
 

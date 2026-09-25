@@ -113,7 +113,7 @@ namespace Ludo.Online
         /// <summary>The 2 / 3 / 4 player buttons. Team Up is 2 vs 2, so its table is always four.</summary>
         public void SetSize(int players)
         {
-            if (GameSession.NeedsFourPlayers(ModePicker.Current)) { RefreshSize(); return; }
+            if (TableChoice.Seats(ModePicker.Current) > 0) { RefreshSize(); return; }
             size = Mathf.Clamp(players, RoomService.MinSize, RoomService.MaxSize);
             PlayerPrefs.SetInt(SizeKey, size);
             PlayerPrefs.Save();
@@ -121,12 +121,15 @@ namespace Ludo.Online
         }
 
         /// <summary>The table size the next room / search really uses (Team Up forces four seats).</summary>
-        int TableSize => GameSession.NeedsFourPlayers(ModePicker.Current) ? RoomService.MaxSize : size;
+        int TableSize => TableChoice.Seats(ModePicker.Current) > 0 ? TableChoice.Seats(ModePicker.Current) : size;
+        ChipRow sizeRow;
 
         void RefreshSize()
         {
             if (sizeChips == null) return;
-            bool locked = GameSession.NeedsFourPlayers(ModePicker.Current);
+            bool locked = TableChoice.Seats(ModePicker.Current) > 0;
+            if (sizeRow == null) sizeRow = new ChipRow(sizeChips);
+            sizeRow.Show(locked ? TableSize - RoomService.MinSize : -1);
             for (int i = 0; i < sizeChips.Length; i++)
             {
                 bool on = i + RoomService.MinSize == TableSize;

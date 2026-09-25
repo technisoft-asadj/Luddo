@@ -41,6 +41,8 @@ namespace Ludo.Game
             }
         }
 
+        ChipRow row;
+
         void OnEnable()
         {
             Changed += Refresh;
@@ -52,13 +54,15 @@ namespace Ludo.Game
         /// <summary>A chip was tapped (wired with the mode number).</summary>
         public void Choose(int mode)
         {
-            if (mode < 0 || mode > (int)GameMode.TeamUp) return;
+            if (mode < 0 || mode > (int)GameMode.TeamUp || TableChoice.ModeLocked) return;
             Current = (GameMode)mode;
         }
 
         void Refresh()
         {
             var mode = Current;
+            if (row == null) row = new ChipRow(chips);
+            row.Show(TableChoice.ModeLocked ? (int)mode : -1);      // rules chosen in Select Mode: show them, not options
             for (int i = 0; i < chips.Length; i++)
             {
                 bool on = i == (int)mode;

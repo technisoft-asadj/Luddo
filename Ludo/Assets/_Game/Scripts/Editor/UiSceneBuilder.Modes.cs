@@ -32,10 +32,30 @@ namespace Ludo.EditorTools
             so.ApplyModifiedProperties();
 
             var heading = AddText(s, "Heading", "How do you want to play?", 46, Color.white, TextAlignmentOptions.Center, true);
-            At(heading.rectTransform, TopCenter, TopCenter, new Vector2(0f, -300f), new Vector2(940f, 64f));
+            At(heading.rectTransform, TopCenter, TopCenter, new Vector2(0f, -522f), new Vector2(940f, 64f));
             heading.enableAutoSizing = true; heading.fontSizeMin = 28f; heading.fontSizeMax = 46f;
 
-            const float top = -410f, step = 300f;
+            // how many players: three chips, or just one when the row (1 vs 1, 4 Player, Team Up) already decided
+            var playersLabel = AddText(s, "PlayersLabel", "How many players?", 40, new Color(1f, 1f, 1f, 0.9f), TextAlignmentOptions.Center, true);
+            At(playersLabel.rectTransform, TopCenter, TopCenter, new Vector2(0f, -292f), new Vector2(940f, 56f));
+            playersLabel.enableAutoSizing = true; playersLabel.fontSizeMin = 24f; playersLabel.fontSizeMax = 40f;
+            var chips = new Image[3]; var chipLabels = new TMP_Text[3];
+            for (int i = 0; i < 3; i++)
+            {
+                var chip = NewRect("Players" + (i + 2), s);
+                At(chip, TopCenter, TopCenter, new Vector2((i - 1) * 306f, -362f), new Vector2(290f, 92f));
+                chips[i] = AddImage(chip, Round(), new Color(0.93f, 0.96f, 1f), true, 0.5f);
+                Depth(chips[i], CardLip, 6f);
+                var cb = chip.gameObject.AddComponent<Button>();
+                cb.targetGraphic = chips[i]; cb.transition = Selectable.Transition.None;
+                AddButtonFx(chip.gameObject, false);
+                chipLabels[i] = AddText(chip, "Label", (i + 2) + " Players", 44, Navy, TextAlignmentOptions.Center, false);
+                Stretch(chipLabels[i].rectTransform, 0f, 0f, 0f, 4f);
+                chipLabels[i].enableAutoSizing = true; chipLabels[i].fontSizeMin = 28f; chipLabels[i].fontSizeMax = 44f;
+                OnClickInt(cb, screen.SetPlayers, i + 2);
+            }
+
+            const float top = -612f, step = 285f;
             var online = ModeRow(s, "RowOnline", top, Ico("public"), "Play Online", "Real players worldwide, on a coin table",
                 "Entry 100+ coins", new Color(1f, 0.93f, 0.74f), new Color(0.95f, 0.70f, 0.13f), out _);
             var friends = ModeRow(s, "RowFriends", top - step, Ico("person_add"), "Play with Friends", "A private room with a code",
@@ -49,8 +69,15 @@ namespace Ludo.EditorTools
             OnClick(ai, flow.PlayHowAi);
             OnClick(local, flow.PlayHowLocal);
 
-            AddSpread(s, new[] { (RectTransform)s.Find("RowOnline"), (RectTransform)s.Find("RowFriends"), (RectTransform)s.Find("RowAi"), (RectTransform)s.Find("RowPassPlay") },
-                new[] { 0.15f, 0.50f, 0.90f, 1.30f });
+            var rowRts = new[] { (RectTransform)s.Find("RowOnline"), (RectTransform)s.Find("RowFriends"), (RectTransform)s.Find("RowAi"), (RectTransform)s.Find("RowPassPlay") };
+            AddSpread(s, rowRts, new[] { 0.15f, 0.50f, 0.90f, 1.30f });
+            var so2 = new SerializedObject(screen);
+            so2.FindProperty("playersLabel").objectReferenceValue = playersLabel;
+            SetObjects(so2.FindProperty("chips"), chips);
+            SetObjects(so2.FindProperty("chipLabels"), chipLabels);
+            SetObjects(so2.FindProperty("rows"), rowRts);
+            so2.FindProperty("spread").objectReferenceValue = s.GetComponent<VerticalSpread>();
+            so2.ApplyModifiedProperties();
             return s;
         }
 

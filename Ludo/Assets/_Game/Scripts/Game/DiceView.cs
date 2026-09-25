@@ -282,8 +282,16 @@ namespace Ludo.Game
         }
 
         /// <summary>'value' facing the player (the camera looks along +Z), turned a little so two more sides show.</summary>
-        Quaternion TrayRotation(int value) =>
-            Quaternion.Euler(trayTilt) * Quaternion.FromToRotation(DiceMesh.FaceNormal[value - 1], Vector3.back);
+        Quaternion TrayRotation(int value)
+        {
+            // turn the face towards the player, then spin it about the view axis until its picture stands upright
+            // (without this the pawn on the waiting die came out upside down)
+            var face = DiceMesh.FaceNormal[value - 1];
+            var toViewer = Quaternion.FromToRotation(face, Vector3.back);
+            var picture = toViewer * DiceMesh.FaceUp(value);
+            float spin = Vector3.SignedAngle(picture, Vector3.up, Vector3.back);
+            return Quaternion.Euler(trayTilt) * Quaternion.AngleAxis(spin, Vector3.back) * toViewer;
+        }
 
         void PlaceShadow(Vector3 onBoard, float height, float size)
         {

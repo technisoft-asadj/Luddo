@@ -47,11 +47,14 @@ namespace Ludo.Online
             router.Replace(welcomeScreen);
         }
 
-        int TableSize => GameSession.NeedsFourPlayers(ModePicker.Current) ? RoomService.MaxSize : size;
+        int TableSize => TableChoice.Seats(ModePicker.Current) > 0 ? TableChoice.Seats(ModePicker.Current) : size;
+        ChipRow sizeRow;
 
         void Refresh()
         {
-            bool locked = GameSession.NeedsFourPlayers(ModePicker.Current);
+            bool locked = TableChoice.Seats(ModePicker.Current) > 0;
+            if (sizeRow == null) sizeRow = new ChipRow(sizeChips);
+            sizeRow.Show(locked ? TableSize - RoomService.MinSize : -1);
             for (int i = 0; i < sizeChips.Length; i++)
             {
                 bool on = i + RoomService.MinSize == TableSize;
@@ -63,7 +66,7 @@ namespace Ludo.Online
 
         public void SetSize(int players)
         {
-            if (GameSession.NeedsFourPlayers(ModePicker.Current)) { Refresh(); return; }
+            if (TableChoice.Seats(ModePicker.Current) > 0) { Refresh(); return; }
             size = Mathf.Clamp(players, RoomService.MinSize, RoomService.MaxSize);
             PlayerPrefs.SetInt("ludo.online.size", size);
             PlayerPrefs.Save();
