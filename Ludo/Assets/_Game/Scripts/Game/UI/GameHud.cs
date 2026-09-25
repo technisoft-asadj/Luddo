@@ -33,8 +33,9 @@ namespace Ludo.Game
         [SerializeField] Sprite[] diceFaces;            // flat dice pictures 1..6 (index 0 = one pip)
         [SerializeField] TMP_Text modeText;             // "MASTER MODE - capture an opponent before ..." (hidden in Classic)
         [SerializeField] TMP_Text countdownText;        // the 3 - 2 - 1 - GO! that opens a match
-        [SerializeField] Button undoButton;             // offline only: take back the move just played
-        [SerializeField] TMP_Text undoLabel;            // "Undo  2"
+        [SerializeField] Button autoButton;             // online only: let the game play this player's turns
+        [SerializeField] Image autoImage;
+        [SerializeField] TMP_Text autoLabel;            // "Auto: OFF" / "Auto: ON"
         [SerializeField] GameObject[] offlineOnly;      // buttons that make no sense in an online match (Play Again, Restart)
 
         [SerializeField] TurnTimerBar timer;            // online: time left for the current turn
@@ -213,28 +214,30 @@ namespace Ludo.Game
             return v;
         }
 
-        // ---------- undo ----------
+        // ---------- auto play ----------
 
-        bool undoTapped;
+        /// <summary>True while the player has handed their turns to auto play (rolls and moves for them).</summary>
+        public bool AutoOn { get; private set; }
 
-        /// <summary>Show or hide the Undo button, with how many takebacks are left in this match.</summary>
-        public void SetUndo(bool show, int left)
+        /// <summary>Show the Auto button (online games) and switch auto play off, e.g. for a new match.</summary>
+        public void SetAutoAvailable(bool available)
         {
-            if (undoButton == null) return;
-            undoTapped = false;
-            undoButton.gameObject.SetActive(show && left > 0);
-            if (undoLabel != null) undoLabel.text = "Undo  " + left;
+            AutoOn = false;
+            if (autoButton != null) autoButton.gameObject.SetActive(available);
+            ShowAuto();
         }
 
-        /// <summary>Wired to the Undo button.</summary>
-        public void TapUndo() => undoTapped = true;
-
-        /// <summary>Was Undo tapped since the last time this was asked? (reading it clears it, like TakeChosenValue)</summary>
-        public bool TakeUndo()
+        /// <summary>Wired to the Auto button: hand the turns over, or take them back.</summary>
+        public void TapAuto()
         {
-            bool tapped = undoTapped;
-            undoTapped = false;
-            return tapped;
+            AutoOn = !AutoOn;
+            ShowAuto();
+        }
+
+        void ShowAuto()
+        {
+            if (autoLabel != null) autoLabel.text = AutoOn ? "Auto: ON" : "Auto: OFF";
+            if (autoImage != null) autoImage.color = AutoOn ? new Color(0.55f, 1f, 0.6f) : Color.white;
         }
 
         public void HideValueChoice()

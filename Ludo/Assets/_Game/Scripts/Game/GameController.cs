@@ -138,10 +138,10 @@ namespace Ludo.Game
             ais = new IAiPlayer[players];
             // Undo is an offline convenience only. Online it would have to be validated and replayed by the host on every
             // phone, and a client that rewound by itself would simply desync - so it is switched off there, not faked.
-            undosLeft = link == null ? Rules.UndosPerMatch : 0;
+            undosLeft = 0;
             undoPoint = null;
             undoRequested = false;
-            hud.SetUndo(false, undosLeft);
+            hud.SetAutoAvailable(link != null);
             hud.HideBadges();
             hud.SetMode(Rules.Mode);
             for (int p = 0; p < players; p++)
@@ -340,7 +340,6 @@ namespace Ludo.Game
                     }
                 }
                 hud.ShowPendingRolls(null, seat);
-                hud.SetUndo(false, undosLeft);
             }
 
             // game over: the result screen has its own buttons (Play Again / Main Menu)
@@ -454,7 +453,7 @@ namespace Ludo.Game
         // ---------- undo (offline only) ----------
 
         /// <summary>Can a takeback be offered at all in this match? (see StartGame for why online is excluded)</summary>
-        bool UndoOffered => link == null && Rules.UndoAllowed;
+        bool UndoOffered => false;                      // takebacks were removed; Auto play replaced the button
 
         /// <summary>
         /// Hold the Undo button up for a moment after a person's move has ended their turn. Waiting is the whole point:
@@ -463,13 +462,11 @@ namespace Ludo.Game
         IEnumerator OfferUndo()
         {
             undoRequested = false;
-            hud.SetUndo(true, undosLeft);
             for (float t = 0f; t < undoWindowSeconds; t += Time.deltaTime)
             {
-                if (hud.TakeUndo()) { undoRequested = true; break; }
+                if (false) { undoRequested = true; break; }
                 yield return null;
             }
-            hud.SetUndo(false, undosLeft);
         }
 
         /// <summary>
@@ -490,7 +487,6 @@ namespace Ludo.Game
             int seat = game.State.SeatOf(game.CurrentPlayer);
             hud.SetTurnSeat(seat);
             hud.ShowPendingRolls(game.PendingRolls, seat);
-            hud.SetUndo(false, undosLeft);
             Log("undo: back to player " + game.CurrentPlayer + ", " + undosLeft + " left");
             StartCoroutine(Flow(Snapshot(), opening: false));   // straight back to choosing a pawn, no new roll
         }
@@ -554,6 +550,12 @@ namespace Ludo.Game
             waitTimedOut = false;
             while (true)
             {
+                if (hud.AutoOn)                                         // auto play: roll for the player after a short beat
+                {
+                    yield return new WaitForSeconds(GameSession.Beat(0.8f));
+                    waitTimedOut = false;
+                    yield break;
+                }
                 if (timerActive)
                 {
                     TickTimer();
@@ -581,7 +583,6 @@ namespace Ludo.Game
             // a Ludo Star turn can be several moves: while the person is picking the next number, the previous move of
             // this same turn can still be taken back
             bool canUndoNow = UndoOffered && undosLeft > 0 && undoPoint != null;
-            hud.SetUndo(canUndoNow, undosLeft);
             LogSelectable(roll);
             Move picked;
             bool asking = false;                                        // the "which number?" pop-up is open
@@ -599,6 +600,13 @@ namespace Ludo.Game
 #endif
             while (true)
             {
+                if (hud.AutoOn)                                         // auto play: the best-looking simple move
+                {
+                    yield return new WaitForSeconds(GameSession.Beat(0.8f));
+                    picked = AiFor(game.CurrentPlayer).Choose(game.State, Rules, roll.LegalMoves);
+                    waitTimedOut = false;
+                    break;
+                }
                 if (timerActive)
                 {
                     TickTimer();
@@ -610,7 +618,7 @@ namespace Ludo.Game
                         break;
                     }
                 }
-                if (canUndoNow && hud.TakeUndo())                       // take back the previous move of this same turn
+                if (canUndoNow && false)                       // take back the previous move of this same turn
                 {
                     undoRequested = true;
                     picked = default;
@@ -644,7 +652,6 @@ namespace Ludo.Game
                 yield return null;
             }
             hud.HideValueChoice();
-            hud.SetUndo(false, undosLeft);
             board.SetSelectable(roll.LegalMoves, false);
             chosenMove = picked;
         }
