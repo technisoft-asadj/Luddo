@@ -21,9 +21,11 @@ namespace Ludo.Online
         public readonly string PhotoStamp; // "0" = uses an animal avatar, otherwise the stamp of their photo (see PhotoService)
         public readonly int Level;
         public readonly string Country;   // ISO code the player chose ("" = none), written only by that player
+        public readonly string Dice;      // the dice design they wear (see DiceSkins), written only by that player
 
-        public RoomPlayer(string id, string name, int avatar, int rating, bool isHost, bool isMe, bool ready = false, string photoStamp = "0", int level = 1, string country = "")
+        public RoomPlayer(string id, string name, int avatar, int rating, bool isHost, bool isMe, bool ready = false, string photoStamp = "0", int level = 1, string country = "", string dice = "")
         {
+            Dice = DiceSkins.Exists(dice) ? dice : DiceSkins.Default;
             Id = id; Name = name; Avatar = avatar; Rating = rating; IsHost = isHost; IsMe = isMe; Ready = ready || isHost; PhotoStamp = photoStamp; Level = level;
             Country = Countries.Normalize(country);
         }
@@ -44,6 +46,7 @@ namespace Ludo.Online
         const string PropPhoto = "photo";
         const string PropLevel = "level";
         const string PropCountry = "country";
+        const string PropDice = "dice";
         const string PropFee = "fee";                // session property: the coin table's entry fee (0 = free)
         const string PropGameMode = "gmode";          // session property: the game mode ("0".."3", see Ludo.Core.GameMode)
         const string ModePublic = "public";
@@ -205,8 +208,10 @@ namespace Ludo.Online
                 string photo = "0";
                 int level = 1;
                 string country = "";
+                string dice = "";
                 if (p.Properties != null)
                 {
+                    if (p.Properties.TryGetValue(PropDice, out var dv)) dice = dv.Value;
                     if (p.Properties.TryGetValue(PropCountry, out var c)) country = c.Value;
                     if (p.Properties.TryGetValue(PropLevel, out var lv)) int.TryParse(lv.Value, out level);
                     if (p.Properties.TryGetValue(PropPhoto, out var ph) && !string.IsNullOrEmpty(ph.Value)) photo = ph.Value;
@@ -215,7 +220,7 @@ namespace Ludo.Online
                     if (p.Properties.TryGetValue(PropRating, out var r)) int.TryParse(r.Value, out rating);
                     if (p.Properties.TryGetValue(PropReady, out var rd)) ready = rd.Value == "1";
                 }
-                list.Add(new RoomPlayer(p.Id, name, avatar, rating, p.Id == session.Host, p.Id == OnlineService.PlayerId, ready, photo, Mathf.Max(1, level), country));
+                list.Add(new RoomPlayer(p.Id, name, avatar, rating, p.Id == session.Host, p.Id == OnlineService.PlayerId, ready, photo, Mathf.Max(1, level), country, dice));
             }
             // host first, then in the order people joined
             list.Sort((x, y) => x.IsHost == y.IsHost ? 0 : (x.IsHost ? -1 : 1));
@@ -268,6 +273,7 @@ namespace Ludo.Online
                 session.CurrentPlayer.SetProperty(PropPhoto, new PlayerProperty(PhotoService.MineStamp(), VisibilityPropertyOptions.Member));
                 session.CurrentPlayer.SetProperty(PropLevel, new PlayerProperty(StatsService.Mine.Level.ToString(), VisibilityPropertyOptions.Member));
                 session.CurrentPlayer.SetProperty(PropCountry, new PlayerProperty(GameSettings.Country, VisibilityPropertyOptions.Member));
+                session.CurrentPlayer.SetProperty(PropDice, new PlayerProperty(GameSettings.DiceSkin, VisibilityPropertyOptions.Member));
                 await session.SaveCurrentPlayerDataAsync();
                 Changed?.Invoke();
             }
@@ -407,7 +413,8 @@ namespace Ludo.Online
             { PropRating, new PlayerProperty(StatsService.Mine.rating.ToString(), VisibilityPropertyOptions.Member) },
             { PropPhoto, new PlayerProperty(PhotoService.MineStamp(), VisibilityPropertyOptions.Member) },
             { PropLevel, new PlayerProperty(StatsService.Mine.Level.ToString(), VisibilityPropertyOptions.Member) },
-            { PropCountry, new PlayerProperty(GameSettings.Country, VisibilityPropertyOptions.Member) }
+            { PropCountry, new PlayerProperty(GameSettings.Country, VisibilityPropertyOptions.Member) },
+            { PropDice, new PlayerProperty(GameSettings.DiceSkin, VisibilityPropertyOptions.Member) }
         };
 
         /// <summary>Guest whose connection dropped: rejoin the room I am still a member of. The network client is started again by the session.</summary>

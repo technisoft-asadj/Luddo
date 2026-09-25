@@ -71,9 +71,12 @@ namespace Ludo.Game
         /// physics and still shows the number the engine decided, so no design can be luckier than another. A material
         /// instance is used so the shared Dice.mat asset on disk is never touched.
         /// </summary>
-        public void ApplySkin()
+        public void ApplySkin() => ApplySkin(GameSettings.DiceSkin);
+
+        /// <summary>The same, for a named design: online, each player throws with their own dice.</summary>
+        public void ApplySkin(string id)
         {
-            var faces = DiceSkinLibrary.Equipped();
+            var faces = DiceSkinLibrary.Faces(string.IsNullOrEmpty(id) ? GameSettings.DiceSkin : id);
             if (faces != null && body != null) body.material.SetTexture("_MainTex", faces);
         }
 

@@ -17,13 +17,14 @@ namespace Ludo.Game
         public string onlineName;
         public int onlineAvatar;
         public string onlineId;        // the player's online ID (to know who is talking in voice chat)
+        public string diceSkin;           // the dice design this player throws with ("" = the one chosen on this phone)
         public string onlineCountry;   // ISO code of the country the player chose ("" = none): shown as a flag
 
         public static PlayerSlot Human => new PlayerSlot();
         public static PlayerSlot Cpu(AiDifficulty level) => new PlayerSlot { isAi = true, difficulty = level };
 
-        public static PlayerSlot Online(string playerName, int avatar, bool remote, string playerId = "", string country = "") =>
-            new PlayerSlot { isRemote = remote, hasProfile = true, onlineName = playerName, onlineAvatar = avatar, onlineId = playerId, onlineCountry = country ?? "" };
+        public static PlayerSlot Online(string playerName, int avatar, bool remote, string playerId = "", string country = "", string diceSkin = "") =>
+            new PlayerSlot { diceSkin = diceSkin ?? "", isRemote = remote, hasProfile = true, onlineName = playerName, onlineAvatar = avatar, onlineId = playerId, onlineCountry = country ?? "" };
 
         public static PlayerSlot OnlineCpu(string playerName, AiDifficulty level) =>
             new PlayerSlot { isAi = true, difficulty = level, hasProfile = true, onlineName = playerName, onlineId = "", onlineCountry = "" };

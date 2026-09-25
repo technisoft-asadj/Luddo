@@ -18,7 +18,7 @@ namespace Ludo.Online
                 var s = start.seats[i];
                 slots[i] = s.ai >= 0
                     ? PlayerSlot.OnlineCpu(s.name, (AiDifficulty)s.ai)
-                    : PlayerSlot.Online(s.name, s.avatar, remote: s.playerId != OnlineService.PlayerId, playerId: s.playerId, country: CountryOf(s));
+                    : PlayerSlot.Online(s.name, s.avatar, remote: s.playerId != OnlineService.PlayerId, playerId: s.playerId, country: CountryOf(s), diceSkin: DiceOf(s));
             }
             GameSession.ConfigureOnline(MatchLink.Current, slots, RoomService.ModeFrom(start.mode));
             GameSession.SpeakingProbe = VoiceService.IsSpeaking;      // the game screen lights up whoever is talking
@@ -40,6 +40,15 @@ namespace Ludo.Online
         /// A seat's country comes from that player's OWN lobby data (only they can write it), not from the host's seating plan;
         /// my own seat uses my saved profile. The host's copy is only a fallback when the lobby no longer lists the player.
         /// </summary>
+        /// <summary>The dice design a seat throws with: mine from this phone, everybody else's from their own lobby data. Only a picture.</summary>
+        public static string DiceOf(MatchSeat seat)
+        {
+            if (seat.playerId == OnlineService.PlayerId) return GameSettings.DiceSkin;
+            foreach (var p in RoomService.Players())
+                if (p.Id == seat.playerId) return p.Dice;
+            return "";
+        }
+
         public static string CountryOf(MatchSeat seat)
         {
             if (seat.playerId == OnlineService.PlayerId) return GameSettings.Country;

@@ -253,6 +253,7 @@ namespace Ludo.Game
                 int player = game.CurrentPlayer;
                 int seat = game.State.SeatOf(player);
                 hud.SetTurnSeat(seat);
+                dice.ApplySkin(slots[player].diceSkin);     // online: whoever throws uses their own design
 
                 RollResult roll = resume;                    // after a reconnect the turn may already be rolled: go straight to choosing
                 resume = null;
