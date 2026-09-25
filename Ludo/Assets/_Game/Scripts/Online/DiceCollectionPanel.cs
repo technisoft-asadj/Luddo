@@ -96,6 +96,7 @@ namespace Ludo.Online
                 ShowFace(previews[i], skin.Id);
             }
             if (!loaded) Say("Connecting...", false);
+            else if (statusText.text.StartsWith("Connecting")) statusText.text = "";     // it connected while the list was open
         }
 
         /// <summary>The design's own "5" face (atlas cell 4: column 0 of the lower row) as its picture in the list.</summary>

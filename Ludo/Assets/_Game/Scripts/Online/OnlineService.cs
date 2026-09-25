@@ -58,6 +58,22 @@ namespace Ludo.Online
             StatusChanged = null;
         }
 
+        /// <summary>
+        /// A player who already chose a login (guest or account) is connected quietly in the background as the app opens, so
+        /// the coins, the chest and My Dice are ready on the home screen without opening Play Online first. A logged-out
+        /// phone is left alone (ConnectAsync refuses it), and a failure here is silent: Play Online still shows the error.
+        /// </summary>
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        static async void ConnectInBackground()
+        {
+            if (!HasChosenLogin) return;
+            try
+            {
+                if (await ConnectAsync()) await StatsService.LoadMineAsync();
+            }
+            catch (System.Exception e) { Debug.LogWarning("[Ludo] Background connect failed: " + e.Message); }
+        }
+
         /// <summary>Start the services and sign in (as a guest unless the player logged in before). Safe to call many times.</summary>
         public static Task<bool> ConnectAsync()
         {
