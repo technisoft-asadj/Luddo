@@ -35,7 +35,7 @@ namespace Ludo.EditorTools
             At(heading.rectTransform, TopCenter, TopCenter, new Vector2(0f, -300f), new Vector2(940f, 64f));
             heading.enableAutoSizing = true; heading.fontSizeMin = 28f; heading.fontSizeMax = 46f;
 
-            const float top = -410f, step = 262f;
+            const float top = -410f, step = 300f;
             var online = ModeRow(s, "RowOnline", top, Ico("public"), "Play Online", "Real players worldwide, on a coin table",
                 "Entry 100+ coins", new Color(1f, 0.93f, 0.74f), new Color(0.95f, 0.70f, 0.13f), out _);
             var friends = ModeRow(s, "RowFriends", top - step, Ico("person_add"), "Play with Friends", "A private room with a code",
@@ -50,7 +50,7 @@ namespace Ludo.EditorTools
             OnClick(local, flow.PlayHowLocal);
 
             AddSpread(s, new[] { (RectTransform)s.Find("RowOnline"), (RectTransform)s.Find("RowFriends"), (RectTransform)s.Find("RowAi"), (RectTransform)s.Find("RowPassPlay") },
-                new[] { 0.10f, 0.35f, 0.65f, 0.95f });
+                new[] { 0.15f, 0.50f, 0.90f, 1.30f });
             return s;
         }
 

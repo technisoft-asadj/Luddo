@@ -480,3 +480,17 @@ Source of truth: `Game Screens/` — 3 sheets, **17 screens** total.
 **Known visual bug found on-device, not yet fixed:** the new **Events** rail button (left column, under Rewards) has its caption hidden behind the Play Online card on this tall screen. Fix next session: move the Events rail up or shrink the logo block. Not yet phone-checked: Select Mode, Play Online, Profile, Events.
 **Editor note:** a modal "Save Scene" dialog froze the Unity Editor (every MCP call timed out) after a menu build left the Menu scene dirty during an APK build. Recovery that worked: kill and relaunch Unity (scenes were already saved/committed), then delete the `Assets/_Recovery` scene it leaves. Prevention: save the open scene explicitly (`EditorSceneManager.SaveScene`) before starting a build.
 **Paused here at the user's request.** Remaining screens: Login/Signup, Quick Match, Pre-Game Lobby, In-Game HUD, Chat, Match Result, Settings restyle; Friends/Leaderboard row restyle; Dice Collection + Daily Rewards tab polish.
+
+## Round 3 - feedback fixes (2026-09-25)
+
+Fixed from phone testing: Rewards/Events captions clipped (rails now dark tiles with coloured art, more spacing), coloured chest/gift/calendar art
+(`Prototype/make_chest_icon.py`), empty space under Daily Rewards (new `VerticalSpread`: spare height on tall phones is shared between the buttons on
+Main, Play Online, Select Mode and the new screens), nav bar only lifted above the ad banner on the main menu (other screens sit low),
+Play Online coins stuck at 0 and Friends ID stuck on "Connecting...".
+Select Mode: every row now leads somewhere. Classic/Master/Blitz/Team Up and 1 vs 1 / 4 Player open "How do you want to play?"
+(`PlayHowScreen`: Online / Friends / AI / Pass & Play); Private Room and Tournaments have their own screens
+(`PrivateRoomScreen`, `TournamentsScreen` - the Weekly Cup only, no invented prizes).
+Online tables are never free (`CoinTables.OnlineFees` 100/500/1K/5K, default 100, winner takes the pot, "not enough coins" points to chest/daily reward).
+Dice: menu pictures are the real 3D dice rendered per design (`Ludo > Render Dice Icons`, transparent). Icons: Kenney Board Game Icons + Game Icons (CC0)
+copied to `Art/UI/Icons/k_*.png`.
+Open: Google sign-in on the Samsung A16 - see notes in the chat (needs the account added as a tester in Play Console / OAuth consent screen).
