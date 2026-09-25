@@ -40,6 +40,8 @@ namespace Ludo.Online
         [SerializeField] TMP_Text timerText;               // 00:18
         [SerializeField] TMP_Text foundText;               // 2 / 4
         [SerializeField] Image[] dots;                     // one per seat
+        [SerializeField] Image progressBar;                // fills as players are found
+        [SerializeField] TMP_Text[] chips;                 // what is being searched for: rules, table size, entry
         [SerializeField] Color dotOn = new Color(0.3f, 1f, 0.45f);
         [SerializeField] Color dotOff = new Color(1f, 1f, 1f, 0.3f);
         [SerializeField] Button cancelButton;
@@ -71,8 +73,13 @@ namespace Ludo.Online
             size = Mathf.Clamp(PendingSize, RoomService.MinSize, RoomService.MaxSize);
             mode = PendingMode;
             fee = CoinTables.IsFee(PendingFee) ? PendingFee : 0;
-            titleText.text = (ranked ? "RANKED MATCH" : "QUICK MATCH") + (mode != GameMode.Classic ? "  -  " + GameSession.ModeName(mode).ToUpperInvariant() : "")
-                + (fee > 0 ? "  -  " + CoinTables.Label(fee) : "");
+            titleText.text = ranked ? "Ranked Match" : "Quick Match";
+            if (chips != null && chips.Length >= 3)
+            {
+                chips[0].text = GameSession.ModeName(mode);
+                chips[1].text = size + " players";
+                chips[2].text = "Entry " + CoinTables.Label(fee);
+            }
             starting = false;
             elapsed = 0f;
             RoomService.Changed += Refresh;
@@ -261,6 +268,7 @@ namespace Ludo.Online
         void SetDots(int found, int target = 0)
         {
             if (target <= 0) target = size;
+            if (progressBar != null) progressBar.fillAmount = Mathf.Clamp01(found / (float)target);
             for (int i = 0; i < dots.Length; i++)
             {
                 dots[i].gameObject.SetActive(i < target);

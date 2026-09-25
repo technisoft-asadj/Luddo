@@ -300,44 +300,46 @@ namespace Ludo.EditorTools
             At(hint.rectTransform, TopCenter, TopCenter, new Vector2(0f, -565f), new Vector2(940f, 60f));
             hint.enableAutoSizing = true; hint.fontSizeMin = 26f; hint.fontSizeMax = 44f;
 
-            // ----- the four seats -----
+            // ----- the four seats: a 2 x 2 grid of player cards, as in the reference lobby -----
             int[] seatOrder = Ludo.Core.Board.DefaultSeats(4);
             for (int i = 0; i < 4; i++)
             {
                 var rowRt = NewRect("Seat" + (i + 1), s);
-                At(rowRt, TopCenter, TopCenter, new Vector2(0f, -640f - i * 160f), new Vector2(940f, 140f));
-                var body = AddImage(rowRt, Round(), new Color(0.10f, 0.19f, 0.47f, 0.92f), true, 0.5f);
-                Depth(body, DarkPanelLip, 8f);
+                At(rowRt, TopCenter, TopCenter, new Vector2((i % 2 == 0 ? -240f : 240f), -650f - (i / 2) * 360f), new Vector2(460f, 330f));
+                var body = AddImage(rowRt, Round(), new Color(0.10f, 0.19f, 0.47f, 0.94f), true, 0.5f);
+                Depth(body, DarkPanelLip, 10f);
 
                 var glow = NewRect("Speaking", rowRt); Stretch(glow, -8f, -8f, -8f, -8f);
                 AddImage(glow, Ring(), SpeakGreen, true, 0.5f).raycastTarget = false;
 
+                // the seat's colour runs along the bottom edge of the card
                 var colorBar = NewRect("SeatColor", rowRt);
-                At(colorBar, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(22f, 0f), new Vector2(22f, 96f));
+                At(colorBar, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 14f), new Vector2(400f, 16f));
                 var barImg = AddImage(colorBar, Round(), SeatStyle.Colors[seatOrder[i]], true, 0.4f); barImg.raycastTarget = false;
 
                 var av = NewRect("Avatar", rowRt);
-                At(av, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(66f, 0f), new Vector2(112f, 112f));
+                At(av, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -22f), new Vector2(150f, 150f));
                 AddImage(av, Circle(), new Color(0.80f, 0.87f, 1f)).raycastTarget = false;
                 var pic = NewRect("Picture", av); Stretch(pic, 8f, 8f, 8f, 8f);
                 var picImg = AddImage(pic, null, Color.white); picImg.raycastTarget = false; picImg.preserveAspect = true;
-                var flagImg = FlagBadge(av, "Flag", new Vector2(1f, 0f), new Vector2(-22f, 10f), 50f);
+                var flagImg = FlagBadge(av, "Flag", new Vector2(1f, 0f), new Vector2(-14f, 6f), 54f);
 
-                var nameText = AddText(rowRt, "Name", "Waiting...", 54, Color.white, TextAlignmentOptions.Left, true);
-                At(nameText.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(200f, 14f), new Vector2(560f, 70f));
-                nameText.enableAutoSizing = true; nameText.fontSizeMin = 28f; nameText.fontSizeMax = 54f;
-                var tag = AddText(rowRt, "Tag", "", 32, Gold, TextAlignmentOptions.Left, true);
-                At(tag.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(200f, -34f), new Vector2(560f, 44f));
+                var nameText = AddText(rowRt, "Name", "Waiting...", 48, Color.white, TextAlignmentOptions.Center, true);
+                At(nameText.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -184f), new Vector2(420f, 62f));
+                nameText.enableAutoSizing = true; nameText.fontSizeMin = 26f; nameText.fontSizeMax = 48f;
+                var tag = AddText(rowRt, "Tag", "", 34, Gold, TextAlignmentOptions.Center, true);
+                At(tag.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -248f), new Vector2(420f, 46f));
+                tag.enableAutoSizing = true; tag.fontSizeMin = 22f; tag.fontSizeMax = 34f;
 
-                var more = MakeRoundButton(rowRt, "MoreButton", "Grey", Ico("flag"), 92f);
-                At((RectTransform)more.transform, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-28f, 0f), new Vector2(92f, 92f));
+                var more = MakeRoundButton(rowRt, "MoreButton", "Grey", Ico("flag"), 72f);
+                At((RectTransform)more.transform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-14f, -14f), new Vector2(72f, 72f));
                 OnClickInt(more, room.OpenMore, i);
 
                 seatRefs[i] = new SeatRefs { root = rowRt.gameObject, avatar = picImg, flag = flagImg, seatColor = barImg, nameText = nameText, tagText = tag, glow = glow.gameObject, more = more };
             }
 
             var notice = AddText(s, "Notice", "", 40, Gold, TextAlignmentOptions.Center, true);
-            At(notice.rectTransform, TopCenter, TopCenter, new Vector2(0f, -1290f), new Vector2(940f, 60f));
+            At(notice.rectTransform, TopCenter, TopCenter, new Vector2(0f, -1390f), new Vector2(940f, 60f));
             notice.enableAutoSizing = true; notice.fontSizeMin = 24f; notice.fontSizeMax = 40f;
 
             var mic = MakeButton(s, "MicButton", "Voice chat", "Blue", new Vector2(460f, 130f), Ico("mic"));

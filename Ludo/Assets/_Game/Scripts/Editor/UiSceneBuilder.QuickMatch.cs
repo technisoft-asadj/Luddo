@@ -20,39 +20,65 @@ namespace Ludo.EditorTools
             // ================= searching =================
             var search = NewRect("SearchPanel", s); Stretch(search);
 
+            // what is being searched for: the rules, the table size and the entry (read-only chips, filled by the screen)
+            var chipTexts = new TMP_Text[3];
+            float[] chipW = { 300f, 280f, 300f };
+            float chipX = -(chipW[0] + chipW[1] + chipW[2] + 40f) / 2f;
+            for (int i = 0; i < 3; i++)
+            {
+                var chip = NewRect("Chip" + i, search);
+                At(chip, Mid, Mid, new Vector2(chipX + chipW[i] / 2f, 800f), new Vector2(chipW[i], 84f));
+                chipX += chipW[i] + 20f;
+                var body = AddImage(chip, Round(), i == 0 ? new Color(1f, 0.82f, 0.15f) : new Color(0.05f, 0.12f, 0.36f, 0.9f), true, 0.5f);
+                body.raycastTarget = false;
+                Depth(body, i == 0 ? new Color(0.72f, 0.5f, 0.02f) : new Color(0.02f, 0.06f, 0.22f), 6f);
+                chipTexts[i] = AddText(chip, "Label", "", 38, i == 0 ? Navy : Color.white, TextAlignmentOptions.Center, false);
+                Stretch(chipTexts[i].rectTransform, 6f, 0f, 6f, 4f);
+                chipTexts[i].enableAutoSizing = true; chipTexts[i].fontSizeMin = 22f; chipTexts[i].fontSizeMax = 38f;
+                chipTexts[i].raycastTarget = false;
+            }
+
             var globe = NewRect("Globe", search);
-            At(globe, Mid, Mid, new Vector2(0f, 470f), new Vector2(320f, 320f));
-            var globeBg = AddImage(globe, Circle(), new Color(0.22f, 0.58f, 1f));
-            Depth(globeBg, new Color(0.07f, 0.30f, 0.72f), 14f);
-            var globeShine = NewRect("Shine", globe);
-            At(globeShine, Mid, Mid, new Vector2(0f, 70f), new Vector2(220f, 130f));
-            AddImage(globeShine, Circle(), new Color(1f, 1f, 1f, 0.22f)).raycastTarget = false;
+            At(globe, Mid, Mid, new Vector2(0f, 400f), new Vector2(400f, 400f));
+            var globeShadow = NewRect("Glow", globe);
+            At(globeShadow, Mid, Mid, Vector2.zero, new Vector2(620f, 620f));
+            AddImage(globeShadow, Load(Generated + "glow_radial.png"), new Color(0.3f, 0.6f, 1f, 0.55f)).raycastTarget = false;
             var globeIcon = NewRect("Icon", globe);
-            At(globeIcon, Mid, Mid, new Vector2(0f, 6f), new Vector2(210f, 210f));
-            AddImage(globeIcon, Ico("public"), Color.white).raycastTarget = false;
-            globeIcon.gameObject.AddComponent<Spin>();
+            At(globeIcon, Mid, Mid, Vector2.zero, new Vector2(400f, 400f));
+            AddImage(globeIcon, Ikon("globe_color"), Color.white).raycastTarget = false;
+            globe.gameObject.AddComponent<Bob>();
 
-            var world = AddText(search, "Worldwide", "Worldwide", 68, Color.white, TextAlignmentOptions.Center, true);
-            At(world.rectTransform, Mid, Mid, new Vector2(0f, 250f), new Vector2(900f, 90f));
-
-            var status = AddText(search, "Status", "Searching for players...", 46, new Color(1f, 1f, 1f, 0.88f), TextAlignmentOptions.Center);
+            var status = AddText(search, "Status", "Searching for players...", 58, Color.white, TextAlignmentOptions.Center, true);
             status.textWrappingMode = TextWrappingModes.Normal;
-            status.enableAutoSizing = true; status.fontSizeMin = 28f; status.fontSizeMax = 46f;
-            At(status.rectTransform, Mid, Mid, new Vector2(0f, 150f), new Vector2(940f, 80f));
+            status.enableAutoSizing = true; status.fontSizeMin = 30f; status.fontSizeMax = 58f;
+            At(status.rectTransform, Mid, Mid, new Vector2(0f, 90f), new Vector2(940f, 90f));
+            var wait = AddText(search, "Wait", "Please wait while we find real players for you.", 34, new Color(1f, 1f, 1f, 0.75f), TextAlignmentOptions.Center);
+            wait.textWrappingMode = TextWrappingModes.Normal;
+            At(wait.rectTransform, Mid, Mid, new Vector2(0f, 10f), new Vector2(940f, 50f));
+            wait.enableAutoSizing = true; wait.fontSizeMin = 22f; wait.fontSizeMax = 34f;
 
-            var timer = AddText(search, "Timer", "00:00", 140, Gold, TextAlignmentOptions.Center, true);
-            At(timer.rectTransform, Mid, Mid, new Vector2(0f, -10f), new Vector2(700f, 170f));
+            var label = AddText(search, "PlayersFound", "Players found", 44, new Color(1f, 1f, 1f, 0.85f), TextAlignmentOptions.Center);
+            At(label.rectTransform, Mid, Mid, new Vector2(0f, -80f), new Vector2(700f, 60f));
+            var found = AddText(search, "Found", "0 / 2", 96, Color.white, TextAlignmentOptions.Center, true);
+            At(found.rectTransform, Mid, Mid, new Vector2(0f, -180f), new Vector2(700f, 120f));
 
-            var label = AddText(search, "PlayersFound", "Players Found", 46, new Color(1f, 1f, 1f, 0.75f), TextAlignmentOptions.Center);
-            At(label.rectTransform, Mid, Mid, new Vector2(0f, -180f), new Vector2(700f, 70f));
-            var found = AddText(search, "Found", "0 / 2", 112, Color.white, TextAlignmentOptions.Center, true);
-            At(found.rectTransform, Mid, Mid, new Vector2(0f, -290f), new Vector2(700f, 140f));
+            // progress towards a full table
+            var track = NewRect("BarTrack", search);
+            At(track, Mid, Mid, new Vector2(0f, -290f), new Vector2(760f, 44f));
+            AddImage(track, Round(), new Color(0.02f, 0.06f, 0.22f, 0.85f), true, 3f).raycastTarget = false;
+            var fillRt = NewRect("Fill", track); Stretch(fillRt, 4f, 4f, 4f, 4f);
+            var bar = AddImage(fillRt, Round(), new Color(0.32f, 0.86f, 0.40f), true, 3.4f);
+            bar.type = Image.Type.Filled; bar.fillMethod = Image.FillMethod.Horizontal; bar.fillOrigin = 0; bar.fillAmount = 0f;
+            bar.raycastTarget = false;
+
+            var timer = AddText(search, "Timer", "00:00", 110, Gold, TextAlignmentOptions.Center, true);
+            At(timer.rectTransform, Mid, Mid, new Vector2(0f, -390f), new Vector2(700f, 140f));
 
             var dots = new Image[4];
             for (int i = 0; i < 4; i++)
             {
                 var dot = NewRect("Dot" + i, search);
-                At(dot, Mid, Mid, new Vector2((i - 1.5f) * 92f, -415f), new Vector2(60f, 60f));
+                At(dot, Mid, Mid, new Vector2((i - 1.5f) * 70f, -500f), new Vector2(44f, 44f));
                 dots[i] = AddImage(dot, Circle(), new Color(1f, 1f, 1f, 0.3f));
                 dots[i].raycastTarget = false;
             }
@@ -86,7 +112,7 @@ namespace Ludo.EditorTools
 
             // ================= buttons (both panels) =================
             var retry = MakeButton(s, "RetryButton", "Try Again", "Green", new Vector2(620f, 140f), Icon("checkmark"));
-            At((RectTransform)retry.transform, Mid, Mid, new Vector2(0f, -560f), new Vector2(620f, 140f));
+            At((RectTransform)retry.transform, Mid, Mid, new Vector2(0f, -640f), new Vector2(620f, 140f));
             var cancel = MakeButton(s, "CancelButton", "Cancel", "Red", new Vector2(620f, 140f), null);
             At((RectTransform)cancel.transform, BottomCenter, BottomCenter, new Vector2(0f, 200f), new Vector2(620f, 140f));
             OnClick(retry, screen.Retry);
@@ -100,6 +126,8 @@ namespace Ludo.EditorTools
             so.FindProperty("timerText").objectReferenceValue = timer;
             so.FindProperty("foundText").objectReferenceValue = found;
             SetObjects(so.FindProperty("dots"), dots);
+            so.FindProperty("progressBar").objectReferenceValue = bar;
+            SetObjects(so.FindProperty("chips"), chipTexts);
             so.FindProperty("cancelButton").objectReferenceValue = cancel;
             so.FindProperty("retryButton").objectReferenceValue = retry;
             so.FindProperty("foundPanel").objectReferenceValue = foundPanel.gameObject;

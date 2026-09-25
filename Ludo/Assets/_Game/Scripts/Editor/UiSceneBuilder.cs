@@ -849,16 +849,18 @@ namespace Ludo.EditorTools
             stack.childControlWidth = stack.childControlHeight = false;
             stack.childForceExpandWidth = stack.childForceExpandHeight = false;
 
-            var credits = MakeButton(column, "CreditsButton", "Credits", "Blue", new Vector2(800f, 140f), Icon("information"));
+            var accountRow = MakeButton(column, "AccountButton", "Account", "Blue", new Vector2(800f, 140f), Ico("person"));
+            OnClickInt(accountRow, router.Show, Account);
+            var credits = MakeButton(column, "CreditsButton", "About / Credits", "Grey", new Vector2(800f, 140f), Icon("information"));
             OnClickInt(credits, router.Show, Credits);
 
             // privacy policy inside the app + delete the online account (Google Play requires both for apps with accounts)
             var online = s.gameObject.AddComponent<Ludo.Online.OnlineSettings>();
-            var policyButton = MakeButton(column, "PolicyButton", "Privacy Policy", "Grey", new Vector2(800f, 140f), Icon("information"));
+            var policyButton = MakeButton(column, "PolicyButton", "Privacy Policy", "Grey", new Vector2(800f, 140f), Ikon("lock"));
             OnClick(policyButton, online.OpenPolicy);
 
             // shown only where the law requires a privacy entry (SettingsScreen hides it otherwise)
-            var privacy = MakeButton(column, "PrivacyButton", "Privacy Settings", "Grey", new Vector2(800f, 140f), null);
+            var privacy = MakeButton(column, "PrivacyButton", "Privacy Settings", "Grey", new Vector2(800f, 140f), Ikon("shield"));
 
             var deleteButton = MakeButton(column, "DeleteAccountButton", "Delete Online Account", "Red", new Vector2(800f, 140f), Ico("block"));
             OnClick(deleteButton, online.OpenDelete);
