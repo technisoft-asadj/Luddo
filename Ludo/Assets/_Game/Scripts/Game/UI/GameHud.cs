@@ -321,11 +321,11 @@ namespace Ludo.Game
                 switch (online.Result)
                 {
                     case ResultKind.Win:
-                        resultTitle.text = online.ByForfeit ? "WIN BY FORFEIT" : "YOU WIN!";
+                        resultTitle.text = online.ByForfeit ? "WIN BY FORFEIT" : "VICTORY!";
                         resultCard.Show(online, online.ByForfeit ? "Your opponent did not reconnect." : "");
                         break;
                     case ResultKind.Loss:
-                        resultTitle.text = "MATCH LOST";
+                        resultTitle.text = "DEFEAT";
                         resultCard.Show(online, online.Mode == MatchMode.Casual && !winnerIsMe && winnerName.StartsWith("CPU")
                             ? "The computer finished the match for a player who left."
                             : winnerName + " won.   Better luck next time!");

@@ -23,11 +23,16 @@ namespace Ludo.Online
         [SerializeField] Color red = new Color(0.96f, 0.30f, 0.32f);
         [SerializeField] Color blue = new Color(0.20f, 0.56f, 1f);
 
+        [SerializeField] Image[] tabFaces;              // All, Online, Requests
+        int tab;
+
         readonly List<GameObject> spawned = new List<GameObject>();
         bool busy;
 
         void OnEnable()
         {
+            tab = 0;
+            PaintTabs();
             messageText.text = "";
             rowTemplate.gameObject.SetActive(false);
             headerTemplate.gameObject.SetActive(false);
@@ -58,6 +63,12 @@ namespace Ludo.Online
             var sent = SocialService.OutgoingRequests();
             bool inRoom = RoomService.InRoom;
 
+            PaintTabs();
+            if (tab == 1) friends = friends.FindAll(f => f.Online);          // Online: only the friends who are on now
+            if (tab != 2) { sent = new List<FriendInfo>(); }                // requests have their own tab
+            if (tab == 1) incoming = new List<FriendInfo>();
+            if (tab == 2) friends = new List<FriendInfo>();
+
             if (incoming.Count > 0)
             {
                 Header("Friend requests");
@@ -68,7 +79,7 @@ namespace Ludo.Online
                 }
             }
 
-            Header("Friends (" + friends.Count + ")");
+            if (tab != 2) Header((tab == 1 ? "Online (" : "Friends (") + friends.Count + ")");
             foreach (var f in friends)
             {
                 var id = f.Id;
@@ -89,6 +100,19 @@ namespace Ludo.Online
             }
 
             emptyText.gameObject.SetActive(friends.Count == 0 && incoming.Count == 0 && sent.Count == 0);
+        }
+
+        /// <summary>The All / Online / Requests tabs (wired with 0, 1, 2).</summary>
+        public void SetTab(int index)
+        {
+            tab = Mathf.Clamp(index, 0, 2);
+            Refresh();
+        }
+
+        void PaintTabs()
+        {
+            for (int i = 0; tabFaces != null && i < tabFaces.Length; i++)
+                tabFaces[i].color = i == tab ? new Color(1f, 0.82f, 0.15f) : new Color(0.90f, 0.94f, 1f);
         }
 
         void Header(string text)

@@ -466,13 +466,31 @@ namespace Ludo.EditorTools
             At((RectTransform)add.transform, TopCenter, TopCenter, new Vector2(340f, 0f), new Vector2(260f, 112f));
             OnClick(add, screen.AddFriend);
 
+            // All / Online / Requests, as in the reference
+            string[] friendTabs = { "All", "Online", "Requests" };
+            var tabFaces = new Image[3]; var tabLabels = new TMP_Text[3];
+            for (int i = 0; i < 3; i++)
+            {
+                var tab = NewRect("Tab" + friendTabs[i], s);
+                At(tab, TopCenter, TopCenter, new Vector2(-310f + i * 310f, -545f), new Vector2(295f, 88f));
+                tabFaces[i] = AddImage(tab, Round(), new Color(0.90f, 0.94f, 1f), true, 0.8f);
+                Depth(tabFaces[i], CardLip, 7f);
+                var tb = tab.gameObject.AddComponent<Button>();
+                tb.targetGraphic = tabFaces[i]; tb.transition = Selectable.Transition.None;
+                AddButtonFx(tab.gameObject, false);
+                tabLabels[i] = AddText(tab, "Label", friendTabs[i], 38, Navy, TextAlignmentOptions.Center);
+                Stretch(tabLabels[i].rectTransform, 0f, 0f, 0f, 6f);
+                tabLabels[i].enableAutoSizing = true; tabLabels[i].fontSizeMin = 24f; tabLabels[i].fontSizeMax = 38f;
+                OnClickInt(tb, screen.SetTab, i);
+            }
+
             var message = AddText(s, "Message", "", 40, Gold, TextAlignmentOptions.Center, true);
-            At(message.rectTransform, TopCenter, TopCenter, new Vector2(0f, -545f), new Vector2(940f, 60f));
+            At(message.rectTransform, TopCenter, TopCenter, new Vector2(0f, -645f), new Vector2(940f, 50f));
             message.enableAutoSizing = true; message.fontSizeMin = 24f; message.fontSizeMax = 40f;
 
             // scrolling list
             var scrollRt = NewRect("List", s);
-            At(scrollRt, TopCenter, TopCenter, new Vector2(0f, -625f), new Vector2(940f, 1190f));
+            At(scrollRt, TopCenter, TopCenter, new Vector2(0f, -705f), new Vector2(940f, 1110f));
             var scroll = scrollRt.gameObject.AddComponent<ScrollRect>();
             var viewport = NewRect("Viewport", scrollRt); Stretch(viewport);
             AddImage(viewport, null, new Color(0f, 0f, 0f, 0f));
@@ -524,6 +542,7 @@ namespace Ludo.EditorTools
             At(empty.rectTransform, TopCenter, TopCenter, new Vector2(0f, -240f), new Vector2(860f, 200f));
 
             var so = new SerializedObject(screen);
+            SetObjects(so.FindProperty("tabFaces"), tabFaces);
             so.FindProperty("myIdText").objectReferenceValue = idText;
             so.FindProperty("addInput").objectReferenceValue = input;
             so.FindProperty("messageText").objectReferenceValue = message;
@@ -1008,10 +1027,13 @@ namespace Ludo.EditorTools
             var avatarImg = AddImage(avatar, Circle(), new Color(0.8f, 0.87f, 1f)); avatarImg.raycastTarget = false;
             var flagImg = FlagBadge(rowRt, "Flag", new Vector2(0f, 0.5f), new Vector2(185f, 0f), 64f);
             var nameText = AddText(rowRt, "Name", "Player", 46, Navy, TextAlignmentOptions.Left);
-            Stretch(nameText.rectTransform, 232f, 0f, 250f, 0f);
+            Stretch(nameText.rectTransform, 232f, 0f, 290f, 0f);
             nameText.enableAutoSizing = true; nameText.fontSizeMin = 26f; nameText.fontSizeMax = 46f;
             var score = AddText(rowRt, "Score", "1000", 46, new Color(0.15f, 0.45f, 0.9f), TextAlignmentOptions.Right);
-            At(score.rectTransform, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-28f, 0f), new Vector2(220f, 70f));
+            At(score.rectTransform, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-28f, 0f), new Vector2(190f, 70f));
+            var scoreIcon = NewRect("ScoreIcon", rowRt);
+            At(scoreIcon, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-240f, 0f), new Vector2(46f, 46f));
+            AddImage(scoreIcon, Icon("trophy"), new Color(0.95f, 0.66f, 0.05f)).raycastTarget = false;
             var view = rowRt.gameObject.AddComponent<LeaderboardRowView>();
             var vo = new SerializedObject(view);
             vo.FindProperty("background").objectReferenceValue = rowBody;

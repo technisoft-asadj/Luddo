@@ -154,6 +154,7 @@ namespace Ludo.Online
             var row = Instantiate(rowTemplate, listRoot);
             row.gameObject.SetActive(true);
             row.rankText.text = r.Rank <= 3 ? new[] { "1st", "2nd", "3rd" }[r.Rank - 1] : "#" + r.Rank;
+            row.rankText.color = r.Rank == 1 ? new Color(0.95f, 0.66f, 0.05f) : r.Rank == 2 ? new Color(0.50f, 0.56f, 0.66f) : r.Rank == 3 ? new Color(0.80f, 0.47f, 0.20f) : new Color(0.08f, 0.18f, 0.45f);
             row.nameText.text = r.Name;
             row.scoreText.text = r.Score.ToString();
             row.background.color = r.IsMe ? meColor : normalColor;
