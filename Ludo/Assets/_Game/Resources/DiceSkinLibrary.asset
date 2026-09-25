@@ -33,7 +33,7 @@ MonoBehaviour:
     icon: {fileID: 2800000, guid: 79bea219ddb52a14f83000c32b274be8, type: 3}
   - id: rainbow
     faces: {fileID: 2800000, guid: 1b5e3ab7cafcf3d489a63641411f9a1d, type: 3}
-    icon: {fileID: 0}
+    icon: {fileID: 2800000, guid: 19062d84bb338f8419d2f94f8e5c6bf5, type: 3}
   - id: carnival
     faces: {fileID: 2800000, guid: 535d94c7f3d709c44928f5a5874ef42f, type: 3}
-    icon: {fileID: 0}
+    icon: {fileID: 2800000, guid: 6b530616a19807e48806f691640a285a, type: 3}
