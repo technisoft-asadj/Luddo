@@ -175,6 +175,16 @@ namespace Ludo.Online
             if (isActiveAndEnabled && (countryPicker == null || !countryPicker.IsOpen)) daily.OpenIfNew();
         }
 
+        float nextProfile;
+
+        /// <summary>Stats can arrive while another screen is showing; keep the card honest while this one is open.</summary>
+        void Update()
+        {
+            if (Time.unscaledTime < nextProfile) return;
+            nextProfile = Time.unscaledTime + 1f;
+            RefreshProfile();
+        }
+
         void RefreshProfile()
         {
             if (this == null || profileName == null) return;

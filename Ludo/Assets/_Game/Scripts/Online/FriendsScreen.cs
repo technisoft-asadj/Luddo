@@ -39,7 +39,7 @@ namespace Ludo.Online
 
         async void Begin()
         {
-            myIdText.text = "Connecting...";
+            myIdText.text = OnlineService.IsReady ? SocialService.MyFriendId.Replace('_', ' ') : "Connecting...";
             bool ok = await SocialService.StartAsync();
             if (this == null) return;
             if (!ok) { myIdText.text = "Offline"; Say(SocialService.LastError); return; }

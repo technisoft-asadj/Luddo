@@ -523,13 +523,13 @@ namespace Ludo.EditorTools
             bo.ApplyModifiedProperties();
 
             // ---- the rails either side of the logo ----
-            var rewards = RailButton(s, "RailRewards", new Vector2(0f, 1f), new Vector2(46f, -330f),
+            var rewards = RailButton(s, "RailRewards", new Vector2(0f, 1f), new Vector2(46f, -282f),
                 Ikon("gift"), "Rewards", new Color(0.93f, 0.26f, 0.32f), out var rewardsDot);
             OnClick(rewards, daily.Open);
-            var chestRail = RailButton(s, "RailChest", new Vector2(1f, 1f), new Vector2(-46f, -330f),
+            var chestRail = RailButton(s, "RailChest", new Vector2(1f, 1f), new Vector2(-46f, -282f),
                 Load(Generated + "chest_white.png"), "Chest", new Color(0.66f, 0.42f, 0.20f), out var chestDot);
             OnClick(chestRail, chest.Open);
-            var eventsRail = RailButton(s, "RailEvents", new Vector2(0f, 1f), new Vector2(46f, -530f),
+            var eventsRail = RailButton(s, "RailEvents", new Vector2(0f, 1f), new Vector2(46f, -486f),
                 Ikon("calendar"), "Events", new Color(0.55f, 0.28f, 0.86f), out var eventsDot);
             OnClickInt(eventsRail, router.Show, Events);
             eventsDot.SetActive(false);                      // the Events screen shows its own state; no dot to guess at here
