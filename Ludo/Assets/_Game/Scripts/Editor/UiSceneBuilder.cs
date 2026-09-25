@@ -157,6 +157,7 @@ namespace Ludo.EditorTools
             SetObjects(fo.FindProperty("playerRowNames"), rowNames);
             SetObjects(fo.FindProperty("playerRowPawns"), rowPawns);
             SetObjects(fo.FindProperty("playerRowAvatars"), rowAvatars);
+            fo.FindProperty("playersPicker").objectReferenceValue = playersPicker;
             SetObjects(fo.FindProperty("difficultyCards"), cards);
             SetObjects(fo.FindProperty("difficultyChecks"), checks);
             SetObjects(fo.FindProperty("opponentButtons"), oppButtons);
@@ -737,6 +738,8 @@ namespace Ludo.EditorTools
             so.ApplyModifiedProperties();
         }
 
+        static RectTransform playersPicker;      // the mode chips built on Select Players, wired into MenuFlow
+
         static RectTransform BuildPlayers(RectTransform parent, ScreenRouter router, MenuFlow flow,
             out GameObject[] rows, out TMP_Text[] names, out Image[] pawns, out Image[] avatars, out Button[] editButtons)
         {
@@ -774,7 +777,7 @@ namespace Ludo.EditorTools
                 At((RectTransform)edit.transform, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-30f, 4f), new Vector2(190f, 96f));
                 rows[i] = row.gameObject; names[i] = label; editButtons[i] = edit;
             }
-            BuildModePicker(s, -1165f, withRule: true);
+            playersPicker = BuildModePicker(s, -1165f, withRule: true).GetComponent<RectTransform>();
             var start = MakeButton(s, "StartGameButton", "Start Game", "Green", new Vector2(800f, 170f), Icon2("icon_play_light"), true);
             At((RectTransform)start.transform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 120f), new Vector2(800f, 170f));
             OnClick(start, flow.StartLocalGame);

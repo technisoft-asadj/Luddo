@@ -63,6 +63,10 @@ namespace Ludo.Game
             var mode = Current;
             if (row == null) row = new ChipRow(chips);
             row.Show(TableChoice.ModeLocked ? (int)mode : -1);      // rules chosen in Select Mode: show them, not options
+            // Team Up is 2 vs 2: with two or three players chosen it is not an option
+            int teamChip = (int)GameMode.TeamUp;
+            if (!TableChoice.ModeLocked && TableChoice.Players > 0 && TableChoice.Players < 4 && teamChip < chips.Length)
+                chips[teamChip].gameObject.SetActive(false);
             for (int i = 0; i < chips.Length; i++)
             {
                 bool on = i == (int)mode;

@@ -21,6 +21,7 @@ namespace Ludo.Game
         [SerializeField] int onlineScreen = 8;
         [SerializeField] int welcomeScreen = 14;         // the login page, for the bottom bar's online destinations
         [SerializeField] ProfileEditor profileEditor;
+        [SerializeField] RectTransform playersPicker;      // the mode chips on Select Players: they follow the last visible row
 
         [Header("Select Players screen")]
         [SerializeField] GameObject[] playerRows;        // 4 rows, the first N are shown
@@ -105,6 +106,8 @@ namespace Ludo.Game
 
         void RefreshPlayerRows()
         {
+            if (playersPicker != null)
+                playersPicker.anchoredPosition = new Vector2(0f, -300f - (players - 1) * 220f - 230f);
             int[] seats = Board.DefaultSeats(players);      // 2 players sit opposite: Red and Yellow
             for (int i = 0; i < playerRows.Length; i++)
             {
