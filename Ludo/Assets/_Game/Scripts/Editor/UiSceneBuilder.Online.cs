@@ -829,6 +829,8 @@ namespace Ludo.EditorTools
             var openLabel = open.transform.Find("Label").GetComponent<TMP_Text>();
             var ad = MakeButton(card, "AdButton", "Watch Ad x2", "Orange", new Vector2(400f, 130f), null);   // no icon: the label already fills the button
             At((RectTransform)ad.transform, BottomCenter, BottomCenter, new Vector2(200f, 50f), new Vector2(400f, 130f));
+            var coinAd = MakeButton(card, "CoinAdButton", "Watch Ad +" + Ludo.Core.Chest.AdCoins, "Orange", new Vector2(640f, 130f), null);
+            At((RectTransform)coinAd.transform, BottomCenter, BottomCenter, new Vector2(0f, 50f), new Vector2(640f, 130f));
             var close = MakeRoundButton(card, "CloseButton", "Red", Icon("cross"), 96f);
             At((RectTransform)close.transform, new Vector2(1f, 1f), new Vector2(0.5f, 0.5f), new Vector2(-30f, -30f), new Vector2(96f, 96f));
 
@@ -841,9 +843,11 @@ namespace Ludo.EditorTools
             so.FindProperty("openButton").objectReferenceValue = open;
             so.FindProperty("openLabel").objectReferenceValue = openLabel;
             so.FindProperty("adButton").objectReferenceValue = ad;
+            so.FindProperty("coinAdButton").objectReferenceValue = coinAd;
             so.ApplyModifiedProperties();
             OnClick(open, panel.Claim);
             OnClick(ad, panel.WatchAd);
+            OnClick(coinAd, panel.WatchForCoins);
             OnClick(close, panel.Close);
             PopIn(modal, card);
             modal.gameObject.SetActive(false);
@@ -860,7 +864,7 @@ namespace Ludo.EditorTools
             var modal = NewRect("DiceCollectionModal", root); Stretch(modal);
             AddImage(modal, null, new Color(0f, 0f, 0.05f, 0.78f)).raycastTarget = true;
             var card = NewRect("Card", modal);
-            At(card, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(960f, 1260f));
+            At(card, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(960f, 1640f));
             Depth(AddImage(card, Round(), Card, true, 0.45f), CardLip, 14f);
             var title = AddText(card, "Title", "My Dice", 70, Navy, TextAlignmentOptions.Center);
             At(title.rectTransform, TopCenter, TopCenter, new Vector2(0f, -30f), new Vector2(800f, 95f));

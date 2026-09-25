@@ -328,6 +328,20 @@ namespace Ludo.Online
             return amount;
         }
 
+        /// <summary>
+        /// A player who is out of coins watched a rewarded ad to the end: give them a small top-up. Only while they are
+        /// really low (Chest.BrokeBelow), so it cannot be farmed. Returns the coins added (0 = not needed / not loaded).
+        /// </summary>
+        public static async Task<int> AddAdCoinsAsync()
+        {
+            await LoadMineAsync();
+            if (!Loaded || !Chest.CanWatchForCoins(Mine.coins)) return 0;
+            Mine.coins += Chest.AdCoins;
+            Changed?.Invoke();
+            await SaveMineAsync();
+            return Chest.AdCoins;
+        }
+
         // ---------- dice collection ----------
 
         /// <summary>

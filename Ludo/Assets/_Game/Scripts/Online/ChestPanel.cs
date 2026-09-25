@@ -22,6 +22,7 @@ namespace Ludo.Online
         [SerializeField] Button openButton;
         [SerializeField] TMP_Text openLabel;
         [SerializeField] Button adButton;
+        [SerializeField] Button coinAdButton;            // out of coins and no chest ready: watch an ad for a top-up
 
         bool busy;
         float bounce;
@@ -52,6 +53,12 @@ namespace Ludo.Online
             openLabel.text = "Open";
             adButton.gameObject.SetActive(ready);
             adButton.interactable = ready && !busy && AdsService.RewardedReady;
+            bool broke = StatsService.Loaded && !ready && Chest.CanWatchForCoins(StatsService.Mine.coins);
+            if (coinAdButton != null)
+            {
+                coinAdButton.gameObject.SetActive(broke);
+                coinAdButton.interactable = broke && !busy && AdsService.RewardedReady;
+            }
             if (!StatsService.Loaded) statusText.text = "Connecting...";
             else if (!ready && statusText.text.Length == 0)
                 statusText.text = "Your next free chest is on its way. Play a few games while you wait!";
@@ -83,6 +90,25 @@ namespace Ludo.Online
                 if (this == null) return;
                 if (!rewarded) { statusText.text = "The ad did not finish - the chest is still yours to open."; Refresh(); return; }
                 Take(true);
+            });
+        }
+
+        /// <summary>Out of coins: watch a rewarded ad, and only when the SDK confirms it finished get the top-up.</summary>
+        public void WatchForCoins()
+        {
+            if (busy) return;
+            busy = true;
+            statusText.text = "Loading the ad...";
+            AdsService.ShowRewarded(async rewarded =>
+            {
+                if (this == null) return;
+                if (!rewarded) { busy = false; statusText.text = "The ad did not finish - no coins this time."; Refresh(); return; }
+                int got = await StatsService.AddAdCoinsAsync();
+                busy = false;
+                if (this == null) return;
+                statusText.text = got > 0 ? "+" + got.ToString("N0") + " coins!" : "";
+                if (got > 0) AudioService.Play(SfxId.Win);
+                Refresh();
             });
         }
 

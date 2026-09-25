@@ -64,7 +64,9 @@ namespace Ludo.Core
             new DiceSkin("emerald", "Emerald",  DiceRarity.Rare,   DiceUnlock.Coins, 500),
             new DiceSkin("ruby",    "Ruby",     DiceRarity.Rare,   DiceUnlock.Rank,  Rating.Start + 500),
             new DiceSkin("ice",     "Ice",      DiceRarity.Epic,   DiceUnlock.Coins, 2000),
-            new DiceSkin("gold",    "Gold",     DiceRarity.Epic,   DiceUnlock.Level, 10)
+            new DiceSkin("gold",    "Gold",     DiceRarity.Epic,   DiceUnlock.Level, 10),
+            new DiceSkin("rainbow", "Rainbow",  DiceRarity.Rare,   DiceUnlock.Coins, 800),      // every number in its own colour
+            new DiceSkin("carnival","Carnival", DiceRarity.Epic,   DiceUnlock.Coins, 1500)
         };
 
         /// <summary>Tests only: forget the built list so changed reward settings are picked up.</summary>

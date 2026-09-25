@@ -21,9 +21,15 @@ SKINS = {
     "emerald":  ((26, 122, 76),   (16, 88, 54),    (240, 252, 244), (255, 214, 92)),
     "gold":     ((228, 176, 48),  (186, 136, 26),  (58, 40, 10),    (58, 40, 10)),
     "ice":      ((214, 236, 252), (168, 202, 228), (36, 84, 128),   (36, 84, 128)),
+    # every number in its own colour (1 yellow, 2 red, 3 green, 4 blue, 5 purple, 6 orange): last item = colour per face
+    "rainbow":  ((252, 251, 246), (206, 208, 214), (18, 20, 30),    (18, 20, 30),
+                 [(250, 190, 20), (232, 48, 56), (40, 170, 80), (40, 110, 230), (150, 70, 210), (250, 120, 20)]),
+    "carnival": ((36, 40, 78),    (20, 24, 50),    (255, 255, 255), (255, 255, 255),
+                 [(255, 214, 40), (255, 88, 96), (72, 220, 120), (90, 170, 255), (206, 120, 255), (255, 150, 50)]),
 }
+FACE_COLOURS = None
 
-IVORY, EDGE, PIP, RED = SKINS["classic"]
+IVORY, EDGE, PIP, RED = SKINS["classic"][:4]
 
 PIPS = {
     1: [(0.5, 0.5)],
@@ -47,7 +53,7 @@ def face(value):
     if value == 0:
         return img.resize((CELL, CELL), Image.LANCZOS)
     r = s * (0.125 if value == 1 else 0.105)          # big round pips, as on the reference dice
-    colour = RED if value == 1 else PIP
+    colour = FACE_COLOURS[value - 1] if FACE_COLOURS else (RED if value == 1 else PIP)
     for (x, y) in PIPS[value]:
         cx, cy = x * s, y * s
         # a light rim below and a dark one above: the pip looks drilled into the face
@@ -99,11 +105,12 @@ def build_atlas():
 
 
 def main():
-    global IVORY, EDGE, PIP, RED
+    global IVORY, EDGE, PIP, RED, FACE_COLOURS
     folder = os.path.dirname(OUT)
     os.makedirs(folder, exist_ok=True)
-    for skin, (body, edge, pip, one) in SKINS.items():
-        IVORY, EDGE, PIP, RED = body, edge, pip, one
+    for skin, spec in SKINS.items():
+        IVORY, EDGE, PIP, RED = spec[:4]
+        FACE_COLOURS = spec[4] if len(spec) > 4 else None
         path = OUT if skin == "classic" else os.path.join(folder, "dice_faces_" + skin + ".png")
         build_atlas().save(path)
         print("saved", path)

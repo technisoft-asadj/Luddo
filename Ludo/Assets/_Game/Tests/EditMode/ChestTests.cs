@@ -67,5 +67,14 @@ namespace Ludo.Tests
             Assert.AreEqual(Chest.Stamp(Now) + 60, Chest.Stamp(Now.AddHours(1)));
             Assert.Greater(Chest.Stamp(Now), 0);
         }
+
+        [Test]
+        public void OnlyAPlayerWhoIsLowOnCoinsMayWatchAnAdForCoins()
+        {
+            Assert.IsTrue(Chest.CanWatchForCoins(0));
+            Assert.IsTrue(Chest.CanWatchForCoins(Chest.BrokeBelow - 1));
+            Assert.IsFalse(Chest.CanWatchForCoins(Chest.BrokeBelow));      // the top-up cannot be farmed
+            Assert.Greater(Chest.AdCoins, 0);
+        }
     }
 }

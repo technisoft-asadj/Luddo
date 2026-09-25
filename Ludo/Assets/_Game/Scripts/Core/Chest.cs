@@ -18,6 +18,11 @@ namespace Ludo.Core
         /// <summary>The smallest and largest coin pile a chest can hold.</summary>
         public const int MinCoins = 60, MaxCoins = 260;
 
+        /// <summary>A player with fewer coins than this may watch an ad for <see cref="AdCoins"/> more (never a condition for anything).</summary>
+        public const int BrokeBelow = 100, AdCoins = 100;
+
+        public static bool CanWatchForCoins(int coins) => coins < BrokeBelow;
+
         /// <summary>Minutes since 2020-01-01 UTC - small enough for an int, and time-zone proof (unlike the daily reward's day key).</summary>
         public static int Stamp(DateTime utcNow) => (int)(utcNow.ToUniversalTime() - new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMinutes;
 
