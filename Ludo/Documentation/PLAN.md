@@ -441,24 +441,31 @@ Source of truth: `Game Screens/` — 3 sheets, **17 screens** total.
 
 | SCREEN | REFERENCE | UNITY SCENE/PREFAB | STATUS | FUNCTIONAL | VISUAL QA |
 |---|---|---|---|---|---|
-| Main Menu | sheet 1 + 3 | Menu.unity `Screen_Main` | | | |
-| Select Mode | sheet 1 + 3 | Menu.unity `Screen_Mode` | | | |
-| Play Online | sheet 2 + 3 | Menu.unity `Screen_Online` | | | |
-| Login / Signup | sheet 3 | Menu.unity `Screen_Welcome` | | | |
-| Global Quick Match | sheet 3 | Menu.unity `Screen_QuickMatch` | | | |
-| Pre-Game Lobby | sheet 3 | Menu.unity `Screen_Room` | | | |
-| In-Game Board HUD | sheet 3 | Game.unity `HudCanvas` | | | |
-| Dice Presentation | sheet 3 | Game.unity (DiceView) | | | |
-| Chat & Reactions | sheet 3 | `ChatModal` (both scenes) | | | |
-| Match Result | sheet 3 | Game.unity result panel | | | |
-| Player Profile | sheet 3 | Menu.unity `Screen_Profile` | | | |
-| Friends | sheet 3 | Menu.unity `Screen_Friends` | | | |
-| Tournaments / Events | sheet 3 | NEW screen | | | |
-| Dice Collection | sheet 3 | `DiceCollectionModal` | | | |
-| Daily Rewards | sheet 3 | `DailyRewardModal` | | | |
-| Settings | sheet 3 | Menu.unity `Screen_Settings` | | | |
-| Leaderboard | sheet 3 | Menu.unity `Screen_Leaderboards` | | | |
-| Clubs | sheet 3 | NEW screen | | | |
+| Main Menu | sheet 1 + 3 | Menu.unity `Screen_Main` | **DONE** | yes | editor ✅ / phone ⏳ |
+| Select Mode | sheet 1 + 3 | Menu.unity `Screen_Mode` | **DONE** | yes | editor ✅ / phone ⏳ |
+| Play Online | sheet 2 + 3 | Menu.unity `Screen_Online` | **DONE** | yes | editor ✅ / phone ⏳ |
+| Tournaments / Events | sheet 3 | Menu.unity `Screen_Events` (new) | **DONE** | yes | editor ✅ / phone ⏳ |
+| Player Profile | sheet 3 | Menu.unity `Screen_Profile` | **DONE** | yes | editor ✅ / phone ⏳ |
+| Friends | sheet 3 | Menu.unity `Screen_Friends` | **PARTIAL** — bottom bar added, rows not restyled | yes | |
+| Leaderboard | sheet 3 | Menu.unity `Screen_Leaderboards` | **PARTIAL** — bottom bar added, tabs/rows not restyled | yes | |
+| Login / Signup | sheet 3 | Menu.unity `Screen_Welcome` | PENDING | yes | |
+| Global Quick Match | sheet 3 | Menu.unity `Screen_QuickMatch` | PENDING | yes | |
+| Pre-Game Lobby | sheet 3 | Menu.unity `Screen_Room` | PENDING | yes | |
+| In-Game Board HUD | sheet 3 | Game.unity `HudCanvas` | PENDING | yes | |
+| Dice Presentation | sheet 3 | Game.unity (DiceView) | already matches (3D physics dice) | yes | ✅ |
+| Chat & Reactions | sheet 3 | `ChatModal` (both scenes) | PENDING | yes | |
+| Match Result | sheet 3 | Game.unity result panel | PENDING | yes | |
+| Dice Collection | sheet 3 | `DiceCollectionModal` | **PARTIAL** — built, no Owned/Locked tabs | yes | phone ✅ |
+| Daily Rewards | sheet 3 | `DailyRewardModal` | **PARTIAL** — 7-day calendar built | yes | phone ✅ |
+| Settings | sheet 3 | Menu.unity `Screen_Settings` | PENDING | yes | |
+| Clubs | sheet 3 | — | **NOT BUILT** — no clubs system exists; a screen here would be empty | n/a | n/a |
+
+**Deliberate departures from the reference (each one is a "do not fake it" call, not an oversight)**
+- **Gems, Lucky Spin, Clubs, Season Pass, timed events** — drawn in the art, no system behind any of them. Left out instead of shown as controls that do nothing.
+- **Bottom nav sits ~196 px above the screen edge**, not flush. The main menu carries an AdMob banner there and the ads policy forbids tappable UI against it; the project already moved buttons off that edge for this reason.
+- **Profile has no bottom nav** — the reference's profile uses that space for its own Statistics/Rewards/Achievements tabs. There is no achievements system, so the page is one honest page, and dropping the bar is also what lets every number fit a 16:9 screen.
+- **Select Mode has no Arrow row** (the reference has none) although the game has Arrow mode; it stays selectable on the Play Online and vs Computer mode chips.
+- **Play Online's tile grid trimmed to the reference's four cards** — Leaderboards and Profile moved to the bottom bar, the account to the header gear, the dice collection to the main menu, so nothing became unreachable.
 
 **Gap analysis (what the reference adds that the project does not have yet)**
 - *Structure:* a persistent **bottom navigation bar** (Home / Friends / Chat / Profile) on the menu screens; the current build has no bottom nav at all.
@@ -468,3 +475,8 @@ Source of truth: `Game Screens/` — 3 sheets, **17 screens** total.
 - *New systems implied by the art:* **Gems** (second currency), **Lucky Spin**, **Clubs**, **Events / Season Pass**, profile **Achievements** and **Statistics** tabs. None of these exist yet — they will be built only where a real system can back them; anything that cannot be backed honestly is left out rather than faked.
 - *Assets to create:* gem, crown, star, key, house, handshake, gamepad, calendar, gift, spin-wheel, shield, sliders, medal and grid icons (procedural, in `UiArtGenerator`, same approach as the existing white shapes); no paid or third-party game art.
 - *Keep untouched (explicit instruction):* the playable Ludo board, tokens, movement, board interaction and the whole gameplay engine. The dice keeps its existing authoritative + PhysX presentation; only its skin/scale is matched to the reference.
+
+**Phone check 2026-09-25 (Infinix 1080x2436, test-ads APK built from `d939eeb` + `_Recovery` cleanup):** installed OK; main menu renders as designed (top bar, rails, Play Online, duo cards, tile row, Daily Rewards, nav bar above the ad banner, test ad loads).
+**Known visual bug found on-device, not yet fixed:** the new **Events** rail button (left column, under Rewards) has its caption hidden behind the Play Online card on this tall screen. Fix next session: move the Events rail up or shrink the logo block. Not yet phone-checked: Select Mode, Play Online, Profile, Events.
+**Editor note:** a modal "Save Scene" dialog froze the Unity Editor (every MCP call timed out) after a menu build left the Menu scene dirty during an APK build. Recovery that worked: kill and relaunch Unity (scenes were already saved/committed), then delete the `Assets/_Recovery` scene it leaves. Prevention: save the open scene explicitly (`EditorSceneManager.SaveScene`) before starting a build.
+**Paused here at the user's request.** Remaining screens: Login/Signup, Quick Match, Pre-Game Lobby, In-Game HUD, Chat, Match Result, Settings restyle; Friends/Leaderboard row restyle; Dice Collection + Daily Rewards tab polish.
