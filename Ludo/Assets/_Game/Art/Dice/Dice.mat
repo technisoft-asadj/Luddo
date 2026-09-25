@@ -29,9 +29,9 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _Ambient: 0.55
-    - _Gloss: 28
-    - _Specular: 0.25
+    - _Ambient: 0.5
+    - _Gloss: 90
+    - _Specular: 0.22
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _LightDir: {r: -0.45, g: 0.6, b: -0.65, a: 0}

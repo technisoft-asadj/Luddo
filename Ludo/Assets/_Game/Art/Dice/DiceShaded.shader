@@ -7,9 +7,9 @@ Shader "Ludo/DiceShaded"
     {
         _MainTex ("Faces", 2D) = "white" {}
         _LightDir ("Light direction (towards the light)", Vector) = (-0.45, 0.6, -0.65, 0)
-        _Ambient ("Ambient", Range(0, 1)) = 0.55
-        _Specular ("Specular", Range(0, 1)) = 0.25
-        _Gloss ("Gloss", Range(2, 128)) = 28
+        _Ambient ("Ambient", Range(0, 1)) = 0.5
+        _Specular ("Specular", Range(0, 1)) = 0.22
+        _Gloss ("Gloss", Range(2, 128)) = 90
     }
     SubShader
     {
@@ -59,7 +59,9 @@ Shader "Ludo/DiceShaded"
                 float3 viewDir = float3(0, 0, -1);                         // orthographic camera looking down the board
                 float diffuse = saturate(dot(n, l));
                 float spec = pow(saturate(dot(n, normalize(l + viewDir))), _Gloss) * _Specular;
-                half3 colour = albedo * (_Ambient + (1 - _Ambient) * diffuse) + spec;
+                float rim = pow(1 - saturate(dot(n, -viewDir)), 3) * 0.06;                 // a soft glow round the silhouette: glossy plastic
+                float sky = 0.5 + 0.5 * n.y;                                              // the top of the die is a little brighter than its underside
+                half3 colour = albedo * (_Ambient * (0.85 + 0.25 * sky) + (1 - _Ambient) * diffuse) + spec + rim;
                 return half4(colour, 1);
             }
             ENDHLSL

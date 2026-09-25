@@ -66,7 +66,7 @@ namespace Ludo.Tests
         {
             var mesh = DiceMesh.Build();
             var v = mesh.vertices; var t = mesh.triangles;
-            Assert.AreEqual(6 * 2 + 12 * 2 + 8, t.Length / 3);           // 6 faces, 12 bevels, 8 corners
+            Assert.AreEqual(6 * 13 * 13 * 2, t.Length / 3);              // 6 faces, each a 14 x 14 vertex grid of rounded surface
             for (int i = 0; i < t.Length; i += 3)
             {
                 Vector3 a = v[t[i]], b = v[t[i + 1]], c = v[t[i + 2]];

@@ -36,54 +36,55 @@ namespace Ludo.Game
         /// face is temporarily repointed here (see SetFaceCell) and the whole die is tinted the current player's colour.</summary>
         public const int PawnCell = 7;
 
+        const int Grid = 14;                                   // vertices per side of one face
+        const int FaceVertices = Grid * Grid;
+
+        /// <summary>
+        /// A rounded cube of edge 1, like the glossy dice in the reference: every face is a grid of vertices pushed onto a
+        /// rounded box (radius = 1.5 x chamfer) with smooth normals, so light rolls over the corners instead of catching flat
+        /// bevels. Each face keeps its own atlas picture; the curved rim shows the picture's shaded border. Face 'value' owns
+        /// vertices (value-1) x FaceVertices ..+FaceVertices-1 (used by SetFaceCell).
+        /// </summary>
         public static Mesh Build(float chamfer = 0.12f)
         {
-            float h = 0.5f, inner = h - Mathf.Clamp(chamfer, 0.01f, 0.45f);
-            var verts = new List<Vector3>();
-            var normals = new List<Vector3>();
-            var uvs = new List<Vector2>();
-            var tris = new List<int>();
-            Vector2 plain = CellCentre(PlainCell);
+            float h = 0.5f;
+            float radius = Mathf.Clamp(chamfer * 1.5f, 0.05f, 0.3f);
+            float inner = h - radius;
+            var verts = new List<Vector3>(FaceVertices * 6);
+            var normals = new List<Vector3>(FaceVertices * 6);
+            var uvs = new List<Vector2>(FaceVertices * 6);
+            var tris = new List<int>(6 * (Grid - 1) * (Grid - 1) * 6);
 
-            // the six faces, each with its picture
             for (int value = 1; value <= 6; value++)
             {
                 Vector3 n = FaceNormal[value - 1];
                 Vector3 u = Mathf.Abs(n.x) > 0.5f ? Vector3.forward : Vector3.right;
                 Vector3 v = Vector3.Cross(n, u);             // u x v = n: the picture reads upright from outside
-                Vector3 c = n * h;
-                var corners = new[] { c + (-u - v) * inner, c + (u - v) * inner, c + (u + v) * inner, c + (-u + v) * inner };
-                var cornerUv = new[] { new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(1f, 1f), new Vector2(0f, 1f) };
-                var quadUv = new Vector2[4];
-                for (int i = 0; i < 4; i++) quadUv[i] = CellUv(value - 1, cornerUv[i]);
-                AddQuad(verts, normals, uvs, tris, corners, n, quadUv);
-            }
-
-            // the twelve bevelled edges
-            var axes = new[] { Vector3.right, Vector3.left, Vector3.up, Vector3.down, Vector3.forward, Vector3.back };
-            for (int i = 0; i < axes.Length; i++)
-                for (int j = i + 1; j < axes.Length; j++)
-                {
-                    Vector3 a = axes[i], b = axes[j];
-                    if (Mathf.Abs(Vector3.Dot(a, b)) > 0.5f) continue;              // parallel sides share no edge
-                    Vector3 w = Vector3.Cross(a, b);
-                    var q = new[]
+                int start = verts.Count;
+                for (int gy = 0; gy < Grid; gy++)
+                    for (int gx = 0; gx < Grid; gx++)
                     {
-                        a * h + b * inner - w * inner, a * h + b * inner + w * inner,
-                        b * h + a * inner + w * inner, b * h + a * inner - w * inner
-                    };
-                    AddQuad(verts, normals, uvs, tris, q, (a + b).normalized, new[] { plain, plain, plain, plain });
-                }
-
-            // the eight corners
-            for (int sx = -1; sx <= 1; sx += 2)
-                for (int sy = -1; sy <= 1; sy += 2)
-                    for (int sz = -1; sz <= 1; sz += 2)
-                    {
-                        Vector3 x = Vector3.right * sx, y = Vector3.up * sy, z = Vector3.forward * sz;
-                        var t = new[] { x * h + (y + z) * inner, y * h + (x + z) * inner, z * h + (x + y) * inner };
-                        AddTriangle(verts, normals, uvs, tris, t, (x + y + z).normalized, plain);
+                        float a = Mathf.Lerp(-h, h, gx / (float)(Grid - 1));
+                        float b = Mathf.Lerp(-h, h, gy / (float)(Grid - 1));
+                        Vector3 p = n * h + u * a + v * b;                                   // the point on the plain cube
+                        Vector3 q = new Vector3(Mathf.Clamp(p.x, -inner, inner), Mathf.Clamp(p.y, -inner, inner), Mathf.Clamp(p.z, -inner, inner));
+                        Vector3 d = p - q;
+                        Vector3 normal = d.sqrMagnitude < 1e-8f ? n : d.normalized;
+                        verts.Add(q + normal * radius);
+                        normals.Add(normal);
+                        uvs.Add(CellUv(value - 1, new Vector2(gx / (float)(Grid - 1), gy / (float)(Grid - 1))));
                     }
+                for (int gy = 0; gy < Grid - 1; gy++)
+                    for (int gx = 0; gx < Grid - 1; gx++)
+                    {
+                        int i0 = start + gy * Grid + gx, i1 = i0 + 1, i2 = i0 + Grid + 1, i3 = i0 + Grid;
+                        // u x v = n, so (i0, i1, i2) runs counter-clockwise seen from outside
+                        Vector3 cross = Vector3.Cross(verts[i1] - verts[i0], verts[i2] - verts[i0]);
+                        bool facesOut = Vector3.Dot(cross, normals[i0]) > 0f;
+                        if (facesOut) tris.AddRange(new[] { i0, i1, i2, i0, i2, i3 });
+                        else tris.AddRange(new[] { i0, i2, i1, i0, i3, i2 });
+                    }
+            }
 
             var mesh = new Mesh { name = "Dice" };
             mesh.SetVertices(verts);
@@ -117,9 +118,25 @@ namespace Ludo.Game
         {
             var uvs = new List<Vector2>();
             mesh.GetUVs(0, uvs);
-            int start = (value - 1) * 4;
-            for (int i = 0; i < 4; i++) uvs[start + i] = CellUv(cell, QuadCorners[i]);
+            int start = (value - 1) * FaceVertices;
+            // every picture sits at the same place inside its cell, so moving to another cell is one shift for all vertices
+            Vector2 from = CellOrigin(CellOf(uvs[start]));
+            Vector2 shift = CellOrigin(cell) - from;
+            for (int i = 0; i < FaceVertices; i++) uvs[start + i] += shift;
             mesh.SetUVs(0, uvs);
+        }
+
+        static int CellOf(Vector2 uv)
+        {
+            int col = Mathf.Clamp(Mathf.FloorToInt(uv.x * Columns), 0, Columns - 1);
+            int row = Mathf.Clamp(Mathf.FloorToInt((1f - uv.y) * Rows), 0, Rows - 1);
+            return row * Columns + col;
+        }
+
+        static Vector2 CellOrigin(int cell)
+        {
+            int col = cell % Columns, row = cell / Columns;
+            return new Vector2(col / (float)Columns, 1f - (row + 1f) / Rows);
         }
 
         static void AddQuad(List<Vector3> v, List<Vector3> n, List<Vector2> uv, List<int> t, Vector3[] q, Vector3 normal, Vector2[] quv)

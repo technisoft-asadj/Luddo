@@ -144,6 +144,9 @@ namespace Ludo.EditorTools
             }
             material.shader = Shader.Find(ShaderName);
             material.SetTexture("_MainTex", AssetDatabase.LoadAssetAtPath<Texture2D>(TexturePath));
+            material.SetFloat("_Ambient", 0.5f);            // glossier look: more shine, a soft rim (see DiceShaded)
+            material.SetFloat("_Specular", 0.22f);
+            material.SetFloat("_Gloss", 90f);
             EditorUtility.SetDirty(material);
             AssetDatabase.SaveAssets();
             return material;
