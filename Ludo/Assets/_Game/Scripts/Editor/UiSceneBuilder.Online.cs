@@ -320,6 +320,8 @@ namespace Ludo.EditorTools
                 var av = NewRect("Avatar", rowRt);
                 At(av, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -22f), new Vector2(150f, 150f));
                 AddImage(av, Circle(), new Color(0.80f, 0.87f, 1f)).raycastTarget = false;
+                var ghost = NewRect("Silhouette", av); Stretch(ghost, 30f, 30f, 30f, 30f);
+                AddImage(ghost, Ico("person"), new Color(0.35f, 0.47f, 0.75f, 0.9f)).raycastTarget = false;
                 var pic = NewRect("Picture", av); Stretch(pic, 8f, 8f, 8f, 8f);
                 var picImg = AddImage(pic, null, Color.white); picImg.raycastTarget = false; picImg.preserveAspect = true;
                 var flagImg = FlagBadge(av, "Flag", new Vector2(1f, 0f), new Vector2(-14f, 6f), 54f);

@@ -9,6 +9,15 @@ namespace Ludo.Tests
     public class CoinsTests
     {
         [Test]
+        public void EveryGameModeSurvivesTheRoomProperty()
+        {
+            foreach (GameMode m in Enum.GetValues(typeof(GameMode)))
+                Assert.AreEqual(m, RoomService.ModeFrom((int)m), m + " must come back from the room as itself");
+            Assert.AreEqual(GameMode.Classic, RoomService.ModeFrom(99));
+            Assert.AreEqual(GameMode.Classic, RoomService.ModeFrom(-1));
+        }
+
+        [Test]
         public void OnlineTablesAreNeverFree()
         {
             foreach (var fee in CoinTables.OnlineFees) Assert.Greater(fee, 0);

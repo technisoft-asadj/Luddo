@@ -61,7 +61,7 @@ namespace Ludo.Online
         public static string Code => session != null ? session.Code : "";
         public static int MaxPlayers => session != null ? session.MaxPlayers : 4;
 
-        /// <summary>The room's game mode (Classic / Master / Arrow / Blitz), set by whoever opened it.</summary>
+        /// <summary>The room's game mode (Classic / Master / Arrow / Blitz / Team Up), set by whoever opened it.</summary>
         public static GameMode Mode
         {
             get
@@ -83,7 +83,7 @@ namespace Ludo.Online
             }
         }
 
-        public static GameMode ModeFrom(int value) => value >= 0 && value <= (int)GameMode.Blitz ? (GameMode)value : GameMode.Classic;
+        public static GameMode ModeFrom(int value) => value >= 0 && value <= (int)GameMode.TeamUp ? (GameMode)value : GameMode.Classic;
 
         static SessionProperty ModeProperty(GameMode mode) =>
             new SessionProperty(((int)mode).ToString(), VisibilityPropertyOptions.Public, PropertyIndex.String2);
