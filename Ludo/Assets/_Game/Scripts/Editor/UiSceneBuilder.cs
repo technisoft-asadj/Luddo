@@ -1284,6 +1284,14 @@ namespace Ludo.EditorTools
             var hud = hudGo.AddComponent<GameHud>();
 
             var pause = BuildPausePanel(root, hud);
+            var friendModal = BuildFriendModal(root, hud, out var friendTitle, out var friendMessage, out var friendAdd);
+            for (int seat = 0; seat < 4; seat++)                    // tap a badge: add that player as a friend
+            {
+                var badgeButton = badges[seat].gameObject.AddComponent<Button>();
+                badgeButton.transition = Selectable.Transition.None;
+                badgeButton.targetGraphic = badges[seat].GetComponentInChildren<Image>();
+                OnClickInt(badgeButton, hud.OpenPlayerCard, seat);
+            }
             var result = BuildResultPanel(root, hud, out var resultTitle, out var resultAvatar, out var resultRing);
 
             var pauseButton = MakeRoundButton(safe, "PauseButton", "Grey", Icon("pause"), 124f);
@@ -1314,6 +1322,10 @@ namespace Ludo.EditorTools
             var controller = Object.FindFirstObjectByType<GameController>();
             var ho = new SerializedObject(hud);
             ho.FindProperty("countdownText").objectReferenceValue = countdown;
+            ho.FindProperty("friendModal").objectReferenceValue = friendModal;
+            ho.FindProperty("friendTitle").objectReferenceValue = friendTitle;
+            ho.FindProperty("friendMessage").objectReferenceValue = friendMessage;
+            ho.FindProperty("friendAddButton").objectReferenceValue = friendAdd;
             ho.FindProperty("autoButton").objectReferenceValue = auto;
             ho.FindProperty("autoImage").objectReferenceValue = auto.GetComponent<Image>();
             ho.FindProperty("autoLabel").objectReferenceValue = auto.transform.Find("Label").GetComponent<TMP_Text>();
@@ -1545,6 +1557,33 @@ namespace Ludo.EditorTools
             so.FindProperty("speaking").objectReferenceValue = speak.gameObject;
             so.ApplyModifiedProperties();
             return badge;
+        }
+
+        /// <summary>The small pop-up over the match: tap an online player's badge to send them a friend request.</summary>
+        static GameObject BuildFriendModal(RectTransform root, GameHud hud, out TMP_Text title, out TMP_Text message, out GameObject addButton)
+        {
+            var modal = NewRect("FriendModal", root); Stretch(modal);
+            AddImage(modal, null, new Color(0f, 0f, 0.06f, 0.75f)).raycastTarget = true;
+            var card = NewRect("Card", modal);
+            At(card, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(820f, 700f));
+            Depth(AddImage(card, Round(), DarkPanel, true, 0.45f), DarkPanelLip, 16f);
+            title = AddText(card, "Title", "Player", 80, Color.white, TextAlignmentOptions.Center, true);
+            At(title.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -40f), new Vector2(720f, 110f));
+            title.enableAutoSizing = true; title.fontSizeMin = 40f; title.fontSizeMax = 80f;
+            message = AddText(card, "Message", "", 40, new Color(1f, 1f, 1f, 0.9f), TextAlignmentOptions.Center, true);
+            message.textWrappingMode = TextWrappingModes.Normal;
+            At(message.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -170f), new Vector2(720f, 130f));
+            message.enableAutoSizing = true; message.fontSizeMin = 26f; message.fontSizeMax = 40f;
+            var add = MakeButton(card, "AddFriendButton", "Add Friend", "Green", new Vector2(640f, 150f), Ico("person_add"));
+            At((RectTransform)add.transform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -340f), new Vector2(640f, 150f));
+            var close = MakeButton(card, "CloseButton", "Close", "Grey", new Vector2(640f, 150f), null);
+            At((RectTransform)close.transform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 50f), new Vector2(640f, 150f));
+            OnClick(add, hud.TapAddFriend);
+            OnClick(close, hud.CloseFriend);
+            addButton = add.gameObject;
+            PopIn(modal, card);
+            modal.gameObject.SetActive(false);
+            return modal.gameObject;
         }
 
         static GameObject BuildPausePanel(RectTransform root, GameHud hud)

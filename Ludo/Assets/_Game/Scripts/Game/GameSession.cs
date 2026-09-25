@@ -120,6 +120,9 @@ namespace Ludo.Game
         /// <summary>Called when the player leaves an online match (set by the online code: leaves the room).</summary>
         public static System.Action LeaveOnline;
 
+        /// <summary>Sends a friend request to somebody met in this match, by online ID, and returns a message to show (set by the online code).</summary>
+        public static System.Func<string, System.Threading.Tasks.Task<string>> AddFriend;
+
         /// <summary>
         /// Settles an online match for this phone (records the result, works out Rank Points / XP / coins, handles the optional ad
         /// bonus) and gives the result screen a MatchSummary to show. Set by the online code, null offline.
@@ -149,6 +152,7 @@ namespace Ludo.Game
             LeaveOnline = null;
             SpeakingProbe = null;
             Settler = null;
+            AddFriend = null;
         }
 
         /// <summary>Text for the badge and the result screen.</summary>

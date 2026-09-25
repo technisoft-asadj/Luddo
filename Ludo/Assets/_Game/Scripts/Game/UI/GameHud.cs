@@ -33,6 +33,10 @@ namespace Ludo.Game
         [SerializeField] Sprite[] diceFaces;            // flat dice pictures 1..6 (index 0 = one pip)
         [SerializeField] TMP_Text modeText;             // "MASTER MODE - capture an opponent before ..." (hidden in Classic)
         [SerializeField] TMP_Text countdownText;        // the 3 - 2 - 1 - GO! that opens a match
+        [SerializeField] GameObject friendModal;        // online: tap a player's badge to send them a friend request
+        [SerializeField] TMP_Text friendTitle;
+        [SerializeField] TMP_Text friendMessage;
+        [SerializeField] GameObject friendAddButton;
         [SerializeField] Button autoButton;             // online only: let the game play this player's turns
         [SerializeField] Image autoImage;
         [SerializeField] TMP_Text autoLabel;            // "Auto: OFF" / "Auto: ON"
@@ -213,6 +217,35 @@ namespace Ludo.Game
             chosenValue = 0;
             return v;
         }
+
+        // ---------- add a friend from the match ----------
+
+        string friendTargetId = "";
+
+        /// <summary>A player's badge was tapped (wired with the seat): offer to add them as a friend if they are a real person.</summary>
+        public void OpenPlayerCard(int seat)
+        {
+            if (friendModal == null || controller == null || GameSession.AddFriend == null) return;
+            string id = controller.OnlineIdOfSeat(seat);
+            if (string.IsNullOrEmpty(id)) return;                    // me, the computer, or an offline game
+            friendTargetId = id;
+            friendTitle.text = badges[seat].PlayerName;
+            friendMessage.text = "Not friends yet? Send a friend request.";
+            friendAddButton.SetActive(true);
+            friendModal.SetActive(true);
+        }
+
+        public async void TapAddFriend()
+        {
+            if (string.IsNullOrEmpty(friendTargetId) || GameSession.AddFriend == null) return;
+            friendAddButton.SetActive(false);
+            friendMessage.text = "Sending...";
+            string message = await GameSession.AddFriend(friendTargetId);
+            if (this == null) return;
+            friendMessage.text = message;
+        }
+
+        public void CloseFriend() { if (friendModal != null) friendModal.SetActive(false); }
 
         // ---------- auto play ----------
 

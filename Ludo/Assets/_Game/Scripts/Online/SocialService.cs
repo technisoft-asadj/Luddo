@@ -141,6 +141,20 @@ namespace Ludo.Online
             await FriendsService.Instance.AddFriendByNameAsync(wanted);
         }, "Could not find that player. Check the ID (it looks like Name#1234).");
 
+        /// <summary>
+        /// Friend request to somebody met in a game or lobby, by their online ID. Returns a short message for the screen:
+        /// already friends, already asked, sent, or why it failed.
+        /// </summary>
+        public static async Task<string> RequestFromGameAsync(string memberId)
+        {
+            if (string.IsNullOrEmpty(memberId) || memberId == OnlineService.PlayerId) return "That is you.";
+            if (!await StartAsync()) return string.IsNullOrEmpty(LastError) ? "Friends are not available right now." : LastError;
+            if (Friends().Exists(f => f.Id == memberId)) return "You are already friends.";
+            if (OutgoingRequests().Exists(f => f.Id == memberId)) return "Friend request already sent.";
+            bool ok = await Run(() => FriendsService.Instance.AddFriendAsync(memberId));   // also accepts if they asked you first
+            return ok ? "Friend request sent!" : LastError;
+        }
+
         public static Task<bool> AcceptAsync(string memberId) => Run(() => FriendsService.Instance.AddFriendAsync(memberId));
         public static Task<bool> DeclineAsync(string memberId) => Run(() => FriendsService.Instance.DeleteIncomingFriendRequestAsync(memberId));
         public static Task<bool> CancelRequestAsync(string memberId) => Run(() => FriendsService.Instance.DeleteOutgoingFriendRequestAsync(memberId));

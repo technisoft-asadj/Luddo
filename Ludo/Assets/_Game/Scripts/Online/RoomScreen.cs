@@ -290,6 +290,15 @@ namespace Ludo.Online
 
         public void CloseMore() => moreModal.SetActive(false);
 
+        public async void AddFriendTarget()
+        {
+            moreModal.SetActive(false);
+            Notice("Sending friend request...");
+            string message = await SocialService.RequestFromGameAsync(moreTarget.Id);
+            if (this == null) return;
+            Notice(moreTarget.Name + ": " + message);
+        }
+
         public void MuteTarget()
         {
             VoiceService.ToggleMuteFor(moreTarget.Id);

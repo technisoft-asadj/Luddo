@@ -24,6 +24,7 @@ namespace Ludo.Online
             GameSession.SpeakingProbe = VoiceService.IsSpeaking;      // the game screen lights up whoever is talking
             var recorder = new MatchRecorder(start, OnlineService.PlayerId);     // rating, statistics and Weekly Cup for this phone
             GameSession.Settler = recorder;
+            GameSession.AddFriend = SocialService.RequestFromGameAsync;
             GameSession.LeaveOnline = () =>
             {
                 recorder.Left(ResultKind.Forfeit);                                     // leaving a ranked match early is a loss

@@ -65,6 +65,15 @@ namespace Ludo.Game
         RulesConfig activeRules;                                   // the rules asset with the chosen game mode (Classic / Master / Arrow / Blitz)
         RulesConfig Rules => activeRules ??= rules.Rules.WithMode(GameSession.Mode);
 
+        /// <summary>Online: the account ID of the person on this seat, or "" for me, the computer or an offline game.</summary>
+        public string OnlineIdOfSeat(int seat)
+        {
+            if (link == null || game == null) return "";
+            for (int p = 0; p < playerCount; p++)
+                if (game.State.SeatOf(p) == seat && slots[p].isRemote && !slots[p].isAi) return slots[p].onlineId ?? "";
+            return "";
+        }
+
         public FlowState State { get; private set; }
         public GameMode Mode => Rules.Mode;
         public int PlayerCount => playerCount;

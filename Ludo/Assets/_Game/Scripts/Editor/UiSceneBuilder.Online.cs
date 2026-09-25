@@ -412,18 +412,21 @@ namespace Ludo.EditorTools
             var modal = NewRect("MoreModal", root); Stretch(modal);
             AddImage(modal, null, new Color(0f, 0f, 0.05f, 0.75f)).raycastTarget = true;
             var card = NewRect("Card", modal);
-            At(card, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(860f, 900f));
+            At(card, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(860f, 1020f));
             Depth(AddImage(card, Round(), Card, true, 0.45f), CardLip, 14f);
             title = AddText(card, "Title", "Player", 66, Navy, TextAlignmentOptions.Center);
             At(title.rectTransform, TopCenter, TopCenter, new Vector2(0f, -35f), new Vector2(760f, 95f));
             title.enableAutoSizing = true; title.fontSizeMin = 34f; title.fontSizeMax = 66f;
 
+            var addFriend = MakeButton(card, "AddFriendButton", "Add Friend", "Green", new Vector2(700f, 130f), Ico("person_add"));
+            At((RectTransform)addFriend.transform, TopCenter, TopCenter, new Vector2(0f, -160f), new Vector2(700f, 130f));
             var mute = MakeButton(card, "MuteButton", "Mute / Unmute", "Blue", new Vector2(700f, 130f), Ico("mic_off"));
-            At((RectTransform)mute.transform, TopCenter, TopCenter, new Vector2(0f, -170f), new Vector2(700f, 130f));
+            At((RectTransform)mute.transform, TopCenter, TopCenter, new Vector2(0f, -310f), new Vector2(700f, 130f));
             var block = MakeButton(card, "BlockButton", "Block", "Orange", new Vector2(700f, 130f), Ico("block"));
-            At((RectTransform)block.transform, TopCenter, TopCenter, new Vector2(0f, -330f), new Vector2(700f, 130f));
+            At((RectTransform)block.transform, TopCenter, TopCenter, new Vector2(0f, -460f), new Vector2(700f, 130f));
             var report = MakeButton(card, "ReportButton", "Report", "Red", new Vector2(700f, 130f), Ico("flag"));
-            At((RectTransform)report.transform, TopCenter, TopCenter, new Vector2(0f, -490f), new Vector2(700f, 130f));
+            At((RectTransform)report.transform, TopCenter, TopCenter, new Vector2(0f, -610f), new Vector2(700f, 130f));
+            OnClick(addFriend, room.AddFriendTarget);
             var close = MakeButton(card, "CloseButton", "Close", "Grey", new Vector2(700f, 130f), null);
             At((RectTransform)close.transform, BottomCenter, BottomCenter, new Vector2(0f, 45f), new Vector2(700f, 130f));
             OnClick(mute, room.MuteTarget);
