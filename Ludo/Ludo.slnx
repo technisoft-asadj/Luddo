@@ -4,10 +4,10 @@
   <Project Path="Ludo.Core.csproj" />
   <Project Path="Ludo.Game.csproj" />
   <Project Path="Google.Play.Games.Editor.csproj" />
+  <Project Path="Ludo.Editor.csproj" />
   <Project Path="Google.Play.Games.csproj" />
   <Project Path="Ludo.AI.csproj" />
   <Project Path="Assembly-CSharp.csproj" />
-  <Project Path="Ludo.Editor.csproj" />
   <Project Path="Ludo.Services.csproj" />
   <Project Path="Assembly-CSharp-Editor.csproj" />
 </Solution>
