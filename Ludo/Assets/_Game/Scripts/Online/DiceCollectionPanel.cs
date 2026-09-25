@@ -23,6 +23,7 @@ namespace Ludo.Online
         [SerializeField] TMP_Text[] names;
         [SerializeField] TMP_Text[] notes;           // "Worn" / "Level 3" / "500 coins"
         [SerializeField] GameObject[] locks;
+        [SerializeField] Image[] tabFaces;           // All, Owned, Locked
         [SerializeField] TMP_Text coinsText;
         [SerializeField] TMP_Text statusText;
         [SerializeField] Color wornColor = new Color(1f, 0.82f, 0.15f);
@@ -33,6 +34,14 @@ namespace Ludo.Online
         static readonly Color Refused = new Color(0.78f, 0.38f, 0.06f);
 
         bool busy;
+        int filter;                                  // 0 all, 1 owned, 2 locked
+
+        /// <summary>The All / Owned / Locked tabs (wired with 0, 1, 2).</summary>
+        public void SetFilter(int index)
+        {
+            filter = Mathf.Clamp(index, 0, 2);
+            Refresh();
+        }
 
         /// <summary>The status line: green when something happened, amber when the tap was refused.</summary>
         void Say(string text, bool good)
@@ -44,6 +53,7 @@ namespace Ludo.Online
         public void Open()
         {
             panel.SetActive(true);
+            filter = 0;
             Say("", true);
             busy = false;
             Refresh();
@@ -63,13 +73,20 @@ namespace Ludo.Online
             string worn = loaded ? s.EquippedDice : GameSettings.DiceSkin;
             coinsText.text = loaded ? s.coins.ToString("N0") : "-";
 
+            for (int i = 0; tabFaces != null && i < tabFaces.Length; i++)
+                tabFaces[i].color = i == filter ? wornColor : new Color(0.90f, 0.94f, 1f);
+            int slot = 0;
             for (int i = 0; i < tiles.Length; i++)
             {
                 bool used = i < all.Length;
-                tiles[i].transform.parent.gameObject.SetActive(used);
-                if (!used) continue;
+                if (!used) { tiles[i].gameObject.SetActive(false); continue; }
                 var skin = all[i];
                 bool owned = loaded && DiceSkins.IsOwned(skin.Id, s.Level, s.rating, s.diceOwned);
+                bool visible = filter == 0 || (filter == 1 && owned) || (filter == 2 && !owned);
+                tiles[i].gameObject.SetActive(visible);
+                if (!visible) continue;
+                tiles[i].rectTransform.anchoredPosition = new Vector2((slot % 3 - 1) * 296f, -360f - (slot / 3) * 330f);
+                slot++;
                 bool isWorn = owned && skin.Id == worn;
 
                 names[i].text = skin.Name;

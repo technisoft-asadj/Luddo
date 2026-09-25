@@ -860,7 +860,7 @@ namespace Ludo.EditorTools
             var modal = NewRect("DiceCollectionModal", root); Stretch(modal);
             AddImage(modal, null, new Color(0f, 0f, 0.05f, 0.78f)).raycastTarget = true;
             var card = NewRect("Card", modal);
-            At(card, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(960f, 1140f));
+            At(card, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(960f, 1260f));
             Depth(AddImage(card, Round(), Card, true, 0.45f), CardLip, 14f);
             var title = AddText(card, "Title", "My Dice", 70, Navy, TextAlignmentOptions.Center);
             At(title.rectTransform, TopCenter, TopCenter, new Vector2(0f, -30f), new Vector2(800f, 95f));
@@ -877,6 +877,22 @@ namespace Ludo.EditorTools
             AddImage(purseCoin, Circle(), new Color(1f, 0.82f, 0.18f)).raycastTarget = false;
             var coins = AddText(purse, "Coins", "0", 42, Navy, TextAlignmentOptions.Left, false);
             Stretch(coins.rectTransform, 76f, 4f, 16f, 4f);
+
+            string[] diceTabs = { "All", "Owned", "Locked" };
+            var diceTabFaces = new Image[3];
+            var pendingTabs = new Button[3];
+            for (int i = 0; i < 3; i++)
+            {
+                var tab = NewRect("Tab" + diceTabs[i], card);
+                At(tab, TopCenter, TopCenter, new Vector2((i - 1) * 296f, -262f), new Vector2(284f, 76f));
+                diceTabFaces[i] = AddImage(tab, Round(), new Color(0.90f, 0.94f, 1f), true, 0.8f);
+                Depth(diceTabFaces[i], CardLip, 6f);
+                pendingTabs[i] = tab.gameObject.AddComponent<Button>();
+                pendingTabs[i].targetGraphic = diceTabFaces[i]; pendingTabs[i].transition = Selectable.Transition.None;
+                AddButtonFx(tab.gameObject, false);
+                var tl = AddText(tab, "Label", diceTabs[i], 38, Navy, TextAlignmentOptions.Center);
+                Stretch(tl.rectTransform, 0f, 0f, 0f, 4f);
+            }
 
             var tiles = new Image[all.Length];
             var previews = new RawImage[all.Length];
@@ -926,6 +942,8 @@ namespace Ludo.EditorTools
             panel = modal.gameObject.AddComponent<DiceCollectionPanel>();
             var so = new SerializedObject(panel);
             so.FindProperty("panel").objectReferenceValue = modal.gameObject;
+            SetObjects(so.FindProperty("tabFaces"), diceTabFaces);
+            for (int i = 0; i < 3; i++) OnClickInt(pendingTabs[i], panel.SetFilter, i);
             so.FindProperty("grid").objectReferenceValue = card;
             SetObjects(so.FindProperty("tiles"), tiles);
             SetObjects(so.FindProperty("previews"), previews);
