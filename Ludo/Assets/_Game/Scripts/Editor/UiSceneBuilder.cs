@@ -1289,7 +1289,11 @@ namespace Ludo.EditorTools
             {
                 var badgeButton = badges[seat].gameObject.AddComponent<Button>();
                 badgeButton.transition = Selectable.Transition.None;
-                badgeButton.targetGraphic = badges[seat].GetComponentInChildren<Image>();
+                var badgeFace = badges[seat].GetComponentInChildren<Image>();
+                badgeFace.raycastTarget = true;                                   // the badge was built click-through: make it tappable
+                badgeButton.targetGraphic = badgeFace;
+                var badgeGroup = badges[seat].GetComponent<CanvasGroup>();
+                if (badgeGroup != null) badgeGroup.blocksRaycasts = true;
                 OnClickInt(badgeButton, hud.OpenPlayerCard, seat);
             }
             var result = BuildResultPanel(root, hud, out var resultTitle, out var resultAvatar, out var resultRing);
