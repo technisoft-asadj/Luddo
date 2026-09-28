@@ -491,9 +491,12 @@ namespace Ludo.EditorTools
             At(message.rectTransform, TopCenter, TopCenter, new Vector2(0f, -645f), new Vector2(940f, 50f));
             message.enableAutoSizing = true; message.fontSizeMin = 24f; message.fontSizeMax = 40f;
 
-            // scrolling list
+            // scrolling list - stretched down to just above the NavBar (not a fixed height: a fixed box tall enough
+            // for its content overshot the screen and its invisible Viewport image, being a raycast target, sat on
+            // top of the NavBar and silently ate every tap on it)
             var scrollRt = NewRect("List", s);
-            At(scrollRt, TopCenter, TopCenter, new Vector2(0f, -705f), new Vector2(940f, 1110f));
+            scrollRt.anchorMin = new Vector2(0.5f, 0f); scrollRt.anchorMax = new Vector2(0.5f, 1f);
+            scrollRt.offsetMin = new Vector2(-470f, 212f); scrollRt.offsetMax = new Vector2(470f, -705f);
             var scroll = scrollRt.gameObject.AddComponent<ScrollRect>();
             var viewport = NewRect("Viewport", scrollRt); Stretch(viewport);
             AddImage(viewport, null, new Color(0f, 0f, 0f, 0f));
@@ -630,12 +633,15 @@ namespace Ludo.EditorTools
 
             var google = MakeButton(column, "GoogleButton", "Continue with Google", "Grey", new Vector2(800f, 140f), null);
             BrandIcon((RectTransform)google.transform, WelcomeSprite("icon_google.png"), 74f);
+            var amazon = MakeButton(column, "AmazonButton", "Continue with Amazon", "Grey", new Vector2(800f, 140f), null);
+            BrandIcon((RectTransform)amazon.transform, WelcomeSprite("icon_amazon.png"), 74f);
             var facebook = MakeButton(column, "FacebookButton", "Continue with Facebook", "Blue", new Vector2(800f, 140f), null);
             BrandIcon((RectTransform)facebook.transform, WelcomeSprite("icon_facebook.png"), 74f);
             var logout = MakeButton(column, "LogOutButton", "Log Out", "Red", new Vector2(800f, 140f), null);
             foreach (RectTransform child in column) child.sizeDelta = new Vector2(800f, 140f);
             OnClick(logout, account.LogOut);
             OnClick(google, account.Google);
+            OnClick(amazon, account.Amazon);
             OnClick(facebook, account.Facebook);
             facebook.gameObject.SetActive(FacebookLogin.Enabled);        // not in this version (kept for the next one)
 
@@ -658,6 +664,7 @@ namespace Ludo.EditorTools
             so.FindProperty("guestNote").objectReferenceValue = note.gameObject;
             so.FindProperty("logoutButton").objectReferenceValue = logout;
             so.FindProperty("googleButton").objectReferenceValue = google;
+            so.FindProperty("amazonButton").objectReferenceValue = amazon;
             so.FindProperty("facebookButton").objectReferenceValue = facebook;
             so.ApplyModifiedProperties();
             return s;
@@ -1023,8 +1030,11 @@ namespace Ludo.EditorTools
             var mine = AddText(s, "MyLine", "", 44, Gold, TextAlignmentOptions.Center, true);
             At(mine.rectTransform, TopCenter, TopCenter, new Vector2(0f, -420f), new Vector2(940f, 64f));
 
+            // stretched down to just above the NavBar - see the matching comment in BuildFriends for why (a fixed-height
+            // box big enough for its content let its raycastable Viewport image reach past the screen and over the NavBar)
             var scrollRt = NewRect("List", s);
-            At(scrollRt, TopCenter, TopCenter, new Vector2(0f, -500f), new Vector2(940f, 1330f));
+            scrollRt.anchorMin = new Vector2(0.5f, 0f); scrollRt.anchorMax = new Vector2(0.5f, 1f);
+            scrollRt.offsetMin = new Vector2(-470f, 212f); scrollRt.offsetMax = new Vector2(470f, -500f);
             var scroll = scrollRt.gameObject.AddComponent<ScrollRect>();
             var viewport = NewRect("Viewport", scrollRt); Stretch(viewport);
             AddImage(viewport, null, new Color(0f, 0f, 0f, 0f));
@@ -1121,9 +1131,27 @@ namespace Ludo.EditorTools
         {
             var s = NewScreen("Screen_Profile", parent);
             Header(s, "My Profile", router);
+            NavBar(s, router, null, 3, Friends, Leaderboards, Profile);
             var screen = s.gameObject.AddComponent<ProfileScreen>();
 
-            var av = NewRect("AvatarBg", s);
+            // the whole page scrolls: on a short/wide screen (a tablet) the canvas is shorter than the reference
+            // phone this was laid out for, so the stats/dice content at the bottom no longer fits above the NavBar
+            var scrollRt = NewRect("Body", s);
+            scrollRt.anchorMin = new Vector2(0.5f, 0f); scrollRt.anchorMax = new Vector2(0.5f, 1f);
+            scrollRt.offsetMin = new Vector2(-540f, 212f); scrollRt.offsetMax = new Vector2(540f, 0f);
+            var scroll = scrollRt.gameObject.AddComponent<ScrollRect>();
+            var viewport = NewRect("Viewport", scrollRt); Stretch(viewport);
+            AddImage(viewport, null, new Color(0f, 0f, 0f, 0f));
+            viewport.gameObject.AddComponent<RectMask2D>();
+            var content = NewRect("Content", viewport);
+            content.anchorMin = new Vector2(0f, 1f); content.anchorMax = new Vector2(1f, 1f); content.pivot = new Vector2(0.5f, 1f);
+            content.offsetMin = Vector2.zero; content.offsetMax = Vector2.zero;
+            content.sizeDelta = new Vector2(0f, 1720f);          // tall enough for every stat row below, plus padding
+            scroll.viewport = viewport; scroll.content = content;
+            scroll.horizontal = false; scroll.vertical = true;
+            scroll.movementType = ScrollRect.MovementType.Elastic; scroll.scrollSensitivity = 40f;
+
+            var av = NewRect("AvatarBg", content);
             At(av, TopCenter, TopCenter, new Vector2(0f, -172f), new Vector2(206f, 206f));
             var avBg = AddImage(av, Circle(), new Color(0.22f, 0.58f, 1f));
             Depth(avBg, new Color(0.07f, 0.30f, 0.72f), 9f);
@@ -1131,14 +1159,14 @@ namespace Ludo.EditorTools
             var picImg = AddImage(pic, null, Color.white); picImg.raycastTarget = false; picImg.preserveAspect = true;
             var profileFlag = FlagBadge(av, "Flag", new Vector2(1f, 0f), new Vector2(-18f, 22f), 84f);
 
-            var nameText = AddText(s, "Name", "Player 1", 64, Color.white, TextAlignmentOptions.Center, true);
+            var nameText = AddText(content, "Name", "Player 1", 64, Color.white, TextAlignmentOptions.Center, true);
             At(nameText.rectTransform, TopCenter, TopCenter, new Vector2(0f, -390f), new Vector2(900f, 84f));
             nameText.enableAutoSizing = true; nameText.fontSizeMin = 34f; nameText.fontSizeMax = 64f;
-            var tierText = AddText(s, "Tier", "Level 1", 42, Gold, TextAlignmentOptions.Center, true);
+            var tierText = AddText(content, "Tier", "Level 1", 42, Gold, TextAlignmentOptions.Center, true);
             At(tierText.rectTransform, TopCenter, TopCenter, new Vector2(0f, -466f), new Vector2(940f, 60f));
             tierText.enableAutoSizing = true; tierText.fontSizeMin = 26f; tierText.fontSizeMax = 42f;
 
-            var bar = NewRect("XpBar", s);
+            var bar = NewRect("XpBar", content);
             At(bar, TopCenter, TopCenter, new Vector2(0f, -530f), new Vector2(660f, 40f));
             AddImage(bar, Round(), new Color(0.05f, 0.16f, 0.45f, 0.85f)).raycastTarget = false;
             var fill = NewRect("Fill", bar); fill.anchorMin = Vector2.zero; fill.anchorMax = new Vector2(0f, 1f); fill.offsetMin = Vector2.zero; fill.offsetMax = Vector2.zero;
@@ -1146,11 +1174,11 @@ namespace Ludo.EditorTools
             var xpText = AddText(bar, "XpText", "0 / 100 XP", 28, Color.white, TextAlignmentOptions.Center, true);
             Stretch(xpText.rectTransform);
 
-            var idText = AddText(s, "FriendId", "", 30, new Color(1f, 1f, 1f, 0.8f), TextAlignmentOptions.Center);
+            var idText = AddText(content, "FriendId", "", 30, new Color(1f, 1f, 1f, 0.8f), TextAlignmentOptions.Center);
             At(idText.rectTransform, TopCenter, TopCenter, new Vector2(0f, -578f), new Vector2(940f, 44f));
             idText.enableAutoSizing = true; idText.fontSizeMin = 18f; idText.fontSizeMax = 30f;
 
-            var edit = MakeButton(s, "EditProfileButton", "Edit Profile", "Blue", new Vector2(520f, 104f), Icon("gear"));
+            var edit = MakeButton(content, "EditProfileButton", "Edit Profile", "Blue", new Vector2(520f, 104f), Icon("gear"));
             At((RectTransform)edit.transform, TopCenter, TopCenter, new Vector2(0f, -626f), new Vector2(520f, 104f));
             OnClickInt(edit, flow.EditProfile, 0);
 
@@ -1159,10 +1187,10 @@ namespace Ludo.EditorTools
             string[] headline = { "Wins", "Losses", "Games", "Win rate" };
             int[] headlineSlot = { 2, 3, 1, 4 };                      // into ProfileScreen's statValues order
             for (int i = 0; i < 4; i++)
-                values[headlineSlot[i]] = StatTile(s, "StatTop" + i, -354f + i * 236f, -756f, new Vector2(224f, 158f), headline[i], 60f);
+                values[headlineSlot[i]] = StatTile(content, "StatTop" + i, -354f + i * 236f, -756f, new Vector2(224f, 158f), headline[i], 60f);
 
             // the rank block, kept apart from Level / XP above
-            var rankCard = NewRect("RankCard", s);
+            var rankCard = NewRect("RankCard", content);
             At(rankCard, TopCenter, TopCenter, new Vector2(0f, -934f), new Vector2(940f, 196f));
             Depth(AddImage(rankCard, Round(), new Color(0.05f, 0.12f, 0.38f, 0.9f), true, 0.5f), new Color(0f, 0.03f, 0.18f, 0.9f), 10f);
             var rankName = AddText(rankCard, "RankName", "BRONZE", 52, Gold, TextAlignmentOptions.Left, true);
@@ -1183,17 +1211,17 @@ namespace Ludo.EditorTools
             rankNext.enableAutoSizing = true; rankNext.fontSizeMin = 20f; rankNext.fontSizeMax = 30f;
 
             // the dice collection, as the reference shows it on this screen
-            var stripTitle = AddText(s, "DiceTitle", "Dice Collection", 40, Color.white, TextAlignmentOptions.Left, true);
+            var stripTitle = AddText(content, "DiceTitle", "Dice Collection", 40, Color.white, TextAlignmentOptions.Left, true);
             At(stripTitle.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(76f, -1152f), new Vector2(520f, 58f));
             stripTitle.enableAutoSizing = true; stripTitle.fontSizeMin = 26f; stripTitle.fontSizeMax = 40f;
-            var stripAll = MakeButton(s, "OpenDiceButton", "View all", "Blue", new Vector2(230f, 68f), null);
+            var stripAll = MakeButton(content, "OpenDiceButton", "View all", "Blue", new Vector2(230f, 68f), null);
             At((RectTransform)stripAll.transform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-70f, -1146f), new Vector2(230f, 68f));
             OnClick(stripAll, dicePanel.Open);
 
             var skins = Ludo.Core.DiceSkins.All;
             for (int i = 0; i < 5 && i < skins.Length; i++)
             {
-                var cell = NewRect("Dice" + i, s);
+                var cell = NewRect("Dice" + i, content);
                 At(cell, TopCenter, TopCenter, new Vector2(-368f + i * 184f, -1222f), new Vector2(164f, 164f));
                 var cellBg = AddImage(cell, Round(), Card, true, 0.6f);
                 Depth(cellBg, CardLip, 8f);
@@ -1213,7 +1241,7 @@ namespace Ludo.EditorTools
             string[] rest = { "Coins", "Best streak", "Ranked wins", "Weekly Cup pts", "Disconnects", "Disc. rate" };
             int[] restSlot = { 0, 5, 6, 7, 8, 9 };
             for (int i = 0; i < rest.Length; i++)
-                values[restSlot[i]] = StatTile(s, "StatRest" + i, -308f + (i % 3) * 308f, -1406f - (i / 3) * 168f,
+                values[restSlot[i]] = StatTile(content, "StatRest" + i, -308f + (i % 3) * 308f, -1406f - (i / 3) * 168f,
                     new Vector2(296f, 156f), rest[i], 48f);
 
             var so = new SerializedObject(screen);
@@ -1306,6 +1334,8 @@ namespace Ludo.EditorTools
             var so = new SerializedObject(screen);
             so.FindProperty("dailyState").objectReferenceValue = dailyState;
             so.FindProperty("dailyDot").objectReferenceValue = dailyDot;
+            so.FindProperty("dailyActionButton").objectReferenceValue = daily;
+            so.FindProperty("dailyActionLabel").objectReferenceValue = daily.transform.Find("Label").GetComponent<TMP_Text>();
             so.FindProperty("chestState").objectReferenceValue = chestState;
             so.FindProperty("chestDot").objectReferenceValue = chestDot;
             so.FindProperty("cupState").objectReferenceValue = cupState;

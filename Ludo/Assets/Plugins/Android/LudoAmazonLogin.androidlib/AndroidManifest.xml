@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Login with Amazon glue for Ludo Fight. AmazonLoginBridge.java wraps the SDK for calls from Unity (Online/AmazonLogin.cs);
+     AmazonLoginInitProvider hooks Activity.onResume() automatically at app start (the same pattern Google Play Games and
+     AdMob already use in this project - MobileAdsInitProvider, PlayGamesInitProvider - so no launcher-activity swap is
+     needed: the game keeps Unity's own UnityPlayerActivity untouched). -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.devorbit.ludofight.amazonlogin"
+    android:versionCode="1"
+    android:versionName="1.0">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <queries>
+        <package android:name="com.amazon.mShop.android.shopping" />
+        <package android:name="in.amazon.mShop.android.shopping" />
+    </queries>
+
+    <application>
+        <provider
+            android:name="com.devorbit.ludofight.amazonlogin.AmazonLoginInitProvider"
+            android:authorities="${applicationId}.amazonlogininitprovider"
+            android:exported="false"
+            android:initOrder="90" />
+
+        <!-- Receives the browser redirect after the player signs in with their Amazon account. -->
+        <activity
+            android:name="com.amazon.identity.auth.device.workflow.WorkflowActivity"
+            android:allowTaskReparenting="true"
+            android:launchMode="singleTask"
+            android:theme="@android:style/Theme.NoDisplay"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:host="${applicationId}" android:scheme="amzn" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

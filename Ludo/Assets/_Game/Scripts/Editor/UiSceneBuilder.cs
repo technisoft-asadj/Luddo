@@ -667,27 +667,45 @@ namespace Ludo.EditorTools
             At(hint.rectTransform, TopCenter, TopCenter, new Vector2(0f, -160f), new Vector2(800f, 50f));
             hint.enableAutoSizing = true; hint.fontSizeMin = 24f; hint.fontSizeMax = 38f;
 
-            const float top = -226f, step = 180f;
+            // the 9 rows + footer scroll: on a short/wide screen (a tablet) the canvas is shorter than the reference
+            // phone this was laid out for, so laying all 9 out at a fixed height (as before, spread out to fill any
+            // *extra* space on tall phones) ran the last rows and the footer off the bottom of the screen, overlapping
+            var scrollRt = NewRect("Body", s);
+            scrollRt.anchorMin = new Vector2(0.5f, 0f); scrollRt.anchorMax = new Vector2(0.5f, 1f);
+            scrollRt.offsetMin = new Vector2(-490f, 20f); scrollRt.offsetMax = new Vector2(490f, -220f);
+            var scroll = scrollRt.gameObject.AddComponent<ScrollRect>();
+            var viewport = NewRect("Viewport", scrollRt); Stretch(viewport);
+            AddImage(viewport, null, new Color(0f, 0f, 0f, 0f));
+            viewport.gameObject.AddComponent<RectMask2D>();
+            var content = NewRect("Content", viewport);
+            content.anchorMin = new Vector2(0f, 1f); content.anchorMax = new Vector2(1f, 1f); content.pivot = new Vector2(0.5f, 1f);
+            content.offsetMin = Vector2.zero; content.offsetMax = Vector2.zero;
+            content.sizeDelta = new Vector2(0f, 1730f);          // 9 rows x 180 + the footer, plus padding
+            scroll.viewport = viewport; scroll.content = content;
+            scroll.horizontal = false; scroll.vertical = true;
+            scroll.movementType = ScrollRect.MovementType.Elastic; scroll.scrollSensitivity = 40f;
+
+            const float top = 0f, step = 180f;
             var rings = new GameObject[4];
 
-            var classic = ModeRow(s, "RowClassic", top, Load("Assets/_Game/Art/Dice/Icons/dice_icon_classic.png"), "Classic", "The original Ludo experience",
+            var classic = ModeRow(content, "RowClassic", top, Load("Assets/_Game/Art/Dice/Icons/dice_icon_classic.png"), "Classic", "The original Ludo experience",
                 "2 - 4 Players", new Color(1f, 0.93f, 0.74f), new Color(0.95f, 0.70f, 0.13f), out rings[0]);
-            var master = ModeRow(s, "RowMaster", top - step, Ikon("k_crown_b"), "Master", "Advanced rules & more strategy",
+            var master = ModeRow(content, "RowMaster", top - step, Ikon("k_crown_b"), "Master", "Advanced rules & more strategy",
                 "2 - 4 Players", new Color(0.90f, 0.85f, 1f), new Color(0.53f, 0.34f, 0.93f), out rings[1]);
-            var blitz = ModeRow(s, "RowBlitz", top - step * 2f, Ico("flash_on"), "Quick / Blitz", "Fast paced, exciting matches",
+            var blitz = ModeRow(content, "RowBlitz", top - step * 2f, Ico("flash_on"), "Quick / Blitz", "Fast paced, exciting matches",
                 "2 - 4 Players", new Color(0.83f, 0.97f, 0.85f), new Color(0.18f, 0.72f, 0.31f), out rings[2]);
-            var team = ModeRow(s, "RowTeamUp", top - step * 3f, Ikon("shield"), "Team Up", "2 vs 2  |  Team Battles",
+            var team = ModeRow(content, "RowTeamUp", top - step * 3f, Ikon("shield"), "Team Up", "2 vs 2  |  Team Battles",
                 "4 Players", new Color(1f, 0.85f, 0.89f), new Color(0.93f, 0.26f, 0.42f), out rings[3]);
 
-            var oneVsOne = ModeRow(s, "RowOneVsOne", top - step * 4f, Ico("group"), "1 vs 1", "Challenge a single player",
+            var oneVsOne = ModeRow(content, "RowOneVsOne", top - step * 4f, Ico("group"), "1 vs 1", "Challenge a single player",
                 "2 Players", new Color(0.83f, 0.92f, 1f), new Color(0.20f, 0.56f, 1f), out _);
-            var four = ModeRow(s, "RowFourPlayer", top - step * 5f, Ikon("k_pawns"), "4 Player", "Play with 4 players online",
+            var four = ModeRow(content, "RowFourPlayer", top - step * 5f, Ikon("k_pawns"), "4 Player", "Play with 4 players online",
                 "4 Players", new Color(0.82f, 0.97f, 1f), new Color(0.13f, 0.72f, 0.85f), out _);
-            var room = ModeRow(s, "RowPrivateRoom", top - step * 6f, Ikon("k_structure_house"), "Private Room", "Create or join with room code",
+            var room = ModeRow(content, "RowPrivateRoom", top - step * 6f, Ikon("k_structure_house"), "Private Room", "Create or join with room code",
                 "2 - 4 Players", new Color(0.97f, 0.85f, 1f), new Color(0.82f, 0.28f, 0.80f), out _);
-            var offline = ModeRow(s, "RowOffline", top - step * 7f, Ikon("gamepad"), "Offline", "Play without internet",
+            var offline = ModeRow(content, "RowOffline", top - step * 7f, Ikon("gamepad"), "Offline", "Play without internet",
                 "2 - 4 Players", new Color(0.86f, 0.92f, 1f), new Color(0.30f, 0.45f, 0.86f), out _);
-            var cups = ModeRow(s, "RowTournaments", top - step * 8f, Ikon("k_award"), "Tournaments", "Compete & win rewards",
+            var cups = ModeRow(content, "RowTournaments", top - step * 8f, Ikon("k_award"), "Tournaments", "Compete & win rewards",
                 "1 - 4 Players", new Color(1f, 0.93f, 0.76f), new Color(0.93f, 0.68f, 0.10f), out _);
 
             var picker = s.gameObject.AddComponent<ModeRowHighlight>();
@@ -713,16 +731,9 @@ namespace Ludo.EditorTools
             OnClick(offline, flow.ChooseOffline);
             OnClickInt(cups, flow.OpenOnlineScreen, Tournaments);
 
-            var footer = AddText(s, "Footer", "Play  ·  Win  ·  Be the Champion", 34, new Color(1f, 1f, 1f, 0.7f), TextAlignmentOptions.Center);
-            At(footer.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 26f), new Vector2(900f, 50f));
+            var footer = AddText(content, "Footer", "Play  ·  Win  ·  Be the Champion", 34, new Color(1f, 1f, 1f, 0.7f), TextAlignmentOptions.Center);
+            At(footer.rectTransform, TopCenter, TopCenter, new Vector2(0f, top - step * 8f - 130f), new Vector2(900f, 50f));
             footer.enableAutoSizing = true; footer.fontSizeMin = 22f; footer.fontSizeMax = 34f;
-
-            // taller phones: the rows spread over the whole height instead of leaving a hole at the bottom
-            var rowRts = new RectTransform[9];
-            var weights = new float[9];
-            string[] rowNames = { "RowClassic", "RowMaster", "RowBlitz", "RowTeamUp", "RowOneVsOne", "RowFourPlayer", "RowPrivateRoom", "RowOffline", "RowTournaments" };
-            for (int i = 0; i < 9; i++) { rowRts[i] = (RectTransform)s.Find(rowNames[i]); weights[i] = i / 9f; }
-            AddSpread(s, rowRts, weights);
             return s;
         }
 
@@ -1304,14 +1315,6 @@ namespace Ludo.EditorTools
             BuildGameOnlineExtras(safe, hud, pause, result);
 
             var banner = BuildTurnBanner(safe, out var turnText, out var turnAvatar, out var turnAvatarBg);
-            var modeLine = AddText(safe, "ModeLine", "", 34, Color.white, TextAlignmentOptions.Center, true);
-            // narrower than the old 1000px box and word-wrapped: at 1000px wide it reached past the turn banner into the
-            // Voice/Chat buttons (top-left) and the Pause button (top-right), which sit past +-448px either side.
-            At(modeLine.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -178f), new Vector2(800f, 92f));
-            modeLine.enableAutoSizing = true; modeLine.fontSizeMin = 20f; modeLine.fontSizeMax = 34f;
-            modeLine.textWrappingMode = TextWrappingModes.Normal;
-            modeLine.raycastTarget = false;
-            modeLine.gameObject.SetActive(false);
 
             // Auto play: bottom-left, out of the way of the dice tray in the middle. Online games only (GameController shows it).
             var auto = MakeButton(safe, "AutoButton", "Auto: OFF", "Purple", new Vector2(250f, 110f), null);
@@ -1348,7 +1351,6 @@ namespace Ludo.EditorTools
             ho.FindProperty("turnText").objectReferenceValue = turnText;
             ho.FindProperty("turnAvatar").objectReferenceValue = turnAvatar;
             ho.FindProperty("turnAvatarBg").objectReferenceValue = turnAvatarBg;
-            ho.FindProperty("modeText").objectReferenceValue = modeLine;
             BuildRollExtras(root, ho);
             ho.FindProperty("resultDetail").objectReferenceValue = result.transform.Find("Stage/Detail").GetComponent<TMP_Text>();
             ho.FindProperty("resultCard").objectReferenceValue = result.transform.Find("Stage/RewardCard").GetComponent<ResultCard>();
@@ -1461,6 +1463,10 @@ namespace Ludo.EditorTools
         static RectTransform BuildTurnBanner(RectTransform safe, out TMP_Text text, out Image avatarPicture, out Image avatarBg)
         {
             var rt = NewRect("TurnBanner", safe);
+            // 112 tall normally; GameHud.SetMode grows it to fit a second, smaller line for the mode name (e.g. "TEAM UP
+            // MODE") instead of that living as its own floating banner - on a short/wide screen, CameraFit's zoom pushes
+            // the world-space player badges up far enough that only a little room is left above them at all, so the grown
+            // height is kept as small as it can be (GameHud.SetMode) rather than a fixed, generously-sized guess.
             At(rt, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -46f), new Vector2(640f, 112f));
             var body = AddImage(rt, Round(), new Color(0.05f, 0.11f, 0.33f, 0.92f), true, 0.7f);
             body.raycastTarget = false;

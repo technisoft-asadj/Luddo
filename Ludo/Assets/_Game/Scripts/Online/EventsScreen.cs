@@ -15,6 +15,8 @@ namespace Ludo.Online
     {
         [SerializeField] TMP_Text dailyState;
         [SerializeField] GameObject dailyDot;
+        [SerializeField] TMP_Text dailyActionLabel;
+        [SerializeField] Button dailyActionButton;
         [SerializeField] TMP_Text chestState;
         [SerializeField] GameObject chestDot;
         [SerializeField] TMP_Text cupState;
@@ -44,6 +46,11 @@ namespace Ludo.Online
             if (dailyState != null)
                 dailyState.text = !loaded ? "Connecting..." : daily ? "Ready to claim!" : "Claimed - come back tomorrow";
             if (dailyDot != null) dailyDot.SetActive(daily);
+            if (dailyActionLabel != null) dailyActionLabel.text = daily ? "Claim" : "Claimed";
+            // still tappable when already claimed (opens the calendar to show the countdown), just tinted so it no
+            // longer looks like there is something ready to collect
+            if (dailyActionButton != null && dailyActionButton.targetGraphic != null)
+                dailyActionButton.targetGraphic.color = daily ? Color.white : new Color(1f, 1f, 1f, 0.55f);
 
             bool chest = ChestPanel.Claimable;
             if (chestState != null)

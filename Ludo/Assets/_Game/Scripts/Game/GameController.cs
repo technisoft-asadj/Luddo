@@ -166,13 +166,21 @@ namespace Ludo.Game
 
         /// <summary>Keep the dice's tray in the open space between the board and the bottom edge, whatever the phone's shape.
         /// A fixed spot (rather than one that hunts for room next to whichever badge is on top) can never collide with the
-        /// turn banner or the mode line above the board; whose turn it is shows on the dice itself (see DiceView.ShowSeatIcon).</summary>
+        /// turn banner or the mode line above the board; whose turn it is shows on the dice itself (see DiceView.ShowSeatIcon).
+        /// The plain average used to undershoot on a short/wide screen (a tablet): the corner player badges hang a roughly
+        /// fixed distance below the board regardless of screen shape, but that average shrinks with it (measured via
+        /// RectTransform.GetWorldCorners: the tray's own backdrop reached about half a unit into the badges on this
+        /// project's test tablet) - so the tray is also floored at a fixed clearance below the badges, and only pulled
+        /// back up near the very bottom of a screen too square/wide for a comfortable middle ground to exist at all.</summary>
         void LateUpdate()
         {
             if (cam == null) return;
             float half = BoardGrid.Size * 0.5f;
             float middle = (half + 2f + cam.orthographicSize) * 0.5f;
-            dice.transform.position = new Vector3(0f, -middle, 0f);
+            float belowBadges = 12.6f;
+            float y = Mathf.Max(middle, belowBadges);
+            y = Mathf.Min(y, cam.orthographicSize - 1f);
+            dice.transform.position = new Vector3(0f, -y, 0f);
         }
 
         /// <summary>Online: hand a player who left over to the computer, on every phone at the same moment.</summary>

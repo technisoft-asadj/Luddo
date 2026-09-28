@@ -1,0 +1,37 @@
+apply plugin: 'com.android.library'
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    // com.unity3d.player.UnityPlayer (for UnitySendMessage): provided by unityLibrary at runtime, so compileOnly avoids a
+    // duplicate-class conflict when Gradle merges the two modules into the final app.
+    compileOnly files('../libs/unity-classes.jar')
+    // RequestContext.create() is overloaded for both android.app.Activity and androidx.fragment.app.FragmentActivity;
+    // javac must resolve every overload's parameter types to pick one, even though we only ever pass a plain Activity -
+    // same version AdMob already pulls into this project (GoogleMobileAdsDependencies.xml), so no version conflict.
+    compileOnly 'androidx.fragment:fragment:1.7.1'
+}
+
+android {
+    namespace "com.devorbit.ludofight.amazonlogin"
+    compileSdk 36
+    buildToolsVersion = "36.0.0"
+
+    defaultConfig {
+        minSdk 25
+        targetSdk 34
+    }
+
+    lint {
+        abortOnError false
+    }
+
+    sourceSets {
+        main {
+            manifest.srcFile 'AndroidManifest.xml'
+            java.srcDirs = ['src']
+            // the LWA API key file: the SDK's own sample app places it at src/main/assets/api_key.txt (NOT
+            // res/raw - that placement silently fails LWA's own signature check with "Invalid API Key").
+            assets.srcDirs = ['assets']
+        }
+    }
+}

@@ -34,14 +34,15 @@ namespace Ludo.Online
 
         /// <summary>The player has seen the login page and chosen guest or an account.</summary>
         public static bool HasChosenLogin => LoginMethod.Length > 0;
-        /// <summary>Signed in with a real account (username, Google or Facebook) rather than as a guest.</summary>
-        public static bool IsAccount => LoginMethod == "account" || LoginMethod == "google" || LoginMethod == "facebook";
+        /// <summary>Signed in with a real account (username, Google, Facebook or Amazon) rather than as a guest.</summary>
+        public static bool IsAccount => LoginMethod == "account" || LoginMethod == "google" || LoginMethod == "facebook" || LoginMethod == "amazon";
         public static bool IsGuest => LoginMethod == "guest";
         public static string AccountName => PlayerPrefs.GetString(AccountNameKey, "");
 
-        /// <summary>"Guest", "Google", "Facebook" or "Account" (username + password): how this player is signed in.</summary>
+        /// <summary>"Guest", "Google", "Facebook", "Amazon" or "Account" (username + password): how this player is signed in.</summary>
         public static string ProviderLabel =>
-            LoginMethod == "google" ? "Google" : LoginMethod == "facebook" ? "Facebook" : LoginMethod == "account" ? "Account" : IsGuest ? "Guest" : "";
+            LoginMethod == "google" ? "Google" : LoginMethod == "facebook" ? "Facebook" : LoginMethod == "amazon" ? "Amazon" :
+            LoginMethod == "account" ? "Account" : IsGuest ? "Guest" : "";
 
         const string UsedKey = "ludo.online.used";
 
@@ -141,6 +142,7 @@ namespace Ludo.Online
                 AuthenticationService.Instance.SignOut(true);                    // true: the saved session token goes too
             SetStatus(ConnectionStatus.Offline);                                 // first, so the profile changes below sync nothing
             FacebookLogin.LogOut();
+            AmazonLogin.LogOut();
             SocialService.Stop();
             StatsService.ForgetMine();
             PendingOutcomes.Clear();
@@ -209,6 +211,23 @@ namespace Ludo.Online
             return await SocialSignIn("facebook", token,
                 t => AuthenticationService.Instance.LinkWithFacebookAsync(t),
                 t => AuthenticationService.Instance.SignInWithFacebookAsync(t), "Facebook");
+        }
+
+        /// <summary>
+        /// Log in with Amazon (Amazon Appstore builds). Unlike Google/Facebook, Unity Authentication has no built-in
+        /// Amazon identity provider, so this cannot link or restore the same online profile on another device the way
+        /// Google/Facebook do - it reads the player's Amazon name through the Login with Amazon SDK and signs in the
+        /// same way a guest does (device-local). Good enough to skip typing a name, not a real cross-device account.
+        /// </summary>
+        public static async Task<SocialResult> AmazonAsync()
+        {
+            var profile = await AmazonLogin.LoginAsync();
+            if (profile.userId == null) { LastError = AmazonLogin.LastError; return SocialResult.Failed; }
+            if (!HasChosenLogin) PlayerPrefs.SetString(LoginMethodKey, "guest");   // ConnectAsync refuses a phone with no choice yet
+            if (!await ConnectAsync()) return SocialResult.Failed;
+            if (!string.IsNullOrEmpty(profile.name)) GameSettings.SetPlayerName(0, profile.name);
+            Chosen("amazon", string.IsNullOrEmpty(profile.email) ? profile.name : profile.email);
+            return SocialResult.Done;
         }
 
         /// <summary>The player agreed to leave the current (guest) profile and use the one that already belongs to their Google account.</summary>

@@ -31,7 +31,6 @@ namespace Ludo.Game
         [SerializeField] Button[] valueButtons;
         [SerializeField] Image[] valueDice;
         [SerializeField] Sprite[] diceFaces;            // flat dice pictures 1..6 (index 0 = one pip)
-        [SerializeField] TMP_Text modeText;             // "MASTER MODE - capture an opponent before ..." (hidden in Classic)
         [SerializeField] TMP_Text countdownText;        // the 3 - 2 - 1 - GO! that opens a match
         [SerializeField] GameObject friendModal;        // online: tap a player's badge to send them a friend request
         [SerializeField] TMP_Text friendTitle;
@@ -112,6 +111,9 @@ namespace Ludo.Game
             if (timer != null) timer.Hide();
             foreach (var b in badges) b.HideTimer();
         }
+
+        string modeLabel = "";                           // "" in Classic, else a small line prefixed onto the turn banner text
+        string turnLine = "Player 1's turn";               // the current banner line itself (turn / status), without modeLabel
 
         // the screen must not dim while the player is thinking or the CPUs are playing
         void Start()
@@ -292,12 +294,27 @@ namespace Ludo.Game
             rt.localPosition = local;
         }
 
-        /// <summary>Show which game mode is being played and its one special rule (nothing for Classic).</summary>
+        /// <summary>
+        /// Show which game mode is being played (nothing for Classic). This used to be its own floating line squeezed
+        /// between the turn banner and the world-space player badges below it - on a short/wide screen (a tablet),
+        /// CameraFit's zoom pushes those badges up far enough that no vertical gap is left for it at all. It is shown
+        /// as a small line inside the turn banner itself instead, which never competes with the badges for space.
+        /// </summary>
         public void SetMode(GameMode mode)
         {
-            if (modeText == null) return;
-            modeText.gameObject.SetActive(mode != GameMode.Classic);
-            modeText.text = "<color=#FFD426>" + GameSession.ModeName(mode).ToUpperInvariant() + " MODE</color>   " + GameSession.ModeRule(mode);
+            bool show = mode != GameMode.Classic;
+            modeLabel = show ? "<size=60%><color=#FFD426>" + GameSession.ModeName(mode).ToUpperInvariant() + " MODE</color></size>\n" : "";
+            RefreshTurnText();
+            // grown only as much as the second line needs: on a short/wide screen there is very little clearance left
+            // above the player badges below this banner (see BuildTurnBanner), so a bigger, generously-sized guess would
+            // reopen the exact overlap this two-line banner was built to avoid in the first place
+            if (turnText != null && turnText.rectTransform.parent is RectTransform bannerRt)
+                bannerRt.sizeDelta = new Vector2(bannerRt.sizeDelta.x, show ? 120f : 112f);
+        }
+
+        void RefreshTurnText()
+        {
+            if (turnText != null) turnText.text = modeLabel + turnLine;
         }
 
         public void HideBadges()
@@ -312,14 +329,16 @@ namespace Ludo.Game
         public void SetStatus(string text)
         {
             if (turnText == null || string.IsNullOrEmpty(text)) return;
-            turnText.text = text;
+            turnLine = text;
+            RefreshTurnText();
         }
 
         public void SetTurnSeat(int seat)
         {
             turnSeat = seat;
             for (int i = 0; i < badges.Length; i++) badges[i].SetTurn(i == seat);
-            if (turnText != null) turnText.text = badges[seat].PlayerName + "'s turn";
+            turnLine = badges[seat].PlayerName + "'s turn";
+            RefreshTurnText();
             if (turnAvatar != null) { turnAvatar.sprite = badges[seat].Avatar; turnAvatar.enabled = turnAvatar.sprite != null; }
             if (turnAvatarBg != null) turnAvatarBg.color = SeatStyle.Colors[seat];
         }

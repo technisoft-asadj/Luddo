@@ -89,45 +89,59 @@ namespace Ludo.EditorTools
             At(sub.rectTransform, Mid, Mid, new Vector2(0f, 20f), new Vector2(940f, 130f));
 
             // ----- buttons -----
-            var google = MakeButton(s, "GoogleButton", "Continue with Google", "Grey", new Vector2(790f, 140f), null);
-            At((RectTransform)google.transform, Mid, Mid, new Vector2(0f, FacebookLogin.Enabled ? -150f : -250f), new Vector2(790f, 140f));
-            BrandIcon((RectTransform)google.transform, WelcomeSprite("icon_google.png"), 78f);
+            // Google and Amazon share one row (half-width each) instead of stacking, so a 4th login option fits without
+            // pushing Guest/Terms/Message down into the overlap problem fixed above - that fix relies on there being
+            // enough room between Guest and the true bottom edge on a short/wide screen, and a 4th full-width button
+            // would eat into it again. Facebook (still off for this version) keeps its own old slot, unused for now.
+            var google = MakeButton(s, "GoogleButton", "Google", "Grey", new Vector2(380f, 140f), null);
+            At((RectTransform)google.transform, Mid, Mid, new Vector2(-200f, -250f), new Vector2(380f, 140f));
+            BrandIcon((RectTransform)google.transform, WelcomeSprite("icon_google.png"), 64f);
+
+            var amazon = MakeButton(s, "AmazonButton", "Amazon", "Grey", new Vector2(380f, 140f), null);
+            At((RectTransform)amazon.transform, Mid, Mid, new Vector2(200f, -250f), new Vector2(380f, 140f));
+            BrandIcon((RectTransform)amazon.transform, WelcomeSprite("icon_amazon.png"), 64f);
 
             var facebook = MakeButton(s, "FacebookButton", "Continue with Facebook", "Blue", new Vector2(790f, 140f), null);
-            At((RectTransform)facebook.transform, Mid, Mid, new Vector2(0f, -320f), new Vector2(790f, 140f));
+            At((RectTransform)facebook.transform, Mid, Mid, new Vector2(0f, -250f), new Vector2(790f, 140f));
             BrandIcon((RectTransform)facebook.transform, WelcomeSprite("icon_facebook.png"), 78f);
             facebook.gameObject.SetActive(FacebookLogin.Enabled);        // not in this version (kept for the next one)
 
             // ----- OR divider -----
             var line1 = NewRect("OrLineLeft", s);
-            At(line1, Mid, Mid, new Vector2(-235f, -450f), new Vector2(300f, 3f));
+            At(line1, Mid, Mid, new Vector2(-235f, -380f), new Vector2(300f, 3f));
             AddImage(line1, null, new Color(1f, 1f, 1f, 0.35f)).raycastTarget = false;
             var line2 = NewRect("OrLineRight", s);
-            At(line2, Mid, Mid, new Vector2(235f, -450f), new Vector2(300f, 3f));
+            At(line2, Mid, Mid, new Vector2(235f, -380f), new Vector2(300f, 3f));
             AddImage(line2, null, new Color(1f, 1f, 1f, 0.35f)).raycastTarget = false;
             var or = AddText(s, "Or", "OR", 42, new Color(1f, 1f, 1f, 0.7f), TextAlignmentOptions.Center);
-            At(or.rectTransform, Mid, Mid, new Vector2(0f, -450f), new Vector2(160f, 60f));
+            At(or.rectTransform, Mid, Mid, new Vector2(0f, -380f), new Vector2(160f, 60f));
 
             var guest = MakeButton(s, "GuestButton", "Continue as Guest", "Green", new Vector2(790f, 140f), Ico("person"));
-            At((RectTransform)guest.transform, Mid, Mid, new Vector2(0f, -580f), new Vector2(790f, 140f));
+            At((RectTransform)guest.transform, Mid, Mid, new Vector2(0f, -510f), new Vector2(790f, 140f));
 
             // ----- message + terms line (bottom) -----
-            var message = AddText(s, "Message", "", 40, Color.white, TextAlignmentOptions.Center, true);
-            message.textWrappingMode = TextWrappingModes.Normal;
-            message.enableAutoSizing = true; message.fontSizeMin = 26f; message.fontSizeMax = 40f;
-            At(message.rectTransform, Mid, Mid, new Vector2(0f, -735f), new Vector2(940f, 120f));
-
+            // Both anchored to Mid, like Guest above, with a fixed gap - NOT to BottomCenter. Mixing a screen-centre anchor
+            // with a screen-bottom anchor made the gap between Guest and Terms shrink (even overlap, swallowing taps meant
+            // for Guest) on a shorter/wider screen, since Mid moves relative to the true bottom edge as the aspect ratio
+            // changes while a bottom-anchored element does not. Anchoring everything to Mid keeps the gaps fixed on every
+            // aspect ratio; only the empty margin below Message, against the true bottom edge, grows or shrinks instead.
             var terms = NewRect("Terms", s);
-            At(terms, BottomCenter, BottomCenter, new Vector2(0f, 270f), new Vector2(940f, 110f));
+            At(terms, Mid, Mid, new Vector2(0f, -655f), new Vector2(940f, 90f));
             var termsHit = AddImage(terms, null, new Color(0f, 0f, 0f, 0f)); termsHit.raycastTarget = true;
             var termsButton = terms.gameObject.AddComponent<Button>();
             termsButton.targetGraphic = termsHit; termsButton.transition = Selectable.Transition.None;
-            var termsText = AddText(terms, "Text", "By continuing, you agree to our\n<color=#4DB2FF>Terms of Service</color> and <color=#4DB2FF>Privacy Policy</color>", 36,
+            var termsText = AddText(terms, "Text", "By continuing, you agree to our\n<color=#4DB2FF>Terms of Service</color> and <color=#4DB2FF>Privacy Policy</color>", 30,
                 new Color(1f, 1f, 1f, 0.75f), TextAlignmentOptions.Center);
             termsText.textWrappingMode = TextWrappingModes.Normal;
             Stretch(termsText.rectTransform);
 
+            var message = AddText(s, "Message", "", 34, Color.white, TextAlignmentOptions.Center, true);
+            message.textWrappingMode = TextWrappingModes.Normal;
+            message.enableAutoSizing = true; message.fontSizeMin = 22f; message.fontSizeMax = 34f;
+            At(message.rectTransform, Mid, Mid, new Vector2(0f, -765f), new Vector2(940f, 70f));
+
             OnClick(google, welcome.Google);
+            OnClick(amazon, welcome.Amazon);
             OnClick(facebook, welcome.Facebook);
             OnClick(guest, welcome.Guest);
             OnClick(gear, welcome.OpenSettings);
@@ -144,6 +158,7 @@ namespace Ludo.EditorTools
             bg.gameObject.SetActive(false);                              // the page switches it on when it opens
             so.FindProperty("messageText").objectReferenceValue = message;
             so.FindProperty("googleButton").objectReferenceValue = google;
+            so.FindProperty("amazonButton").objectReferenceValue = amazon;
             so.FindProperty("facebookButton").objectReferenceValue = facebook;
             so.FindProperty("guestButton").objectReferenceValue = guest;
             so.ApplyModifiedProperties();

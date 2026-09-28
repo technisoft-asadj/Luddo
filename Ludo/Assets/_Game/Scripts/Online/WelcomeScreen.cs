@@ -22,6 +22,7 @@ namespace Ludo.Online
         [SerializeField] TMP_Text subtitle;
         [SerializeField] TMP_Text messageText;            // "Connecting to Google...", errors, the policy notice
         [SerializeField] Button googleButton;
+        [SerializeField] Button amazonButton;
         [SerializeField] Button facebookButton;
         [SerializeField] Button guestButton;
 
@@ -70,6 +71,10 @@ namespace Ludo.Online
         public void Google() => RunSocial("Google", OnlineService.GoogleAsync, OnlineService.SwitchToGoogleAsync);
 
         public void Facebook() => RunSocial("Facebook", OnlineService.FacebookAsync, OnlineService.SwitchToFacebookAsync);
+
+        // Amazon never returns SocialResult.NeedsChoice (it has no Unity Authentication account-linking behind it,
+        // see OnlineService.AmazonAsync), so the "switch to this profile" path RunSocial offers is never used here.
+        public void Amazon() => RunSocial("Amazon", OnlineService.AmazonAsync, () => Task.FromResult(false));
 
         public void OpenSettings()
         {
@@ -132,6 +137,7 @@ namespace Ludo.Online
         void SetButtons(bool on)
         {
             googleButton.interactable = on;
+            amazonButton.interactable = on;
             facebookButton.interactable = on;
             facebookButton.gameObject.SetActive(FacebookLogin.Enabled);        // Facebook: next version
             guestButton.interactable = on;

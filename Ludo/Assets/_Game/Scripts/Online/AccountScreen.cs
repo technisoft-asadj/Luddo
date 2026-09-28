@@ -20,6 +20,7 @@ namespace Ludo.Online
         [SerializeField] GameObject guestNote;            // "A guest profile lives only on this phone..." (guests only)
         [SerializeField] Button logoutButton;
         [SerializeField] Button googleButton;
+        [SerializeField] Button amazonButton;
         [SerializeField] Button facebookButton;
 
         bool busy;
@@ -37,12 +38,17 @@ namespace Ludo.Online
             bool account = OnlineService.IsAccount;
             switchFor = null;
             googleButton.gameObject.SetActive(!account);
+            amazonButton.gameObject.SetActive(!account && AmazonLogin.Supported);
             facebookButton.gameObject.SetActive(!account && FacebookLogin.Enabled);      // Facebook: next version
             logoutButton.gameObject.SetActive(true);
             if (guestNote != null) guestNote.SetActive(!account);
+            // Amazon does not actually keep progress across phones (see OnlineLogin.AmazonAsync) - only Google/Facebook
+            // do, so it is left out of that specific claim to avoid promising something it cannot deliver.
+            string withWhat = "Google" + (FacebookLogin.Enabled ? " or Facebook" : "");
+            string amazonNote = AmazonLogin.Supported ? " Or use your Amazon name instead of typing one." : "";
             headline.text = account
                 ? (OnlineService.ProviderLabel == "Account" ? "Signed in as " + OnlineService.AccountName : "Signed in with " + OnlineService.ProviderLabel)
-                : "You are playing as a guest.\nLog in with " + (FacebookLogin.Enabled ? "Google or Facebook" : "Google") + " to keep your progress on any phone.";
+                : "You are playing as a guest.\nLog in with " + withWhat + " to keep your progress on any phone." + amazonNote;
         }
 
         /// <summary>The "Play Online" button in the mode menu: the login page when nobody is logged in, otherwise the online menu.</summary>
@@ -56,6 +62,8 @@ namespace Ludo.Online
         // ---------- buttons ----------
 
         public void Google() => RunSocial("Google", OnlineService.GoogleAsync, OnlineService.SwitchToGoogleAsync);
+
+        public void Amazon() => RunSocial("Amazon", OnlineService.AmazonAsync, () => System.Threading.Tasks.Task.FromResult(false));
 
         public void Facebook() => RunSocial("Facebook", OnlineService.FacebookAsync, OnlineService.SwitchToFacebookAsync);
 
@@ -112,6 +120,7 @@ namespace Ludo.Online
         {
             logoutButton.interactable = on;
             googleButton.interactable = on;
+            amazonButton.interactable = on;
             facebookButton.interactable = on;
         }
     }
