@@ -127,7 +127,10 @@ namespace Ludo.EditorTools
             importer.anisoLevel = 4;
             importer.wrapMode = TextureWrapMode.Clamp;
             importer.sRGBTexture = true;
-            importer.textureCompression = TextureImporterCompression.CompressedHQ;
+            // block-compressed (even at HQ) breaks up the pips/edges on this small, high-contrast atlas into a visibly
+            // "bursty" blocky look up close - the atlas is only 1024x512, so leaving it uncompressed costs ~2MB and buys
+            // clean pixels instead.
+            importer.textureCompression = TextureImporterCompression.Uncompressed;
             importer.SaveAndReimport();
             return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
         }

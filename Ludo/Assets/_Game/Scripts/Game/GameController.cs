@@ -179,7 +179,11 @@ namespace Ludo.Game
             float middle = (half + 2f + cam.orthographicSize) * 0.5f;
             float belowBadges = 12.6f;
             float y = Mathf.Max(middle, belowBadges);
-            y = Mathf.Min(y, cam.orthographicSize - 1f);
+            // 1.675 = half the tray's largest backdrop panel ("Shadow", 3.35 world units, see UiSceneBuilder.BuildDiceTray)
+            // plus its own -0.12 downward offset, so the panel itself never extends past the visible bottom edge - a
+            // clearance of just 1 unit (the old value) only accounted for the dice model, not the backdrop around it.
+            const float trayHalfHeight = 1.8f;
+            y = Mathf.Min(y, cam.orthographicSize - trayHalfHeight);
             dice.transform.position = new Vector3(0f, -y, 0f);
         }
 

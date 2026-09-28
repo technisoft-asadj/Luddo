@@ -122,7 +122,8 @@ namespace Ludo.Online
         /// <summary>
         /// Log out on this phone. Results still waiting on the phone are saved first (so logging out cannot dodge a loss), then
         /// everything that belonged to this player is forgotten. A guest who logs out loses that guest identity; a Google or
-        /// Facebook account comes back with its progress the next time it logs in.
+        /// Facebook account comes back with its progress the next time it logs in - so does Amazon, but only on this same
+        /// device (its saved session is what's actually remembered; see ClearLocalIdentity).
         /// </summary>
         public static async Task SignOutAsync()
         {
@@ -139,7 +140,13 @@ namespace Ludo.Online
         static void ClearLocalIdentity()
         {
             if (UnityServices.State == ServicesInitializationState.Initialized && AuthenticationService.Instance.IsSignedIn)
-                AuthenticationService.Instance.SignOut(true);                    // true: the saved session token goes too
+            {
+                // Amazon has no server-linked identity to sign back into (see AmazonAsync) - the ONLY way back to this
+                // same player's data is this device's own saved session token, so a plain sign-out must not delete it
+                // (deleting the account below still does, via DeleteAccountAsync itself - that part stays permanent).
+                bool keepSession = LoginMethod == "amazon";
+                AuthenticationService.Instance.SignOut(!keepSession);
+            }
             SetStatus(ConnectionStatus.Offline);                                 // first, so the profile changes below sync nothing
             FacebookLogin.LogOut();
             AmazonLogin.LogOut();
