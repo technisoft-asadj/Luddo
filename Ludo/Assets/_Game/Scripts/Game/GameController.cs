@@ -164,26 +164,26 @@ namespace Ludo.Game
             StartCoroutine(Flow());
         }
 
-        /// <summary>Keep the dice's tray in the open space between the board and the bottom edge, whatever the phone's shape.
-        /// A fixed spot (rather than one that hunts for room next to whichever badge is on top) can never collide with the
-        /// turn banner or the mode line above the board; whose turn it is shows on the dice itself (see DiceView.ShowSeatIcon).
-        /// The plain average used to undershoot on a short/wide screen (a tablet): the corner player badges hang a roughly
-        /// fixed distance below the board regardless of screen shape, but that average shrinks with it (measured via
-        /// RectTransform.GetWorldCorners: the tray's own backdrop reached about half a unit into the badges on this
-        /// project's test tablet) - so the tray is also floored at a fixed clearance below the badges, and only pulled
-        /// back up near the very bottom of a screen too square/wide for a comfortable middle ground to exist at all.</summary>
+        /// <summary>Keep the dice's tray in the open space between the board's bottom-corner badges and the screen edge,
+        /// whatever the phone's shape. A fixed spot (rather than one that hunts for room next to whichever badge is on
+        /// top) can never collide with the turn banner or the mode line above the board; whose turn it is shows on the
+        /// dice itself (see DiceView.ShowSeatIcon). Two hard limits, measured in the Editor via RectTransform.GetWorldCorners
+        /// and SpriteRenderer.bounds at this project's test tablet's aspect (a short/wide screen, the tight case - a taller
+        /// phone aspect always leaves more room than this): the tray must stay below the badges' bottom edge, and above the
+        /// screen's own bottom edge. On the tablet those two limits leave under 3 world units of gap - too little for the
+        /// tray's old, bigger art (see UiSceneBuilder.BuildDiceTray), which is why the art itself was shrunk to fit.</summary>
         void LateUpdate()
         {
             if (cam == null) return;
             float half = BoardGrid.Size * 0.5f;
-            float middle = (half + 2f + cam.orthographicSize) * 0.5f;
-            float belowBadges = 12.6f;
-            float y = Mathf.Max(middle, belowBadges);
-            // 1.675 = half the tray's largest backdrop panel ("Shadow", 3.35 world units, see UiSceneBuilder.BuildDiceTray)
-            // plus its own -0.12 downward offset, so the panel itself never extends past the visible bottom edge - a
-            // clearance of just 1 unit (the old value) only accounted for the dice model, not the backdrop around it.
-            const float trayHalfHeight = 1.8f;
-            y = Mathf.Min(y, cam.orthographicSize - trayHalfHeight);
+            // the badges are UI on a Screen-Space-Camera canvas, so their world-space drop below the board edge scales
+            // with the camera's zoom, not a fixed world distance - measured on the test tablet (aspect 0.625, ortho
+            // 13.6): badges hang 3.18 units below the board edge, i.e. ~0.24x orthographicSize.
+            float badgeBottom = half + 0.24f * cam.orthographicSize;
+            const float trayHalfHeight = 1.25f, trayOffset = 0.09f;   // matches the "Shadow" panel's own size/offset
+            float yMin = badgeBottom + trayHalfHeight - trayOffset;          // any higher and the tray touches the badges
+            float yMax = cam.orthographicSize - trayHalfHeight - trayOffset; // any lower and the tray clips off-screen
+            float y = yMax >= yMin ? (yMin + yMax) * 0.5f : yMin;   // centred in the gap; badge clearance wins if it's too tight
             dice.transform.position = new Vector3(0f, -y, 0f);
         }
 

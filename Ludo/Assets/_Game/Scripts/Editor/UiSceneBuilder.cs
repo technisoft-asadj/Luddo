@@ -1442,9 +1442,11 @@ namespace Ludo.EditorTools
             var fo = new SerializedObject(follow);
             fo.FindProperty("target").objectReferenceValue = dice.transform;
             fo.ApplyModifiedProperties();
-            WorldPanel(tray.transform, "Shadow", Load(Generated + "shadow_soft.png"), new Color(0f, 0f, 0.1f, 0.35f), 3.35f, new Vector2(0f, -0.12f), 86);
-            WorldPanel(tray.transform, "Rim", Load(Generated + "panel_world.png"), new Color(0.45f, 0.65f, 1f), 2.9f, Vector2.zero, 87);
-            WorldPanel(tray.transform, "Body", Load(Generated + "panel_world.png"), new Color(0.05f, 0.11f, 0.33f), 2.7f, Vector2.zero, 88);
+            // sized to fit the gap between the board's bottom-corner badges and the screen edge on a short/wide screen
+            // (a tablet) without touching either - see GameController.LateUpdate, which positions the tray to match.
+            WorldPanel(tray.transform, "Shadow", Load(Generated + "shadow_soft.png"), new Color(0f, 0f, 0.1f, 0.35f), 2.5f, new Vector2(0f, -0.09f), 86);
+            WorldPanel(tray.transform, "Rim", Load(Generated + "panel_world.png"), new Color(0.45f, 0.65f, 1f), 2.2f, Vector2.zero, 87);
+            WorldPanel(tray.transform, "Body", Load(Generated + "panel_world.png"), new Color(0.05f, 0.11f, 0.33f), 2f, Vector2.zero, 88);
         }
 
         static void WorldPanel(Transform parent, string name, Sprite sprite, Color color, float size, Vector2 offset, int order)
