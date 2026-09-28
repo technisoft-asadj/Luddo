@@ -53,8 +53,12 @@ namespace Ludo.Core
         {
             if (lastClaimDay == DayKey(today)) return Math.Max(1, lastStreak);                 // already claimed today: that day
             bool yesterday = lastClaimDay == DayKey(today.AddDays(-1));
-            if (!yesterday || lastStreak <= 0) return 1;
-            return lastStreak >= Amounts.Length ? 1 : lastStreak + 1;
+            if (!yesterday) return 1;
+            // lastClaimDay says a claim really happened yesterday, so never restart at day 1 here even if lastStreak
+            // itself is missing or 0 (an older save without the field, or one that lost it) - that showed the day 1
+            // reward again right after day 1 was already claimed. Treat an unknown streak as "day 1 was claimed".
+            int streak = lastStreak > 0 ? lastStreak : 1;
+            return streak >= Amounts.Length ? 1 : streak + 1;
         }
 
         public static int AmountFor(int day) => Amounts[Math.Max(1, Math.Min(Amounts.Length, day)) - 1];

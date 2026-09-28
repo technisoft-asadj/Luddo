@@ -1305,8 +1305,11 @@ namespace Ludo.EditorTools
 
             var banner = BuildTurnBanner(safe, out var turnText, out var turnAvatar, out var turnAvatarBg);
             var modeLine = AddText(safe, "ModeLine", "", 34, Color.white, TextAlignmentOptions.Center, true);
-            At(modeLine.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -170f), new Vector2(1000f, 56f));
-            modeLine.enableAutoSizing = true; modeLine.fontSizeMin = 22f; modeLine.fontSizeMax = 34f;
+            // narrower than the old 1000px box and word-wrapped: at 1000px wide it reached past the turn banner into the
+            // Voice/Chat buttons (top-left) and the Pause button (top-right), which sit past +-448px either side.
+            At(modeLine.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -178f), new Vector2(800f, 92f));
+            modeLine.enableAutoSizing = true; modeLine.fontSizeMin = 20f; modeLine.fontSizeMax = 34f;
+            modeLine.textWrappingMode = TextWrappingModes.Normal;
             modeLine.raycastTarget = false;
             modeLine.gameObject.SetActive(false);
 

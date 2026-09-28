@@ -1447,6 +1447,37 @@ namespace Ludo.EditorTools
             return panel;
         }
 
+        /// <summary>
+        /// A boxed, clipped "snackbar" near the bottom of the board: shows the sender and a new chat message for a few
+        /// seconds while the chat window is closed, then fades on its own (ChatPanel drives the fade and the timing).
+        /// Bottom-centre so it never competes with the top-of-screen buttons or the mode line above the turn banner.
+        /// </summary>
+        static RectTransform BuildChatPreview(RectTransform safe, out CanvasGroup group, out TMP_Text text)
+        {
+            var bubble = NewRect("ChatPreview", safe);
+            At(bubble, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 210f), new Vector2(760f, 140f));
+            group = bubble.gameObject.AddComponent<CanvasGroup>();
+            group.alpha = 0f;
+            group.blocksRaycasts = false;
+            group.interactable = false;
+            bubble.gameObject.AddComponent<RectMask2D>();        // the message can never spill past this box
+            Depth(AddImage(bubble, Round(), new Color(0.05f, 0.11f, 0.33f, 0.92f), true, 0.4f), new Color(0.02f, 0.05f, 0.2f), 7f);
+
+            var icon = AddImage(NewRect("Icon", bubble), Ico("chat"), new Color(1f, 0.7f, 0.25f));
+            At(icon.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(26f, 0f), new Vector2(56f, 56f));
+
+            var label = AddText(bubble, "Text", "", 32, Color.white, TextAlignmentOptions.TopLeft, true);
+            At(label.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(78f, 0f), new Vector2(656f, 110f));
+            label.textWrappingMode = TextWrappingModes.Normal;
+            label.overflowMode = TextOverflowModes.Ellipsis;
+            label.richText = true;
+            label.raycastTarget = false;
+            text = label;
+
+            bubble.gameObject.SetActive(false);
+            return bubble;
+        }
+
         /// <summary>Game screen: the microphone button (online matches only) and the "offline only" buttons.</summary>
         static void BuildGameOnlineExtras(RectTransform safe, GameHud hud, GameObject pausePanel, GameObject resultPanel)
         {
@@ -1465,8 +1496,12 @@ namespace Ludo.EditorTools
             At((RectTransform)chat.transform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(30f, -176f), new Vector2(124f, 124f));
             var dot = BuildUnreadDot((RectTransform)chat.transform, out var dotText, new Vector2(4f, 4f), 46f, false);
             var chatPanel = BuildChat(safe, chat, dot, dotText);
+            var preview = BuildChatPreview(safe, out var previewGroup, out var previewText);
             var cso = new SerializedObject(chatPanel);
             cso.FindProperty("hideWhenOffline").boolValue = true;
+            cso.FindProperty("previewBubble").objectReferenceValue = preview;
+            cso.FindProperty("previewGroup").objectReferenceValue = previewGroup;
+            cso.FindProperty("previewText").objectReferenceValue = previewText;
             cso.ApplyModifiedProperties();
 
             var offline = new[]

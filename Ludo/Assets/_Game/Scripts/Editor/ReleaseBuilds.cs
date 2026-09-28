@@ -12,6 +12,7 @@ namespace Ludo.EditorTools
     /// The two release builds. Each one sets everything a release needs, builds, and then puts the project settings back
     /// exactly as they were (so day-to-day development builds stay safe: test ads, trace logs, debug signing).
     ///   Ludo > Release > Build Play Store AAB      real ads, signed, no trace logs  -> upload this to Google Play
+    ///   Ludo > Release > Build Amazon Appstore APK real ads, signed, no trace logs  -> upload this to Amazon Appstore (APK, not AAB)
     ///   Ludo > Release > Build Test-Ads APK        Google TEST ads, signed          -> install on a phone to try the release build
     /// The signing password is read from ..\..\Keystore\keystore-info.txt (outside the project and outside git).
     /// The result is written to Builds/Release/result-*.txt (a build blocks the Editor for many minutes).
@@ -21,8 +22,8 @@ namespace Ludo.EditorTools
     /// </summary>
     public static class ReleaseBuilds
     {
-        const string Version = "1.0.0";
-        const int VersionCode = 1;
+        const string Version = "1.0.1";
+        const int VersionCode = 2;
         const string OutputFolder = "Builds/Release";
         const string KeystoreInfo = "../../Keystore/keystore-info.txt";
         const string AdsConfigPath = "Assets/_Game/Resources/AdsConfig.asset";
@@ -43,6 +44,11 @@ namespace Ludo.EditorTools
 
         [MenuItem("Ludo/Release/Build Play Store AAB")]
         public static void BuildAab() => Begin(bundle: true, testAds: false, file: "LudoFight-" + Version + ".aab", result: "result-aab.txt");
+
+        // Amazon Appstore takes a signed APK (not an AAB) and does its own re-signing on submission, same as Google Play
+        // App Signing does for the AAB - so this reuses our own upload key, exactly like the Play build.
+        [MenuItem("Ludo/Release/Build Amazon Appstore APK")]
+        public static void BuildAmazonApk() => Begin(bundle: false, testAds: false, file: "LudoFight-" + Version + "-amazon.apk", result: "result-amazon.txt");
 
         [MenuItem("Ludo/Release/Build Test-Ads APK")]
         public static void BuildTestApk() => Begin(bundle: false, testAds: true, file: "LudoFight-" + Version + "-testads.apk", result: "result-apk.txt");

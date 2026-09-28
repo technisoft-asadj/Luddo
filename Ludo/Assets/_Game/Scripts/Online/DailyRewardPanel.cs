@@ -47,10 +47,17 @@ namespace Ludo.Online
             panel.SetActive(true);
             statusText.text = "";
             busy = false;
+            StatsService.Changed += Refresh;                // stats can finish loading while the panel is already open
             Refresh();
         }
 
-        public void Close() => panel.SetActive(false);
+        public void Close()
+        {
+            panel.SetActive(false);
+            StatsService.Changed -= Refresh;
+        }
+
+        void OnDisable() => StatsService.Changed -= Refresh;      // safety net if the object goes away without Close()
 
         void Refresh()
         {
