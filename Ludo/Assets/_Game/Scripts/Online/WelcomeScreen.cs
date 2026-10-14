@@ -138,6 +138,13 @@ namespace Ludo.Online
         {
             googleButton.interactable = on;
             amazonButton.interactable = on;
+            // Google and Amazon share one half-width row; where Amazon is not offered (Google Play phones) Google takes
+            // the whole row instead of sitting alone on one side
+            bool amazon = AmazonLogin.Offered;
+            amazonButton.gameObject.SetActive(amazon);
+            var googleRt = (RectTransform)googleButton.transform;
+            googleRt.anchoredPosition = new Vector2(amazon ? googleRt.anchoredPosition.x : 0f, googleRt.anchoredPosition.y);
+            googleRt.sizeDelta = new Vector2(amazon ? 380f : 780f, googleRt.sizeDelta.y);
             facebookButton.interactable = on;
             facebookButton.gameObject.SetActive(FacebookLogin.Enabled);        // Facebook: next version
             guestButton.interactable = on;

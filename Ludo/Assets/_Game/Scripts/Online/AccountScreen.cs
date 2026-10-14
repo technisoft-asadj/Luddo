@@ -38,14 +38,14 @@ namespace Ludo.Online
             bool account = OnlineService.IsAccount;
             switchFor = null;
             googleButton.gameObject.SetActive(!account);
-            amazonButton.gameObject.SetActive(!account && AmazonLogin.Supported);
+            amazonButton.gameObject.SetActive(!account && AmazonLogin.Offered);
             facebookButton.gameObject.SetActive(!account && FacebookLogin.Enabled);      // Facebook: next version
             logoutButton.gameObject.SetActive(true);
             if (guestNote != null) guestNote.SetActive(!account);
             // Amazon does not actually keep progress across phones (see OnlineLogin.AmazonAsync) - only Google/Facebook
             // do, so it is left out of that specific claim to avoid promising something it cannot deliver.
             string withWhat = "Google" + (FacebookLogin.Enabled ? " or Facebook" : "");
-            string amazonNote = AmazonLogin.Supported ? " Or use your Amazon name instead of typing one." : "";
+            string amazonNote = AmazonLogin.Offered ? " Or use your Amazon name instead of typing one." : "";
             headline.text = account
                 ? (OnlineService.ProviderLabel == "Account" ? "Signed in as " + OnlineService.AccountName : "Signed in with " + OnlineService.ProviderLabel)
                 : "You are playing as a guest.\nLog in with " + withWhat + " to keep your progress on any phone." + amazonNote;

@@ -13,6 +13,23 @@ namespace Ludo.Online
         public static string LastError { get; private set; } = "";
         public static bool Supported => Application.platform == RuntimePlatform.Android;
 
+        static bool? offered;
+
+        /// <summary>Show the Amazon button only on Amazon's own devices or Amazon Appstore installs. On a Google Play phone it
+        /// would just open an Amazon error page (the app is not an Amazon-registered one there).</summary>
+        public static bool Offered => offered ??= Supported && DetectAmazon();
+
+        static bool DetectAmazon()
+        {
+            try
+            {
+                if ((Application.installerName ?? "").StartsWith("com.amazon")) return true;
+                using var build = new AndroidJavaClass("android.os.Build");
+                return string.Equals(build.GetStatic<string>("MANUFACTURER"), "Amazon", System.StringComparison.OrdinalIgnoreCase);
+            }
+            catch (System.Exception) { return false; }
+        }
+
         static TaskCompletionSource<(string name, string email, string userId)> pending;
         static AmazonLoginReceiver receiver;
 
