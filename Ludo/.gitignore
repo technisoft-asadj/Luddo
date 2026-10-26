@@ -44,3 +44,7 @@ keystore.properties
 # Claude/MCP local tooling
 /.claude/
 Assets/_Recovery/
+
+# Facebook SDK regenerates this with android:debuggable="true" - never ship it; LudoFacebook.androidlib holds the real entries
+/Assets/Plugins/Android/AndroidManifest.xml
+/Assets/Plugins/Android/AndroidManifest.xml.meta

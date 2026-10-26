@@ -78,11 +78,12 @@ namespace Ludo.Game
         public static string TeamName(int seat) => seat % 2 == 0 ? "RED + YELLOW" : "GREEN + BLUE";
 
         /// <summary>
-        /// How fast the match plays. Blitz is meant to be a sprint, so its pawn steps, pauses and thinking time run shorter;
-        /// every other mode keeps the timing the rest of the game was tuned with. It never touches the online turn limit -
-        /// people need the same time to think whatever the mode is.
+        /// How fast the match plays. Players who know other Ludo games found the first version slow, so every mode now runs
+        /// about half as fast again (pawn steps, dice throw, pauses, the computer's thinking time); Blitz is meant to be a
+        /// sprint and stays quicker still. It never touches the online turn limit - people need the same time to think
+        /// whatever the mode is.
         /// </summary>
-        public static float Speed => Mode == Ludo.Core.GameMode.Blitz ? 1.6f : 1f;
+        public static float Speed => Mode == Ludo.Core.GameMode.Blitz ? 2.2f : 1.5f;
 
         /// <summary>A pause or animation length in seconds, shortened for the fast modes (see Speed).</summary>
         public static float Beat(float seconds) => seconds / Speed;

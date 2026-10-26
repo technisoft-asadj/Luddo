@@ -42,7 +42,7 @@ namespace Ludo.Core
         // ---------- leaving / not reconnecting in a ranked match ----------
         public int forfeitRankPoints = 15;                  // subtracted
         public int forfeitXp = 25;                          // subtracted
-        public float reconnectGraceSeconds = 20f;           // how long a dropped player has to come back before they forfeit
+        public float reconnectGraceSeconds = 40f;           // how long a dropped player has to come back before they forfeit
 
         // ---------- rewarded ad ----------
         public int adRankMultiplier = 2;                    // Rank Points of a win x this (XP and coins are NOT multiplied)

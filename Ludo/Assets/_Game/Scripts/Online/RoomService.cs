@@ -433,7 +433,7 @@ namespace Ludo.Online
             }
             catch (Exception e)
             {
-                Debug.LogWarning("[Ludo] Reconnect: " + e.Message);
+                Debug.LogWarning("[Ludo] Reconnect: " + e.Message + (e.InnerException != null ? "  <- " + e.InnerException.GetType().Name + ": " + e.InnerException.Message : ""));
                 string text = (e.Message ?? "").ToLowerInvariant();
                 return text.Contains("deleted") || text.Contains("not found") || text.Contains("404") ? ReconnectOutcome.Gone : ReconnectOutcome.Retry;
             }

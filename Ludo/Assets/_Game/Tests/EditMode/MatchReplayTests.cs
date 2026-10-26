@@ -49,6 +49,38 @@ namespace Ludo.Tests
         }
 
         [Test]
+        public void ARanOutOfTimeTurnPassesOnWithoutRollingOrMoving()
+        {
+            var dice = new QueuedDiceSource();
+            var game = new LudoGame(Board.DefaultSeats(2), new RulesConfig(), dice);
+            int first = game.CurrentPlayer;
+            game.SkipTurn();
+            Assert.AreNotEqual(first, game.CurrentPlayer);
+            Assert.AreEqual(TurnPhase.WaitingForRoll, game.Phase);
+            for (int t = 0; t < Board.TokensPerPlayer; t++) Assert.AreEqual(game.State.GetProgress(first, t), new LudoGame(Board.DefaultSeats(2), new RulesConfig(), new QueuedDiceSource()).State.GetProgress(first, t));
+        }
+
+        [Test]
+        public void ASkippedTurnInTheStoryIsReplayedTheSameOnAnotherPhone()
+        {
+            // roll a 6 (pick pending), time runs out on the pick (announced as pick -1 = 9), then the next player runs out on the roll (9)
+            var dice = new QueuedDiceSource();
+            var original = new LudoGame(Board.DefaultSeats(2), new RulesConfig(), dice);
+            var story = new List<int>();
+            dice.Push(6); story.Add(6);
+            var roll = original.Roll();
+            if (MatchReplay.OnlyOneChoice(roll)) original.Play(roll.LegalMoves[0]);    // nobody is asked: the pawn comes out by itself (a six = roll again)
+            story.Add(MatchReplay.PickBase - 1);                                        // out of time on the pick (or the next roll): turn passes on
+            original.SkipTurn();
+            story.Add(MatchReplay.SkipEvent); original.SkipTurn();
+
+            var copyDice = new QueuedDiceSource();
+            var copy = new LudoGame(Board.DefaultSeats(2), new RulesConfig(), copyDice);
+            Assert.IsNull(MatchReplay.Apply(copy, copyDice, story));
+            AssertSame(original.State, copy.State, "skipped turns");
+        }
+
+        [Test]
         public void ReplayingTheWholeStoryGivesTheSameFinishedGame()
         {
             for (int players = 2; players <= 4; players++)

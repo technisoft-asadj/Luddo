@@ -10,6 +10,9 @@ namespace Ludo.Core
     public static class MatchReplay
     {
         public const int PickBase = 10;
+        /// <summary>The player ran out of time: nothing was rolled or moved and the turn passed on. Announced in place of a dice value
+        /// (waiting to roll) or as pick -1 (waiting to pick, 10 + -1), so both end up as this number in the story.</summary>
+        public const int SkipEvent = 9;
 
         /// <summary>
         /// When every legal move is the same move (several tokens in the base, or the same number rolled twice), nobody is asked
@@ -33,7 +36,12 @@ namespace Ludo.Core
             RollResult waiting = null;
             foreach (int e in story)
             {
-                if (e < PickBase)
+                if (e == SkipEvent)                                                // the player ran out of time: the turn passed on
+                {
+                    game.SkipTurn();
+                    waiting = null;
+                }
+                else if (e < PickBase)
                 {
                     dice.Push(e);
                     var roll = game.Roll();

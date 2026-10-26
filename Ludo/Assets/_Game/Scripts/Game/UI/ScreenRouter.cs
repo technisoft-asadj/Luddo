@@ -45,7 +45,30 @@ namespace Ludo.Game
             foreach (var m in modals)
                 if (m != null && m.activeSelf) { m.SetActive(false); return; }
             if (history.Count > 1) Back();
-            else Application.Quit();
+            else if (Time.unscaledTime - lastExitPress < 2f) Application.Quit();    // a second press within 2 seconds
+            else
+            {
+                lastExitPress = Time.unscaledTime;                                    // one stray swipe must not close the app
+                ShowExitHint();
+            }
+        }
+
+        float lastExitPress = -10f;
+
+        static void ShowExitHint()
+        {
+#if UNITY_ANDROID && !UNITY_EDITOR
+            try
+            {
+                var activity = new AndroidJavaClass("com.unity3d.player.UnityPlayer").GetStatic<AndroidJavaObject>("currentActivity");
+                activity.Call("runOnUiThread", new AndroidJavaRunnable(() =>
+                {
+                    var toast = new AndroidJavaClass("android.widget.Toast");
+                    toast.CallStatic<AndroidJavaObject>("makeText", activity, "Press back again to exit", 0).Call("show");
+                }));
+            }
+            catch (System.Exception) { }
+#endif
         }
 
         public void Show(int index) => Push(index);

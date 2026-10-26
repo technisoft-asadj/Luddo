@@ -224,9 +224,7 @@ namespace Ludo.Online
 
         public void Share()
         {
-            var config = OnlineConfig.Load();
-            string link = config != null && !string.IsNullOrEmpty(config.storeUrl) ? "\n" + config.storeUrl : "";
-            NativeShare.Text("Ludo Fight", "Join my Ludo Fight room! Code: " + RoomService.Code + link);
+            NativeShare.Text("Ludo Fight", "Join my Ludo Fight room! Code: " + RoomService.Code + "\nGet the game: " + ShareApp.StoreUrl);
         }
 
         public void InviteFriends()

@@ -6,7 +6,7 @@ using UnityEngine.UI;
 namespace Ludo.Game
 {
     /// <summary>The short in-game messages. Each kind has its own colour, icon and wording.</summary>
-    public enum ToastKind { NoMoves, ThreeSixes, Captured, RollAgain }
+    public enum ToastKind { NoMoves, ThreeSixes, Captured, RollAgain, TimeUp }
 
     /// <summary>
     /// A coloured banner across the board that pops in, holds and fades away ("No Moves", "Three Sixes! Turn lost",
@@ -68,6 +68,10 @@ namespace Ludo.Game
                 case ToastKind.RollAgain:
                     face = new Color(0.22f, 0.58f, 1f); edge = new Color(0.07f, 0.30f, 0.72f);
                     head = "Six!"; sub = "Roll again";
+                    break;
+                case ToastKind.TimeUp:
+                    face = new Color(0.96f, 0.30f, 0.32f); edge = new Color(0.62f, 0.10f, 0.14f);
+                    head = "Time's up!"; sub = "Turn passes on";
                     break;
                 default:
                     face = new Color(1f, 0.68f, 0.14f); edge = new Color(0.78f, 0.38f, 0.04f);

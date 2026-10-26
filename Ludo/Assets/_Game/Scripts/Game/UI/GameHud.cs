@@ -80,7 +80,7 @@ namespace Ludo.Game
                 // gold numbers, green GO!: both read over the board's white centre thanks to the font's dark outline
                 countdownText.color = go ? new Color(0.45f, 1f, 0.55f) : new Color(1f, 0.83f, 0.15f);
                 AudioService.Play(go ? SfxId.Home : SfxId.Click);
-                float hold = go ? 0.45f : 0.6f;
+                float hold = go ? 0.3f : 0.38f;      // quick: players asked for a faster game
                 for (float t = 0f; t < hold;)
                 {
                     t += Time.unscaledDeltaTime;
@@ -272,7 +272,16 @@ namespace Ludo.Game
         void ShowAuto()
         {
             if (autoLabel != null) autoLabel.text = AutoOn ? "Auto: ON" : "Auto: OFF";
-            if (autoImage != null) autoImage.color = AutoOn ? new Color(0.55f, 1f, 0.6f) : Color.white;
+            if (autoImage != null) autoImage.color = AutoOn ? new Color(0.55f, 1f, 0.6f) : autoTint;
+        }
+
+        Color autoTint = Color.white;
+
+        /// <summary>Online: tint the Auto button (while it is off) with this player's own seat colour, so it reads as THEIR button.</summary>
+        public void SetAutoSeatColor(Color seatColor)
+        {
+            autoTint = Color.Lerp(Color.white, seatColor, 0.45f);
+            ShowAuto();
         }
 
         public void HideValueChoice()
@@ -320,6 +329,75 @@ namespace Ludo.Game
         public void HideBadges()
         {
             foreach (var b in badges) b.Hide();
+        }
+
+        /// <summary>Where a seat's badge is on the screen, in world units (the dice is placed next to it). False if there is none.</summary>
+        public bool TryGetBadgeRect(int seat, out Rect rect) =>
+            WorldRect(seat >= 0 && badges != null && seat < badges.Length && badges[seat] != null ? badges[seat].transform as RectTransform : null, out rect);
+
+        /// <summary>Where the turn banner at the top of the screen is, in world units.</summary>
+        public bool TryGetBannerRect(out Rect rect) =>
+            WorldRect(turnText != null ? turnText.rectTransform.parent as RectTransform : null, out rect);
+
+        Vector2 autoHome;
+        bool autoHomeKnown;
+
+        /// <summary>Online: line the Auto button up with the dice (beside it, at the bottom) so the chat message bar, which sits just above
+        /// the dice, is never covered by it.</summary>
+        public void AlignAutoButton(Vector2 worldCentre, bool alignX)
+        {
+            if (autoButton == null) return;
+            var rt = (RectTransform)autoButton.transform;
+            if (!autoHomeKnown) { autoHome = rt.anchoredPosition; autoHomeKnown = true; }
+            rt.anchoredPosition = autoHome;                                // measure from the designed spot, then shift
+            rt.GetWorldCorners(cornerBuffer);
+            float centreX = (cornerBuffer[0].x + cornerBuffer[2].x) * 0.5f;
+            float centreY = (cornerBuffer[0].y + cornerBuffer[2].y) * 0.5f;
+            rt.position += new Vector3(alignX ? worldCentre.x - centreX : 0f, worldCentre.y - centreY, 0f);
+        }
+
+        /// <summary>Where the Auto button is (online only; false while it is hidden).</summary>
+        public bool TryGetAutoRect(out Rect rect)
+        {
+            rect = default;
+            if (autoButton == null || !autoButton.gameObject.activeInHierarchy) return false;
+            return WorldRect((RectTransform)autoButton.transform, out rect);
+        }
+
+        RectTransform[] clearRects;
+
+        /// <summary>The parts of the screen the dice slots must stay off: the turn banner, the pause button and (online) the mic and chat buttons.
+        /// Only the ones that are showing are listed.</summary>
+        public void GetKeepClearRects(System.Collections.Generic.List<Rect> into)
+        {
+            into.Clear();
+            if (clearRects == null)
+            {
+                var list = new System.Collections.Generic.List<RectTransform>();
+                if (turnText != null && turnText.rectTransform.parent is RectTransform banner) list.Add(banner);
+                var canvasObject = GameObject.Find("HudCanvas");
+                var safe = canvasObject != null ? canvasObject.transform.Find("SafeArea") : null;
+                if (safe != null)
+                    foreach (var name in new[] { "PauseButton", "VoiceButton", "ChatButton" })
+                    {
+                        var t = safe.Find(name);
+                        if (t != null) list.Add((RectTransform)t);
+                    }
+                clearRects = list.ToArray();
+            }
+            foreach (var rt in clearRects)
+                if (rt != null && rt.gameObject.activeInHierarchy && WorldRect(rt, out Rect r)) into.Add(r);
+        }
+
+        static readonly Vector3[] cornerBuffer = new Vector3[4];
+
+        static bool WorldRect(RectTransform rt, out Rect rect)
+        {
+            rect = default;
+            if (rt == null) return false;
+            rt.GetWorldCorners(cornerBuffer);
+            rect = Rect.MinMaxRect(cornerBuffer[0].x, cornerBuffer[0].y, cornerBuffer[2].x, cornerBuffer[2].y);
+            return true;
         }
 
         public void SetBadge(int seat, string playerName, string subtitle, Sprite avatar, Sprite flag = null) =>

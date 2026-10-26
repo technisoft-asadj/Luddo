@@ -243,6 +243,18 @@ namespace Ludo.Core
             return result;
         }
 
+        /// <summary>
+        /// The current player ran out of time (online): the turn passes on without a roll or a move. Whatever was rolled or
+        /// waiting (Ludo Star numbers, a bonus roll) is lost. Works while waiting for the roll or for the move.
+        /// </summary>
+        public void SkipTurn()
+        {
+            if (Phase == TurnPhase.GameOver)
+                throw new InvalidOperationException("The game is over.");
+            legal.Clear();
+            NextTurn();
+        }
+
         RollResult Pass(int player, int value, PassReason reason)
         {
             legal.Clear();

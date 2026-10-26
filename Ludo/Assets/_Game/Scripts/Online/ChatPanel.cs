@@ -185,6 +185,12 @@ namespace Ludo.Online
             unread = 0;
             ShowUnread();
             notice.text = MatchLink.Current == null ? "Chat works once you are in a room." : "";
+            // the ready-made phrases and emojis come first: the keyboard only opens when the person taps the text box
+            if (input != null)
+            {
+                input.DeactivateInputField();
+                if (UnityEngine.EventSystems.EventSystem.current != null) UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(null);
+            }
             ScrollToEnd();
         }
 
@@ -204,7 +210,7 @@ namespace Ludo.Online
             {
                 input.text = "";
                 notice.text = "";
-                input.ActivateInputField();
+                input.DeactivateInputField();             // the keyboard closes after sending, so the phrases and emojis show again
             }
             else notice.text = problem;
         }

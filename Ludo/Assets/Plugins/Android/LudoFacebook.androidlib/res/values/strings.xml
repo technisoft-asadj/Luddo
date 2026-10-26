@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- the Facebook login library's own manifest points at these -->
+    <string name="facebook_app_id">1759980011780675</string>
+    <string name="fb_login_protocol_scheme">fb1759980011780675</string>
+    <string name="facebook_client_token">0386a4ab96e83a9605a658fff175228a</string>
+</resources>

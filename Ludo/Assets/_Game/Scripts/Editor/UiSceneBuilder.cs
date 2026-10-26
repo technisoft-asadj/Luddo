@@ -142,7 +142,8 @@ namespace Ludo.EditorTools
             // hand the pieces to the scripts
             var so = new SerializedObject(router);
             SetObjects(so.FindProperty("screens"), screens);
-            SetObjects(so.FindProperty("modals"), new[] { countryModal, root.Find("DailyRewardModal").gameObject, nameModal, joinModal, moreModal, inviteModal, settingsModals[0], settingsModals[1] });
+            SetObjects(so.FindProperty("modals"), new[] { countryModal, root.Find("DailyRewardModal").gameObject, nameModal, joinModal, moreModal, inviteModal, settingsModals[0], settingsModals[1],
+                root.Find("ChestModal").gameObject, root.Find("DiceCollectionModal").gameObject });    // Android Back closes these pop-ups too, instead of quitting the app
             so.FindProperty("firstScreen").intValue = Splash;
             so.ApplyModifiedProperties();
 
@@ -539,6 +540,11 @@ namespace Ludo.EditorTools
                 Ikon("calendar_color"), "Events", new Color(0.60f, 0.34f, 0.90f), out var eventsDot);
             OnClickInt(eventsRail, router.Show, Events);
             eventsDot.SetActive(false);                      // the Events screen shows its own state; no dot to guess at here
+            // "Share": sends the Play Store link through the phone's share sheet (WhatsApp, Facebook, Messenger ...)
+            var shareRail = RailButton(s, "RailShare", new Vector2(1f, 1f), new Vector2(-46f, -486f),
+                Ico("share"), "Share", new Color(0.20f, 0.72f, 0.45f), out var shareDot);
+            OnClick(shareRail, shareRail.gameObject.AddComponent<ShareAppButton>().Share);
+            shareDot.SetActive(false);
 
             // ---- logo over the board art ----
             Logo(s, new Vector2(0.5f, 1f), new Vector2(0f, -170f), 560f);

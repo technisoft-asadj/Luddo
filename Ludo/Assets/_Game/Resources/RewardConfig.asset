@@ -40,7 +40,7 @@ MonoBehaviour:
     lossCoins: 0
     forfeitRankPoints: 15
     forfeitXp: 25
-    reconnectGraceSeconds: 20
+    reconnectGraceSeconds: 40
     adRankMultiplier: 2
     casualWinXp: 60
     casualLossXp: 20

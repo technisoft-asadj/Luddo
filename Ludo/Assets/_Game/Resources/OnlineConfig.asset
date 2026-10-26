@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Ludo.Online::Ludo.Online.OnlineConfig
   supportEmail: trisoftic@gmail.com
   privacyPolicyUrl: https://technisoft-asadj.github.io/Privacy_pages/ludofight/privacy.html
-  storeUrl: 
+  storeUrl: https://play.google.com/store/apps/details?id=com.devorbit.ludofight
   ratingBoardId: ludovibe_rating
   weeklyBoardId: ludovibe_weekly

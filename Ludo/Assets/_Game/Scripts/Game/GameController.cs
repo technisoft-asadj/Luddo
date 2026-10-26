@@ -35,7 +35,7 @@ namespace Ludo.Game
         [SerializeField] float aiThinkSeconds = 0.7f;              // pause before the computer rolls, so you can follow
         [SerializeField] float tapRadius = 1.1f;                   // how close (in cells) a tap must be to a token or the dice
         [SerializeField] float turnSecondsSetting = 20f;                  // online: time to roll, and again time to pick a pawn
-        const float hostGraceSeconds = 5f;                           // online host: waits a little longer than the player's own phone, so the phone's auto-play arrives first
+        const float hostGraceSeconds = 2f;                           // online host: waits a little longer than the player's own phone, so a last-second tap still arrives
         [SerializeField] int missesBeforeKick = 3;                 // online: this many idle turns in a row and the computer takes the seat
 
         LudoGame game;
@@ -161,6 +161,9 @@ namespace Ludo.Game
             }
             board.Bind(game);
             hud.HideResult();
+            diceSeat = game.State.SeatOf(game.CurrentPlayer);          // the dice starts in the first player's corner
+            dicePlaced = false;
+            SetupPads();
             StartCoroutine(Flow());
         }
 
@@ -184,7 +187,287 @@ namespace Ludo.Game
             float yMin = badgeBottom + trayHalfHeight - trayOffset;          // any higher and the tray touches the badges
             float yMax = cam.orthographicSize - trayHalfHeight - trayOffset; // any lower and the tray clips off-screen
             float y = yMax >= yMin ? (yMin + yMax) * 0.5f : yMin;   // centred in the gap; badge clearance wins if it's too tight
-            dice.transform.position = new Vector3(0f, -y, 0f);
+            // Every player's own corner slot fits on this screen: online it also decides where the Auto button and the chat message
+            // bar go (see PlaceOnlineExtras). Otherwise (a wide tablet) the old single dice at the bottom is used.
+            bool corners = SeatDice && AllSeatSpotsFit();
+            if (link != null && !corners)
+            {
+                // no corner slots: the chat message bar goes above the dice, so the dice sits as low as the screen allows -
+                // above the phone's gesture bar - to leave the most room between it and the badges
+                float safeBottom = -cam.ScreenToWorldPoint(new Vector3(0f, Screen.safeArea.yMin, 0f)).y;     // > 0: how far down the usable screen reaches
+                float lowest = Mathf.Min(yMax, safeBottom - trayHalfHeight - trayOffset - 0.1f);
+                if (lowest >= yMin) y = lowest;
+            }
+            Vector3 home = new Vector3(0f, -y, 0f);
+
+            // Friends sharing one phone: every player gets the dice at THEIR OWN corner (next to their badge), so nobody has to
+            // reach across the table. If a seat's own spot does not fit on this screen it uses the bottom-centre spot as before.
+            Vector3 target = home;
+            if (SeatDice && diceSeat >= 0 && TrySeatDiceSpot(diceSeat, out Vector3 spot)) target = spot;
+            Vector3 now = dice.transform.position;
+            if (!dicePlaced || (target - now).sqrMagnitude < 0.0004f) now = target;
+            else now = Vector3.Lerp(now, target, 1f - Mathf.Exp(-16f * Time.unscaledDeltaTime));   // a quick glide to the next player
+            dicePlaced = true;
+            dice.transform.position = now;
+            UpdatePads(now);
+            if (link != null) PlaceOnlineExtras(corners, now);
+        }
+
+        // ---------- the chat message bar (online) ----------
+
+        RectTransform chatPreview;                                  // the box that shows a new chat message for a few seconds
+        Vector2 chatPreviewHome;
+        static readonly Vector3[] previewCorners = new Vector3[4];
+
+        float cornerRowY;                                           // centre height of the bottom row of dice slots (set by AllSeatSpotsFit)
+        const float chatBarHeight = 2.4f;                           // world units, a little more than the bar itself
+
+        /// <summary>
+        /// Online only: where the Auto button and the chat message bar go. With a slot in every corner they use the free bottom strip:
+        /// the Auto button sits between the two bottom dice slots, and a new chat message shows just under that row. Without corner
+        /// slots (a wide tablet) the single dice is at the bottom and the bar sits just above it, with Auto beside the dice.
+        /// Either way nothing covers the dice, the badges, the mic, the chat button or the turn banner.
+        /// </summary>
+        void PlaceOnlineExtras(bool corners, Vector3 dicePosition)
+        {
+            float safeBottom = -cam.ScreenToWorldPoint(new Vector3(0f, Screen.safeArea.yMin, 0f)).y;
+            bool autoBesideSlot = corners && PlaceAutoBesideOwnSlot();      // the Auto button belongs to MY slot, right next to my dice
+            float barBottomInCorners = cornerRowY - padHalf - 0.2f - chatBarHeight;
+            if (corners && barBottomInCorners >= -safeBottom + 0.05f)
+            {
+                if (!autoBesideSlot) hud.AlignAutoButton(new Vector2(0f, cornerRowY), true);
+                PlaceChatPreview(cornerRowY - padHalf - 0.2f, true);
+            }
+            else
+            {
+                hud.AlignAutoButton(new Vector2(0f, dicePosition.y), false);
+                PlaceChatPreview(dicePosition.y + padHalf + 0.25f, false);
+            }
+        }
+
+        /// <summary>Put the Auto button on the screen-centre side of this player's own dice slot, in their seat colour. False (and the
+        /// button is left for the caller to place) when there is no room there: off screen, on the mic/chat/pause/banner, or on another slot.</summary>
+        bool PlaceAutoBesideOwnSlot()
+        {
+            int seat = MySeat();
+            if (seat < 0 || !TrySeatDiceSpot(seat, out Vector3 spot)) return false;
+            hud.SetAutoSeatColor(SeatStyle.Colors[seat]);
+            hud.AlignAutoButton(new Vector2(spot.x, spot.y), true);
+            if (!hud.TryGetAutoRect(out Rect autoRect)) return false;
+            float towardCentre = spot.x > 0f ? -1f : 1f;
+            hud.AlignAutoButton(new Vector2(spot.x + towardCentre * (padHalf + 0.25f + autoRect.width * 0.5f), spot.y), true);
+            hud.TryGetAutoRect(out autoRect);
+            float halfWidth = cam.orthographicSize * cam.aspect;
+            if (autoRect.xMin < -halfWidth + 0.1f || autoRect.xMax > halfWidth - 0.1f) return false;
+            hud.GetKeepClearRects(keepClear);
+            if (Hits(autoRect, keepClear)) return false;
+            for (int p = 0; p < playerCount; p++)
+            {
+                int other = game.State.SeatOf(p);
+                if (other == seat || !TrySeatDiceSpot(other, out Vector3 otherSpot)) continue;
+                if (autoRect.Overlaps(new Rect(otherSpot.x - padHalf, otherSpot.y - padHalf, padHalf * 2f, padHalf * 2f))) return false;
+            }
+            return true;
+        }
+
+        /// <summary>Does every player's own corner slot fit on this screen? Also finds the height of the bottom row of slots.</summary>
+        bool AllSeatSpotsFit()
+        {
+            float bottomY = 0f; int bottoms = 0;
+            for (int p = 0; p < playerCount; p++)
+            {
+                int seat = game.State.SeatOf(p);
+                if (!TrySeatDiceSpot(seat, out Vector3 spot)) return false;
+                if (seat > (int)Seat.Green) { bottomY += spot.y; bottoms++; }
+            }
+            if (bottoms == 0) return false;
+            cornerRowY = bottomY / bottoms;
+            return true;
+        }
+
+        /// <summary>Put the chat message bar with its top edge at 'edgeY' (below = true) or its bottom edge at 'edgeY' (below = false).</summary>
+        void PlaceChatPreview(float edgeY, bool below)
+        {
+            if (chatPreview == null)
+            {
+                var canvasObject = GameObject.Find("HudCanvas");
+                var found = canvasObject != null ? canvasObject.transform.Find("SafeArea/ChatPreview") : null;
+                if (found == null) return;
+                chatPreview = (RectTransform)found;
+                chatPreviewHome = chatPreview.anchoredPosition;
+            }
+            if (!chatPreview.gameObject.activeInHierarchy) return;
+            chatPreview.anchoredPosition = chatPreviewHome;                  // measure from the designed spot, then shift
+            chatPreview.GetWorldCorners(previewCorners);
+            float height = previewCorners[1].y - previewCorners[0].y;
+            float wantedBottom = below ? edgeY - height : edgeY;
+            chatPreview.position += new Vector3(0f, wantedBottom - previewCorners[0].y, 0f);
+        }
+
+        // ---------- every player's dice slot, always visible (pass & play) ----------
+
+        const float padHalf = 1.25f;
+        readonly GameObject[] pads = new GameObject[4];             // index = board seat; the slot of a player who is not rolling now
+        SpriteRenderer trayRim;                                     // the rim of the tray that follows the dice (the active slot)
+        Color trayRimDefault;
+        bool trayRimCaptured;
+        Transform arrow;                                            // points at the slot whose turn it is
+        SpriteRenderer arrowRenderer;
+
+        /// <summary>Build (or remove) the slots for this match. A slot is a copy of the dice tray, dimmed, with its player's colour on
+        /// the rim, so everybody can see where their own dice will be; the real tray (with the dice in it) sits in the active slot.</summary>
+        void SetupPads()
+        {
+            for (int i = 0; i < pads.Length; i++) { if (pads[i] != null) Destroy(pads[i]); pads[i] = null; }
+            if (arrow != null) { Destroy(arrow.gameObject); arrow = null; arrowRenderer = null; }
+
+            var tray = GameObject.Find("DiceTray");
+            if (tray == null) return;
+            if (trayRim == null)
+                foreach (var sr in tray.GetComponentsInChildren<SpriteRenderer>(true))
+                    if (sr.name == "Rim") trayRim = sr;
+            if (trayRim != null && !trayRimCaptured) { trayRimDefault = trayRim.color; trayRimCaptured = true; }
+            if (trayRim != null && !SeatDice) trayRim.color = trayRimDefault;
+            if (!SeatDice) return;
+
+            for (int p = 0; p < playerCount; p++)
+            {
+                int seat = game.State.SeatOf(p);
+                var pad = Instantiate(tray, tray.transform.parent);
+                pad.name = "DicePad_" + SeatStyle.Names[seat];
+                var follow = pad.GetComponent<FollowPosition>();
+                if (follow != null) Destroy(follow);
+                foreach (var sr in pad.GetComponentsInChildren<SpriteRenderer>(true))
+                {
+                    var c = sr.name == "Rim" ? Color.Lerp(SeatStyle.Colors[seat], Color.white, 0.1f) : sr.color;
+                    sr.color = new Color(c.r, c.g, c.b, c.a * 0.8f);
+                }
+                pad.SetActive(false);
+                pads[seat] = pad;
+            }
+
+            var go = new GameObject("DiceArrow");
+            arrowRenderer = go.AddComponent<SpriteRenderer>();
+            arrowRenderer.sprite = ArrowSprite();
+            arrowRenderer.sortingOrder = 95;
+            arrow = go.transform;
+            go.SetActive(false);
+        }
+
+        /// <summary>Each frame: show the slots of the players who are not rolling, colour the active one, and point the arrow at it.</summary>
+        void UpdatePads(Vector3 dicePosition)
+        {
+            if (!SeatDice) return;
+            for (int seat = 0; seat < pads.Length; seat++)
+            {
+                if (pads[seat] == null) continue;
+                bool show = seat != diceSeat && TrySeatDiceSpot(seat, out Vector3 spot);
+                if (show) { TrySeatDiceSpot(seat, out spot); pads[seat].transform.position = spot; }
+                if (pads[seat].activeSelf != show) pads[seat].SetActive(show);
+            }
+            if (trayRim != null && diceSeat >= 0) trayRim.color = Color.Lerp(SeatStyle.Colors[diceSeat], Color.white, 0.1f);
+
+            if (arrow == null) return;
+            bool pointing = diceSeat >= 0 && State == FlowState.WaitingForRoll && IsLocalHuman(game.CurrentPlayer);
+            float side = 0f;
+            if (pointing)
+            {
+                // beside the slot, on whichever side is free: the board's side first, else the screen-edge side
+                float halfWidth = cam.orthographicSize * cam.aspect;
+                bool hasAuto = hud.TryGetAutoRect(out Rect autoRect);
+                hud.GetKeepClearRects(keepClear);
+                float towardCentre = dicePosition.x > 0f ? -1f : 1f;
+                foreach (float candidate in new[] { towardCentre, -towardCentre })
+                {
+                    float x = dicePosition.x + candidate * (padHalf + 1.0f);
+                    var box = new Rect(x - 0.6f, dicePosition.y - 0.6f, 1.2f, 1.2f);
+                    if (Mathf.Abs(x) + 0.6f > halfWidth || Hits(box, keepClear) || (hasAuto && box.Overlaps(autoRect))) continue;
+                    side = candidate;
+                    break;
+                }
+            }
+            bool arrowShown = side != 0f;
+            if (arrow.gameObject.activeSelf != arrowShown) arrow.gameObject.SetActive(arrowShown);
+            if (!arrowShown) return;
+            float bob = Mathf.Sin(Time.unscaledTime * 7f) * 0.18f;
+            arrow.position = dicePosition + new Vector3(side * (padHalf + 1.0f + bob), 0f, 0f);
+            arrow.localScale = new Vector3(-side, 1f, 1f);          // the sprite points right; flipped it points left
+            arrowRenderer.color = Color.Lerp(SeatStyle.Colors[diceSeat], Color.white, 0.15f);
+        }
+
+        static Sprite arrowSprite;
+
+        /// <summary>A plain triangle pointing right, drawn in code so no art file is needed.</summary>
+        static Sprite ArrowSprite()
+        {
+            if (arrowSprite != null) return arrowSprite;
+            const int size = 96;
+            var texture = new Texture2D(size, size, TextureFormat.RGBA32, false) { filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp };
+            var pixels = new Color32[size * size];
+            for (int y = 0; y < size; y++)
+                for (int x = 0; x < size; x++)
+                {
+                    float along = (x - 10f) / 76f;                          // 0 at the flat back, 1 at the tip
+                    float reach = (1f - along) * 40f;                       // how far from the middle line the triangle still reaches
+                    float edge = reach - Mathf.Abs(y - 48f);
+                    byte a = along < 0f || along > 1f ? (byte)0 : (byte)(Mathf.Clamp01(edge) * 255f);
+                    pixels[y * size + x] = new Color32(255, 255, 255, a);
+                }
+            texture.SetPixels32(pixels);
+            texture.Apply();
+            arrowSprite = Sprite.Create(texture, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 80f);
+            return arrowSprite;
+        }
+
+        // ---------- one dice position per player (offline, more than one person on this phone) ----------
+
+        int diceSeat = -1;                                          // whose corner the dice sits in (a board seat)
+        bool dicePlaced;                                            // the dice has been put somewhere since the match began
+
+        /// <summary>Online, or offline with two or more people sharing the phone: the dice moves to the corner of the player whose turn it is.</summary>
+        bool SeatDice
+        {
+            get
+            {
+                if (link != null) return true;
+                int people = 0;
+                for (int p = 0; p < playerCount && p < slots.Length; p++) if (!slots[p].isAi && !slots[p].isRemote) people++;
+                return people > 1;
+            }
+        }
+
+        /// <summary>The spot for a seat's dice: above its badge for the two top seats, below it for the two bottom seats,
+        /// in line with the badge. False when that spot would run off the screen or touch the turn banner.</summary>
+        readonly List<Rect> keepClear = new List<Rect>();
+
+        static bool Hits(Rect tray, List<Rect> others)
+        {
+            foreach (var r in others) if (tray.Overlaps(r)) return true;
+            return false;
+        }
+
+        bool TrySeatDiceSpot(int seat, out Vector3 spot)
+        {
+            spot = default;
+            if (cam == null || !hud.TryGetBadgeRect(seat, out Rect badge)) return false;
+            const float half = 1.25f, gap = 0.3f;                    // half the tray's size; space between badge and tray
+            float screenHalfWidth = cam.orthographicSize * cam.aspect;
+            bool top = seat <= (int)Seat.Green;                     // Red and Green sit above the board
+            float x = Mathf.Clamp(badge.center.x, -screenHalfWidth + half + 0.2f, screenHalfWidth - half - 0.2f);
+            float y = top ? badge.yMax + gap + half : badge.yMin - gap - half;
+            var tray = new Rect(x - half, y - half, half * 2f, half * 2f);
+            if (tray.yMax > cam.orthographicSize - 0.1f || tray.yMin < -cam.orthographicSize + 0.1f) return false;
+            // the turn banner, pause button and (online) mic and chat buttons must stay clear: slide the slot towards the middle until
+            // it is off them, but never so far that it meets the slot of the player next to it
+            hud.GetKeepClearRects(keepClear);
+            for (int guard = 0; guard < 40 && Hits(tray, keepClear); guard++)
+            {
+                x -= Mathf.Sign(x) * 0.2f;
+                tray.x = x - half;
+            }
+            if (Hits(tray, keepClear) || Mathf.Abs(x) < half + 0.4f) return false;
+            spot = new Vector3(x, y, 0f);
+            return true;
         }
 
         /// <summary>Online: hand a player who left over to the computer, on every phone at the same moment.</summary>
@@ -265,6 +548,7 @@ namespace Ludo.Game
                 int player = game.CurrentPlayer;
                 int seat = game.State.SeatOf(player);
                 hud.SetTurnSeat(seat);
+                diceSeat = seat;                             // pass & play: the dice glides to this player's corner
                 dice.ApplySkin(slots[player].diceSkin);     // online: whoever throws uses their own design
 
                 RollResult roll = resume;                    // after a reconnect the turn may already be rolled: go straight to choosing
@@ -282,6 +566,11 @@ namespace Ludo.Game
                 StopTimer();
                 if (leftForInactivity) yield break;
                 if (link != null && rolledValue == 0) { yield return ConnectionLost(); yield break; }
+                if (link != null && rolledValue == MatchReplay.SkipEvent)        // out of time: no roll, no move, the dice goes on
+                {
+                    yield return PassOnAfterTimeout(player);
+                    continue;
+                }
 
                 // 2. roll: the engine decides the value NOW, the dice only plays the animation
                 State = FlowState.Rolling;
@@ -324,6 +613,7 @@ namespace Ludo.Game
                         yield return ChooseOnline(player, seat, options);
                         StopTimer();
                         if (leftForInactivity) yield break;
+                        if (pickSkipped) { yield return PassOnAfterTimeout(player); continue; }
                         if (link != null && !link.IsConnected && chosenMove.Equals(default(Move))) { yield return ConnectionLost(); yield break; }
                         chosen = chosenMove;
                     }
@@ -525,20 +815,23 @@ namespace Ludo.Game
             bool online = link != null;
             bool host = !online || link.IsHost;
             StartTimer(online && !slots[player].isAi);            // online, a person has limited time to roll
+            bool skip = false;                                    // out of time: nothing is rolled, the turn passes on
 
             if (IsLocalHuman(player))
             {
                 dice.SetReady(true);
+                if (online && GameSettings.Vibration) Haptics.Pulse(40);        // a nudge: it is your turn
                 Vector3 diceScreen = cam.WorldToScreenPoint(dice.transform.position);
                 Log("awaiting dice tap@" + (int)diceScreen.x + "," + (int)(Screen.height - diceScreen.y));
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                 if (AutoPlay) { yield return new WaitForSeconds(GameSession.Beat(0.6f)); waitTimedOut = false; }
                 else
 #endif
-                yield return WaitForDiceTap(tapRadius * 1.6f);
+                yield return WaitForDiceTap(tapRadius * (SeatDice ? 2.3f : 1.6f));   // pass & play: a big target, people tap in a hurry
                 if (online) NoteOwnTurn(player, waitTimedOut);
                 if (leftForInactivity) yield break;
-                if (online && !host) link.SendRollRequest();       // (a timed-out player's phone rolls for them)
+                skip = online && waitTimedOut;
+                if (online && !host && !skip) link.SendRollRequest();       // out of time: no request, the host passes the turn on
             }
             else if (slots[player].isAi)
             {
@@ -551,13 +844,14 @@ namespace Ludo.Game
                 if (host)
                 {
                     yield return WaitForRemote(player, () => link.TryTakeRollRequest(player));
+                    skip = waitTimedOut;
                     NoteRemoteTurn(player, waitTimedOut);
                 }
             }
 
             if (!online) yield break;
 
-            if (host) link.BroadcastRoll(hostDice.Next());
+            if (host) link.BroadcastRoll(skip ? MatchReplay.SkipEvent : hostDice.Next());
             while (!link.TryTakeRoll(out rolledValue))
             {
                 if (!link.IsConnected) { rolledValue = 0; yield break; }
@@ -634,9 +928,9 @@ namespace Ludo.Game
                     TickTimer();
                     if (Time.time - timerStart >= TurnSeconds)
                     {
-                        // out of time: the best-looking simple move is played for the player
+                        // out of time: nothing is moved, the turn passes on (ChooseOnline announces it)
                         waitTimedOut = true;
-                        picked = AiFor(game.CurrentPlayer).Choose(game.State, Rules, roll.LegalMoves);
+                        picked = default;
                         break;
                     }
                 }
@@ -694,19 +988,36 @@ namespace Ludo.Game
             return roll.LegalMoves[0];
         }
 
+        bool pickSkipped;                                           // the pick that was just announced is "ran out of time"
+
+        /// <summary>The player ran out of time (announced to everybody): nothing is rolled or moved, the dice goes to the next player.</summary>
+        IEnumerator PassOnAfterTimeout(int player)
+        {
+            Log("player " + player + " ran out of time: the turn passes on");
+            pickSkipped = false;
+            board.SetSelectable(new Move[0], false);
+            hud.ShowPendingRolls(null, game.State.SeatOf(player));
+            hud.ShowToast(ToastKind.TimeUp, 1.2f);
+            game.SkipTurn();
+            yield return new WaitForSeconds(GameSession.Beat(0.9f));
+        }
+
         /// <summary>Online: whoever owns the seat decides, the host checks and announces "move N", everybody plays move N.</summary>
         IEnumerator ChooseOnline(int player, int seat, RollResult roll)
         {
             bool host = link.IsHost;
+            bool outOfTime = false;
             chosenMove = default;
+            pickSkipped = false;
             StartTimer(!slots[player].isAi);                     // a person has limited time to pick a pawn
 
             if (IsLocalHuman(player))
             {
                 yield return PickByTap(roll);
+                outOfTime = waitTimedOut;
                 NoteOwnTurn(player, waitTimedOut);
                 if (leftForInactivity) yield break;
-                int index = IndexOf(roll, chosenMove);
+                int index = outOfTime ? -1 : IndexOf(roll, chosenMove);      // -1: out of time, the turn passes on
                 if (host) link.BroadcastPick(index);
                 else link.SendPickRequest(index);
             }
@@ -719,12 +1030,16 @@ namespace Ludo.Game
                 else
                 {
                     requestedPick = -1;
-                    yield return WaitForRemote(player, () => link.TryTakePickRequest(player, out requestedPick));
-                    NoteRemoteTurn(player, waitTimedOut);
+                    bool arrived = false;
+                    yield return WaitForRemote(player, () => arrived = link.TryTakePickRequest(player, out requestedPick));
+                    outOfTime = waitTimedOut || (arrived && requestedPick < 0);   // too slow, or their phone says it ran out of time
+                    NoteRemoteTurn(player, outOfTime);
                 }
-                int index = requestedPick >= 0 && requestedPick < roll.LegalMoves.Length && !slots[player].isAi
-                    ? requestedPick
-                    : IndexOf(roll, AiFor(player).Choose(game.State, Rules, roll.LegalMoves));   // computer, or a player who took too long
+                int index = outOfTime &&!slots[player].isAi
+                    ? -1
+                    : requestedPick >= 0 && requestedPick < roll.LegalMoves.Length && !slots[player].isAi
+                        ? requestedPick
+                        : IndexOf(roll, AiFor(player).Choose(game.State, Rules, roll.LegalMoves));   // computer, or a player who dropped
                 link.BroadcastPick(index);
                 requestedPick = -1;
             }
@@ -737,7 +1052,8 @@ namespace Ludo.Game
                 TickTimer();
                 yield return null;
             }
-            if (announced < 0 || announced >= roll.LegalMoves.Length) announced = 0;
+            if (announced < 0) { pickSkipped = true; yield break; }          // out of time: no move, the turn passes on
+            if (announced >= roll.LegalMoves.Length) announced = 0;
             Move chosen = roll.LegalMoves[announced];
 
             if (!IsLocalHuman(player))
