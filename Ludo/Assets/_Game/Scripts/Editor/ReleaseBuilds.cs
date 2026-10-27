@@ -22,8 +22,8 @@ namespace Ludo.EditorTools
     /// </summary>
     public static class ReleaseBuilds
     {
-        const string Version = "1.0.1";
-        const int VersionCode = 2;
+        const string Version = "1.0.2";
+        const int VersionCode = 4;
         const string OutputFolder = "Builds/Release";
         const string KeystoreInfo = "../../Keystore/keystore-info.txt";
         const string AdsConfigPath = "Assets/_Game/Resources/AdsConfig.asset";

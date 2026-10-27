@@ -25,7 +25,7 @@
         <activity android:name="com.facebook.unity.FBUnityGameRequestActivity" android:exported="false" />
 
         <meta-data android:name="com.facebook.sdk.ApplicationId" android:value="fb1759980011780675" />
-        <meta-data android:name="com.facebook.sdk.ClientToken" android:value="0386a4ab96e83a9605a658fff175228a" />
+        <meta-data android:name="com.facebook.sdk.ClientToken" android:value="5af5902a078140de3015ba76dccc3f84" />
         <!-- login only: no analytics and no advertising ID (the privacy policy covers login, not tracking) -->
         <meta-data android:name="com.facebook.sdk.AutoLogAppEventsEnabled" android:value="false" />
         <meta-data android:name="com.facebook.sdk.AutoLogProductImprovementEnabled" android:value="false" />

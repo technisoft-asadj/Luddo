@@ -3,5 +3,5 @@
     <!-- the Facebook login library's own manifest points at these -->
     <string name="facebook_app_id">1759980011780675</string>
     <string name="fb_login_protocol_scheme">fb1759980011780675</string>
-    <string name="facebook_client_token">0386a4ab96e83a9605a658fff175228a</string>
+    <string name="facebook_client_token">5af5902a078140de3015ba76dccc3f84</string>
 </resources>
