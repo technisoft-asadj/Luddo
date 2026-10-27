@@ -45,8 +45,20 @@ namespace Ludo.Services
         bool bannerLoaded;
         int bannerFailures;
 
+        AppOpenAd appOpen;                     // shown when the player comes back to the app (main menu only)
+        bool loadingAppOpen;
+        int appOpenFailures;
+        DateTime appOpenExpires;               // Google: a loaded App Open ad is good for 4 hours
+        bool appOpenShowing;
+        DateTime? leftAt;                      // when the app went to the background
+        float lastAppOpenShown = -9999f;
+        static int appOpenBlockers;            // rooms and games raise this so no ad appears over them
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void ResetStatics() => instance = null;
+        static void ResetStatics() { instance = null; appOpenBlockers = 0; }
+
+        /// <summary>A screen that must never be covered by an App Open ad (the waiting room) calls this with true when it opens and false when it closes.</summary>
+        public static void BlockAppOpen(bool blocked) => appOpenBlockers = Mathf.Max(0, appOpenBlockers + (blocked ? 1 : -1));
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void Boot()
@@ -164,8 +176,82 @@ namespace Ludo.Services
                 Debug.Log("[Ludo] Ads SDK ready (test ads: " + config.useTestAds + ")");
                 LoadInterstitial();
                 LoadRewarded();
+                LoadAppOpen();
                 ApplyBanner();      // the main menu may already be waiting for its banner
             });
+        }
+
+        // ---------- App Open ad (when the player returns to the app) ----------
+
+        void OnApplicationPause(bool paused)
+        {
+            if (paused) { leftAt = DateTime.UtcNow; return; }
+            if (leftAt == null) return;
+            float away = (float)(DateTime.UtcNow - leftAt.Value).TotalSeconds;
+            leftAt = null;
+            TryShowAppOpen(away);
+        }
+
+        void TryShowAppOpen(float secondsAway)
+        {
+            if (!sdkStarted) return;
+            bool busy = pendingContinue != null || pendingRewarded != null || appOpenShowing;
+            // only on the main menu: never over a match, and never over the waiting room
+            bool blocked = busy || appOpenBlockers > 0 || UnityEngine.SceneManagement.SceneManager.GetActiveScene().name != "Menu";
+            bool allowed = AdPolicy.ShouldShowAppOpen(config, secondsAway, Time.realtimeSinceStartup - lastAppOpenShown,
+                Time.realtimeSinceStartup - lastAdTime, blocked);
+            if (!allowed) return;
+            if (appOpen == null || !appOpen.CanShowAd() || DateTime.UtcNow >= appOpenExpires)
+            {
+                if (appOpen != null) { appOpen.Destroy(); appOpen = null; }
+                LoadAppOpen();          // nothing good to show now; have one ready for the next return
+                return;
+            }
+            appOpenShowing = true;
+            lastAppOpenShown = Time.realtimeSinceStartup;
+            appOpen.Show();
+        }
+
+        void LoadAppOpen()
+        {
+            if (!config.showAppOpenAd || loadingAppOpen || appOpen != null) return;
+            loadingAppOpen = true;
+            AppOpenAd.Load(config.AppOpenId, new AdRequest(), (ad, error) =>
+            {
+                loadingAppOpen = false;
+                if (error != null || ad == null)
+                {
+                    appOpenFailures++;
+                    Debug.LogWarning("[Ludo] App Open ad failed to load: " + (error != null ? error.GetMessage() : "no ad"));
+                    StartCoroutine(RetryAppOpenLater());
+                    return;
+                }
+                appOpenFailures = 0;
+                appOpen = ad;
+                appOpenExpires = DateTime.UtcNow.AddHours(3.5);       // a little under Google's 4 hours
+                Debug.Log("[Ludo] App Open ad loaded and ready.");
+                ad.OnAdFullScreenContentClosed += EndAppOpen;
+                ad.OnAdFullScreenContentFailed += adError =>
+                {
+                    Debug.LogWarning("[Ludo] App Open ad failed to show: " + adError.GetMessage());
+                    EndAppOpen();
+                };
+            });
+        }
+
+        IEnumerator RetryAppOpenLater()
+        {
+            float wait = Mathf.Min(15f * Mathf.Pow(2f, Mathf.Min(appOpenFailures - 1, 3)), 120f);
+            yield return new WaitForSecondsRealtime(wait);
+            LoadAppOpen();
+        }
+
+        void EndAppOpen()
+        {
+            if (appOpen != null) { appOpen.Destroy(); appOpen = null; }        // an ad can be shown only once
+            appOpenShowing = false;
+            lastAdTime = Time.realtimeSinceStartup;                            // no interstitial right behind it
+            LoadAppOpen();
         }
 
         // ---------- banner (main menu only) ----------

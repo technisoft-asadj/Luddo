@@ -103,6 +103,28 @@ namespace Ludo.Tests
         }
 
         [Test]
+        public void AppOpen_ShowsOnlyAfterARealAbsenceAndNeverTooOftenOrOverAGame()
+        {
+            Assert.IsTrue(AdPolicy.ShouldShowAppOpen(config, 60f, 600f, 600f, false));
+            Assert.IsFalse(AdPolicy.ShouldShowAppOpen(config, 5f, 600f, 600f, false));      // a quick glance at another app
+            Assert.IsFalse(AdPolicy.ShouldShowAppOpen(config, 60f, 30f, 600f, false));      // one was shown a moment ago
+            Assert.IsFalse(AdPolicy.ShouldShowAppOpen(config, 60f, 600f, 3f, false));       // just came back from another ad
+            Assert.IsFalse(AdPolicy.ShouldShowAppOpen(config, 60f, 600f, 600f, true));      // in a game or a room
+            config.showAppOpenAd = false;
+            Assert.IsFalse(AdPolicy.ShouldShowAppOpen(config, 60f, 600f, 600f, false));
+        }
+
+        [Test]
+        public void AppOpenId_FollowsTheSameTestVersusRealRule()
+        {
+            config.androidAppOpenId = "ca-app-pub-1234567890123456/3333333333";
+            config.useTestAds = true;
+            Assert.AreEqual(AdsConfig.TestAndroidAppOpenId, config.AppOpenId);
+            config.useTestAds = false;
+            Assert.AreEqual("ca-app-pub-1234567890123456/3333333333", config.AppOpenId);
+        }
+
+        [Test]
         public void IdFormat_CatchesTheCommonMixUp()
         {
             Assert.IsTrue(AdsConfig.LooksLikeAppId("ca-app-pub-1234567890123456~1234567890"));

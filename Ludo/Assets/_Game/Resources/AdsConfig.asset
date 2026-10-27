@@ -13,11 +13,15 @@ MonoBehaviour:
   m_Name: AdsConfig
   m_EditorClassIdentifier: Ludo.Services::Ludo.Services.AdsConfig
   adsEnabled: 1
-  useTestAds: 1
-  androidAppId: ca-app-pub-2502837360597894~1360211875
-  androidInterstitialId: ca-app-pub-2502837360597894/4539154968
-  androidBannerId: ca-app-pub-2502837360597894/2002464843
-  androidRewardedId: ca-app-pub-2502837360597894/3226073297
+  useTestAds: 0
+  androidAppId: ca-app-pub-2502837360597894~1343767526
+  androidInterstitialId: ca-app-pub-2502837360597894/8521608870
+  androidBannerId: ca-app-pub-2502837360597894/4656843499
+  androidRewardedId: ca-app-pub-2502837360597894/7946893802
+  androidAppOpenId: ca-app-pub-2502837360597894/8062443874
+  showAppOpenAd: 1
+  appOpenMinAwaySeconds: 30
+  appOpenMinSecondsBetween: 180
   showMenuBanner: 1
   firstAdAfterGames: 2
   minGamesBetweenAds: 2

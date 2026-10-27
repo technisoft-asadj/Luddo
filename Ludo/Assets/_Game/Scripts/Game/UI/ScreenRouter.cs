@@ -12,6 +12,7 @@ namespace Ludo.Game
     {
         [SerializeField] GameObject[] screens;         // index = screen number used by the buttons
         [SerializeField] GameObject[] modals;          // pop-ups that Back closes first
+        [SerializeField] GameObject quitModal;         // "Quit the game?" asked when Back is pressed on the first screen
         [SerializeField] int firstScreen;
 
         readonly Stack<int> history = new Stack<int>();
@@ -44,8 +45,9 @@ namespace Ludo.Game
             if (!Input.GetKeyDown(KeyCode.Escape)) return;
             foreach (var m in modals)
                 if (m != null && m.activeSelf) { m.SetActive(false); return; }
-            if (history.Count > 1) Back();
-            else if (Time.unscaledTime - lastExitPress < 2f) Application.Quit();    // a second press within 2 seconds
+            if (history.Count > 1) { Back(); return; }
+            if (quitModal != null) { quitModal.SetActive(true); return; }          // "Quit Ludo Fight?" - Back again closes it (it is one of the modals)
+            if (Time.unscaledTime - lastExitPress < 2f) Application.Quit();         // no dialog built: a second press within 2 seconds
             else
             {
                 lastExitPress = Time.unscaledTime;                                    // one stray swipe must not close the app
@@ -54,6 +56,12 @@ namespace Ludo.Game
         }
 
         float lastExitPress = -10f;
+
+        /// <summary>The "Quit" button of the quit pop-up.</summary>
+        public void ConfirmQuit() => Application.Quit();
+
+        /// <summary>The "Stay" button of the quit pop-up.</summary>
+        public void CancelQuit() { if (quitModal != null) quitModal.SetActive(false); }
 
         static void ShowExitHint()
         {

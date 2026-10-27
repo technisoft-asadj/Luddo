@@ -424,17 +424,10 @@ namespace Ludo.Game
         int diceSeat = -1;                                          // whose corner the dice sits in (a board seat)
         bool dicePlaced;                                            // the dice has been put somewhere since the match began
 
-        /// <summary>Online, or offline with two or more people sharing the phone: the dice moves to the corner of the player whose turn it is.</summary>
-        bool SeatDice
-        {
-            get
-            {
-                if (link != null) return true;
-                int people = 0;
-                for (int p = 0; p < playerCount && p < slots.Length; p++) if (!slots[p].isAi && !slots[p].isRemote) people++;
-                return people > 1;
-            }
-        }
+        /// <summary>Every match (online, against the computer, or friends sharing the phone): each player has a dice slot beside their
+        /// own badge, and the dice moves to the corner of the player whose turn it is. When a seat's slot does not fit on a
+        /// very wide screen, that seat falls back to the single dice at the bottom (see LateUpdate).</summary>
+        bool SeatDice => true;
 
         /// <summary>The spot for a seat's dice: above its badge for the two top seats, below it for the two bottom seats,
         /// in line with the badge. False when that spot would run off the screen or touch the turn banner.</summary>

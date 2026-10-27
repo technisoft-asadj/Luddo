@@ -59,6 +59,7 @@ namespace Ludo.Online
 
         void OnEnable()
         {
+            Ludo.Services.AdsService.BlockAppOpen(true);        // no App Open ad over the waiting room
             starting = false;
             keepRoom = false;
             leaving = false;
@@ -86,6 +87,7 @@ namespace Ludo.Online
 
         void OnDisable()
         {
+            Ludo.Services.AdsService.BlockAppOpen(false);
             RoomService.Changed -= Refresh;
             RoomService.Closed -= OnRoomClosed;
             VoiceService.Changed -= RefreshVoice;

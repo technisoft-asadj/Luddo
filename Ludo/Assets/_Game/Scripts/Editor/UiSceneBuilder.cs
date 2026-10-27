@@ -139,11 +139,32 @@ namespace Ludo.EditorTools
             OnClick(cancelButton, profileEditor.Cancel);
             for (int i = 0; i < editButtons.Length; i++) OnClickInt(editButtons[i], flow.EditProfile, i);
 
+            // pop-up: "Quit Ludo Fight?" when Back is pressed on the main menu; built last so it sits above everything
+            var quitModal = NewRect("QuitModal", root); Stretch(quitModal);
+            AddImage(quitModal, null, new Color(0f, 0f, 0.05f, 0.78f)).raycastTarget = true;
+            var qCard = NewRect("Card", quitModal);
+            At(qCard, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(900f, 560f));
+            Depth(AddImage(qCard, Round(), Card, true, 0.45f), CardLip, 14f);
+            var qTitle = AddText(qCard, "Title", "Quit Ludo Fight?", 66, Navy, TextAlignmentOptions.Center);
+            At(qTitle.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -40f), new Vector2(800f, 100f));
+            var qMsg = AddText(qCard, "Message", "Are you sure you want to leave the game?", 40, Navy, TextAlignmentOptions.Center);
+            qMsg.textWrappingMode = TextWrappingModes.Normal;
+            At(qMsg.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -170f), new Vector2(760f, 140f));
+            var qQuit = MakeButton(qCard, "QuitButton", "Quit", "Red", new Vector2(360f, 130f), null);
+            At((RectTransform)qQuit.transform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(205f, 50f), new Vector2(360f, 130f));
+            var qStay = MakeButton(qCard, "StayButton", "Stay", "Green", new Vector2(360f, 130f), null);
+            At((RectTransform)qStay.transform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(-205f, 50f), new Vector2(360f, 130f));
+            OnClick(qQuit, router.ConfirmQuit);
+            OnClick(qStay, router.CancelQuit);
+            PopIn(quitModal, qCard);
+            quitModal.gameObject.SetActive(false);
+
             // hand the pieces to the scripts
             var so = new SerializedObject(router);
             SetObjects(so.FindProperty("screens"), screens);
+            so.FindProperty("quitModal").objectReferenceValue = quitModal.gameObject;
             SetObjects(so.FindProperty("modals"), new[] { countryModal, root.Find("DailyRewardModal").gameObject, nameModal, joinModal, moreModal, inviteModal, settingsModals[0], settingsModals[1],
-                root.Find("ChestModal").gameObject, root.Find("DiceCollectionModal").gameObject });    // Android Back closes these pop-ups too, instead of quitting the app
+                root.Find("ChestModal").gameObject, root.Find("DiceCollectionModal").gameObject, quitModal.gameObject });    // Android Back closes these pop-ups too, instead of quitting the app
             so.FindProperty("firstScreen").intValue = Splash;
             so.ApplyModifiedProperties();
 

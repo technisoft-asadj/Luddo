@@ -16,6 +16,7 @@ namespace Ludo.Services
         public const string TestAndroidInterstitialId = "ca-app-pub-3940256099942544/1033173712";
         public const string TestAndroidBannerId = "ca-app-pub-3940256099942544/6300978111";
         public const string TestAndroidRewardedId = "ca-app-pub-3940256099942544/5224354917";
+        public const string TestAndroidAppOpenId = "ca-app-pub-3940256099942544/9257395921";
 
         [Header("Master switch")]
         public bool adsEnabled = true;
@@ -31,6 +32,13 @@ namespace Ludo.Services
         public string androidBannerId = "";
         [Tooltip("The optional \"double your Rank Points\" ad after an online win. Create a Rewarded ad unit in AdMob and paste its ID here.")]
         public string androidRewardedId = "";
+        [Tooltip("The App Open ad: shown when the player comes back to the app from the background, on the main menu only.")]
+        public string androidAppOpenId = "";
+
+        [Header("App Open ad")]
+        public bool showAppOpenAd = true;
+        [Min(0)] public float appOpenMinAwaySeconds = 30f;          // a quick look at another app does not count as leaving
+        [Min(0)] public float appOpenMinSecondsBetween = 180f;      // at most one App Open ad every 3 minutes
 
         [Header("Banner")]
         [Tooltip("A small banner at the bottom of the MAIN MENU only. Never shown during a game.")]
@@ -51,6 +59,9 @@ namespace Ludo.Services
 
         public string RewardedId =>
             useTestAds || string.IsNullOrWhiteSpace(androidRewardedId) ? TestAndroidRewardedId : androidRewardedId.Trim();
+
+        public string AppOpenId =>
+            useTestAds || string.IsNullOrWhiteSpace(androidAppOpenId) ? TestAndroidAppOpenId : androidAppOpenId.Trim();
 
         /// <summary>An AdMob app ID has a "~", an ad unit ID has a "/" - mixing them up is the most common setup mistake.</summary>
         public static bool LooksLikeAppId(string id) => !string.IsNullOrWhiteSpace(id) && id.StartsWith("ca-app-pub-") && id.Contains("~") && !id.Contains("/");
