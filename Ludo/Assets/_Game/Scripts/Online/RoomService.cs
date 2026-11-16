@@ -22,9 +22,11 @@ namespace Ludo.Online
         public readonly int Level;
         public readonly string Country;   // ISO code the player chose ("" = none), written only by that player
         public readonly string Dice;      // the dice design they wear (see DiceSkins), written only by that player
+        public readonly string Partner;   // Team Up: the id of the person they asked to play with ("" = no choice), written only by that player
 
-        public RoomPlayer(string id, string name, int avatar, int rating, bool isHost, bool isMe, bool ready = false, string photoStamp = "0", int level = 1, string country = "", string dice = "")
+        public RoomPlayer(string id, string name, int avatar, int rating, bool isHost, bool isMe, bool ready = false, string photoStamp = "0", int level = 1, string country = "", string dice = "", string partner = "")
         {
+            Partner = partner ?? "";
             Dice = DiceSkins.Exists(dice) ? dice : DiceSkins.Default;
             Id = id; Name = name; Avatar = avatar; Rating = rating; IsHost = isHost; IsMe = isMe; Ready = ready || isHost; PhotoStamp = photoStamp; Level = level;
             Country = Countries.Normalize(country);
@@ -47,6 +49,7 @@ namespace Ludo.Online
         const string PropLevel = "level";
         const string PropCountry = "country";
         const string PropDice = "dice";
+        const string PropPartner = "partner";        // Team Up: the id of the person I want as my partner
         const string PropFee = "fee";                // session property: the coin table's entry fee (0 = free)
         const string PropGameMode = "gmode";          // session property: the game mode ("0".."3", see Ludo.Core.GameMode)
         const string ModePublic = "public";
@@ -209,8 +212,10 @@ namespace Ludo.Online
                 int level = 1;
                 string country = "";
                 string dice = "";
+                string partner = "";
                 if (p.Properties != null)
                 {
+                    if (p.Properties.TryGetValue(PropPartner, out var pt)) partner = pt.Value;
                     if (p.Properties.TryGetValue(PropDice, out var dv)) dice = dv.Value;
                     if (p.Properties.TryGetValue(PropCountry, out var c)) country = c.Value;
                     if (p.Properties.TryGetValue(PropLevel, out var lv)) int.TryParse(lv.Value, out level);
@@ -220,11 +225,52 @@ namespace Ludo.Online
                     if (p.Properties.TryGetValue(PropRating, out var r)) int.TryParse(r.Value, out rating);
                     if (p.Properties.TryGetValue(PropReady, out var rd)) ready = rd.Value == "1";
                 }
-                list.Add(new RoomPlayer(p.Id, name, avatar, rating, p.Id == session.Host, p.Id == OnlineService.PlayerId, ready, photo, Mathf.Max(1, level), country, dice));
+                list.Add(new RoomPlayer(p.Id, name, avatar, rating, p.Id == session.Host, p.Id == OnlineService.PlayerId, ready, photo, Mathf.Max(1, level), country, dice, partner));
             }
             // host first, then in the order people joined
             list.Sort((x, y) => x.IsHost == y.IsHost ? 0 : (x.IsHost ? -1 : 1));
             return list;
+        }
+
+        /// <summary>Team Up with four people: the room's people in SEAT order, so whoever asked to be partners sit across from each
+        /// other (see TeamSeating). In every other room this is the same as Players(). Every phone computes the same list.</summary>
+        public static List<RoomPlayer> Seated(List<RoomPlayer> people = null)
+        {
+            people = people ?? Players();
+            if (Mode != GameMode.TeamUp || people.Count != 4) return people;
+            var ids = new string[4]; var wanted = new string[4];
+            for (int i = 0; i < 4; i++) { ids[i] = people[i].Id; wanted[i] = people[i].Partner; }
+            var order = TeamSeating.Arrange(ids, wanted);
+            var seated = new List<RoomPlayer>(4);
+            foreach (int i in order) seated.Add(people[i]);
+            return seated;
+        }
+
+        /// <summary>Team Up: ask for this person as my partner (""/my own id = no preference). Picking the same person again undoes it.</summary>
+        public static async Task<bool> SetPartnerAsync(string playerId)
+        {
+            if (session == null) return false;
+            try
+            {
+                if (playerId == OnlineService.PlayerId) playerId = "";
+                session.CurrentPlayer.SetProperty(PropPartner, new PlayerProperty(playerId ?? "", VisibilityPropertyOptions.Member));
+                await session.SaveCurrentPlayerDataAsync();
+                Changed?.Invoke();
+                return true;
+            }
+            catch (Exception e)
+            {
+                LastError = OnlineService.Describe(e);
+                Debug.LogWarning("[Ludo] Choosing a partner: " + LastError);
+                return false;
+            }
+        }
+
+        /// <summary>The partner I asked for ("" if none).</summary>
+        public static string MyPartnerChoice()
+        {
+            foreach (var p in Players()) if (p.IsMe) return p.Partner;
+            return "";
         }
 
         /// <summary>Everybody the host is waiting for has pressed Ready. Public and ranked rooms start by themselves, so they never wait.</summary>
@@ -299,6 +345,7 @@ namespace Ludo.Online
             var people = Players();
             if (present != null) people = people.FindAll(p => present(p.Id));      // only people whose game connection is up
             if (people.Count < 2) return null;
+            people = Seated(people);                                                  // Team Up: chosen partners sit across from each other
             var start = new MatchStart { seats = new MatchSeat[Mathf.Min(4, people.Count)], ranked = IsRanked, mode = (int)Mode, matchId = Guid.NewGuid().ToString("N").Substring(0, 12) };
             for (int i = 0; i < start.seats.Length; i++)
                 start.seats[i] = new MatchSeat { playerId = people[i].Id, name = people[i].Name, avatar = people[i].Avatar, rating = people[i].Rating, country = people[i].Country, ai = -1 };
@@ -465,6 +512,10 @@ namespace Ludo.Online
             sessionId = s.Id;
             IsPublic = isPublic;
             IsRanked = isRanked;
+            string type = isPublic ? Ludo.Services.GameAnalytics.TypeOnline : Ludo.Services.GameAnalytics.TypePrivate;
+            Ludo.Game.GameSession.MatchType = type;
+            if (s.IsHost) Ludo.Services.GameAnalytics.LogMatchCreated(Ludo.Game.GameSession.ModeName(Mode), type, s.MaxPlayers);
+            else Ludo.Services.GameAnalytics.LogMatchJoined(Ludo.Game.GameSession.ModeName(Mode), type, s.MaxPlayers);
             Attach(s);
             MatchLink.Open(OnlineService.PlayerId);
             Changed?.Invoke();

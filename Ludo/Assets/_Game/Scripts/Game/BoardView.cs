@@ -29,6 +29,13 @@ namespace Ludo.Game
 
         public bool IsAnimating => runner != null;
 
+        /// <summary>Turn the board picture so each corner shows the colour SeatStyle gives it (the picture is the same in all four turns).</summary>
+        public void ShowColourTurn(int turn)
+        {
+            var art = GameObject.Find("Board");
+            if (art != null) art.transform.localRotation = Quaternion.Euler(0f, 0f, -90f * turn);
+        }
+
         public void Bind(LudoGame newGame)
         {
             if (game != null) game.Moved -= OnMoved;

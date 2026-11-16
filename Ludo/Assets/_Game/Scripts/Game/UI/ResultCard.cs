@@ -70,7 +70,34 @@ namespace Ludo.Game
             bannerText.color = s.RankDown && !s.LevelUp ? Loss : Neutral;
             bannerText.gameObject.SetActive(banner.Length > 0);
 
+            PackRows();
             RefreshAd(s, adReady: false);
+        }
+
+        const float cardTop = 360f;       // the card's top edge on the result screen (it is built 640 high, centred 40 above the middle)
+
+        /// <summary>
+        /// Stack the visible lines from the top of the card, so a hidden header or a casual match (no rank rows) leaves no empty band
+        /// above the XP line, and make the card exactly as tall as what it shows. The card's top edge stays where it was.
+        /// </summary>
+        void PackRows()
+        {
+            float y = headerText.gameObject.activeSelf ? -125f : -30f;
+            foreach (var row in new[] { rankRow, xpRow, coinsRow, tierRow, levelRow })
+            {
+                if (!row.activeSelf) continue;
+                ((RectTransform)row.transform).anchoredPosition = new Vector2(0f, y);
+                y -= 80f;
+            }
+            if (bannerText.gameObject.activeSelf)
+            {
+                bannerText.rectTransform.anchoredPosition = new Vector2(0f, y - 10f);
+                y -= 125f;
+            }
+            var card = (RectTransform)transform;
+            float height = Mathf.Max(260f, -y + 30f);
+            card.sizeDelta = new Vector2(card.sizeDelta.x, height);
+            card.anchoredPosition = new Vector2(card.anchoredPosition.x, cardTop - height * 0.5f);
         }
 
         /// <summary>The ad button (only for a win that can still be doubled) or the "unavailable" note. Called again as the ad loads.</summary>

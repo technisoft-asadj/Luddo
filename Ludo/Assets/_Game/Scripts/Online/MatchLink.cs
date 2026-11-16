@@ -236,7 +236,7 @@ namespace Ludo.Online
             problem = null;
             string clean = ChatRules.Prepare(text);
             if (clean == null) { problem = "Type a message first."; return false; }
-            if (!ownThrottle.Allow(Time.unscaledTimeAsDouble)) { problem = "Slow down a little."; return false; }
+            if (!ownThrottle.Allow(Time.unscaledTimeAsDouble)) { problem = "One moment..."; return false; }
             if (IsHost) HostAcceptChat(localPlayerId, clean);
             else SendToHost("CQ|" + clean);
             return true;

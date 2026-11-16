@@ -36,6 +36,7 @@ namespace Ludo.Services
         int rewardedFailures;
         Action<bool> pendingRewarded;          // the result screen waiting for the rewarded ad to end (true = the player earned the reward)
         bool rewardEarned;
+        string rewardedPlacement = "other";    // which screen offered the rewarded ad (for analytics)
 
         Action pendingContinue;                // what to do once the ad closes
         Coroutine watchdog;
@@ -106,9 +107,11 @@ namespace Ludo.Services
         /// (watched to the end); it is called at most once. 'onDone(false)' when the ad is missing, fails, or is closed early. The
         /// caller must never grant anything on false, and must never make the ad mandatory.
         /// </summary>
-        public static void ShowRewarded(Action<bool> onDone)
+        public static void ShowRewarded(Action<bool> onDone, string placement = "other")
         {
             if (instance == null || !RewardedReady || instance.pendingRewarded != null) { onDone?.Invoke(false); return; }
+            instance.rewardedPlacement = placement;
+            GameAnalytics.LogRewardedAdStarted(placement);
             instance.ShowRewardedAd(onDone);
         }
 
@@ -143,7 +146,7 @@ namespace Ludo.Services
             yield return null;   // one frame, so the first screen is already visible behind the consent form
 
             // A returning player who already gave (or did not need to give) consent may start the SDK straight away.
-            if (ConsentInformation.CanRequestAds()) StartSdk();
+            if (ConsentInformation.CanRequestAds()) { StartSdk(); GameAnalytics.SetConsent(true); }
 
             var parameters = new ConsentRequestParameters();   // audience is 13+, so no "under age of consent" flag
             ConsentInformation.Update(parameters, OnConsentInfoUpdated);
@@ -160,7 +163,9 @@ namespace Ludo.Services
             ConsentForm.LoadAndShowConsentFormIfRequired(formError =>
             {
                 if (formError != null) Debug.LogWarning("[Ludo] Consent form: " + formError.Message);
-                if (ConsentInformation.CanRequestAds()) StartSdk();
+                bool canRequest = ConsentInformation.CanRequestAds();
+                GameAnalytics.SetConsent(canRequest);      // measurement follows the same privacy choice as the ads
+                if (canRequest) StartSdk();
             });
         }
 
@@ -367,6 +372,7 @@ namespace Ludo.Services
                 // the SDK says the player earned the reward. This can in principle be reported twice: it only counts once.
                 if (rewardEarned) return;
                 rewardEarned = true;
+                GameAnalytics.LogRewardedAdCompleted(rewardedPlacement);
                 Debug.Log("[Ludo] Rewarded ad: reward earned.");
             });
         }

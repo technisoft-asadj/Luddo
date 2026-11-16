@@ -162,8 +162,12 @@ namespace Ludo.Online
         public static Task<bool> BlockAsync(string memberId) => Run(() => FriendsService.Instance.AddBlockAsync(memberId));
 
         /// <summary>Tell a friend "come and join my room".</summary>
-        public static Task<bool> InviteAsync(string memberId, string roomCode, string myName, int myAvatar) =>
-            Run(() => FriendsService.Instance.MessageAsync(memberId, new RoomInvite { code = roomCode, fromName = myName, fromAvatar = myAvatar }));
+        public static async Task<bool> InviteAsync(string memberId, string roomCode, string myName, int myAvatar)
+        {
+            bool sent = await Run(() => FriendsService.Instance.MessageAsync(memberId, new RoomInvite { code = roomCode, fromName = myName, fromAvatar = myAvatar }));
+            if (sent) Ludo.Services.GameAnalytics.LogInviteSent("friend");
+            return sent;
+        }
 
         /// <summary>Show friends that we are busy playing (or available again).</summary>
         public static async void SetBusy(bool busy)

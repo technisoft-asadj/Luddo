@@ -89,8 +89,9 @@ namespace Ludo.Online
                 busy = false;
                 if (this == null) return;
                 if (!rewarded) { statusText.text = "The ad did not finish - the chest is still yours to open."; Refresh(); return; }
+                Ludo.Services.GameAnalytics.LogRewardEarned("chest", "chest_double");
                 Take(true);
-            });
+            }, "chest");
         }
 
         /// <summary>Out of coins: watch a rewarded ad, and only when the SDK confirms it finished get the top-up.</summary>
@@ -103,13 +104,14 @@ namespace Ludo.Online
             {
                 if (this == null) return;
                 if (!rewarded) { busy = false; statusText.text = "The ad did not finish - no coins this time."; Refresh(); return; }
+                Ludo.Services.GameAnalytics.LogRewardEarned("chest_coins", "coin_top_up");
                 int got = await StatsService.AddAdCoinsAsync();
                 busy = false;
                 if (this == null) return;
                 statusText.text = got > 0 ? "+" + got.ToString("N0") + " coins!" : "";
                 if (got > 0) AudioService.Play(SfxId.Win);
                 Refresh();
-            });
+            }, "chest_coins");
         }
 
         async void Take(bool doubled)

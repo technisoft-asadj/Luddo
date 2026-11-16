@@ -133,16 +133,21 @@ namespace Ludo.Game
             dice.Cancel();                                            // a throw from the abandoned match must not tumble over the new one
             playerCount = players;
             activeRules = rules.Rules.WithMode(GameSession.Mode);
+            seatPlan = SeatPlanFor(players);
+            int mine = LocalPlayer();
+            // online the colours stay with the players (the same on every phone) and the whole picture turns with the table
+            SeatStyle.Turn = link != null && mine >= 0 ? seatPlan[mine] - Board.DefaultSeats(players)[mine] : 0;
+            board.ShowColourTurn(SeatStyle.Turn);
             if (link != null)
             {
                 queuedDice = new QueuedDiceSource();
                 hostDice = new RandomDiceSource();
-                game = new LudoGame(Board.DefaultSeats(players), Rules, queuedDice);
+                game = new LudoGame(seatPlan, Rules, queuedDice);
             }
             else
             {
                 queuedDice = null;
-                game = new LudoGame(Board.DefaultSeats(players), Rules, new RandomDiceSource());
+                game = new LudoGame(seatPlan, Rules, new RandomDiceSource());
             }
             ais = new IAiPlayer[players];
             // Undo is an offline convenience only. Online it would have to be validated and replayed by the host on every
@@ -161,10 +166,26 @@ namespace Ludo.Game
             }
             board.Bind(game);
             hud.HideResult();
+            Ludo.Services.GameAnalytics.LogMatchStarted(GameSession.ModeName(GameSession.Mode), link != null ? GameSession.MatchType : Ludo.Services.GameAnalytics.TypeOffline, players);
             diceSeat = game.State.SeatOf(game.CurrentPlayer);          // the dice starts in the first player's corner
             dicePlaced = false;
             SetupPads();
             StartCoroutine(Flow());
+        }
+
+        void OnDestroy() => SeatStyle.Turn = 0;                    // the menus use the plain colours
+
+        int[] seatPlan;                                            // board seat of each player, fixed for the whole match
+
+        /// <summary>
+        /// Where everybody sits. The person holding this phone (offline: the first person) always takes the bottom-right corner, in every
+        /// mode and on every phone; the others keep their order round the table. Online each phone therefore turns the table to its own
+        /// player - see Board.SeatsWithPlayerAt for why that cannot disagree with the other phones.
+        /// </summary>
+        int[] SeatPlanFor(int players)
+        {
+            int me = LocalPlayer();
+            return Board.SeatsWithPlayerAt(players, me < 0 ? 0 : me, (int)Seat.Yellow);
         }
 
         /// <summary>Keep the dice's tray in the open space between the board's bottom-corner badges and the screen edge,
@@ -487,7 +508,7 @@ namespace Ludo.Game
             StopAllCoroutines();
             StopTimer();
             queuedDice = new QueuedDiceSource();
-            game = new LudoGame(Board.DefaultSeats(playerCount), Rules, queuedDice);
+            game = new LudoGame(seatPlan, Rules, queuedDice);
             RollResult waiting = MatchReplay.Apply(game, queuedDice, story.history);    // a roll whose pick has not been announced yet, or null
             board.Bind(game);                                            // pawns straight to where the story ended
             foreach (int gone in story.takenOver) ApplyTakeover(gone);
@@ -684,6 +705,7 @@ namespace Ludo.Game
             string title = teams
                 ? GameSession.NameOf(winnerSlot, winner) + " + " + GameSession.NameOf(slots[partner], partner)
                 : GameSession.NameOf(winnerSlot, winner);
+            Ludo.Services.GameAnalytics.LogMatchCompleted((teams ? mineWon : IsLocalHuman(winner)) ? "win" : "loss");
             hud.ShowResult(title, SeatStyle.Colors[game.State.SeatOf(winner)], GameSession.AvatarOf(winnerSlot, winner), summary,
                 teams ? mineWon : IsLocalHuman(winner), byForfeit, GameSession.FlagOf(winnerSlot));
         }

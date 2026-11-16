@@ -6,7 +6,33 @@ namespace Ludo.Game
     /// <summary>The colours and names of the four board seats, shared by the board, the HUD and the menus.</summary>
     public static class SeatStyle
     {
-        public static readonly UnityEngine.Color[] Colors =
+        /// <summary>
+        /// The colour shown in each corner. Online, every player keeps the colour the other phones show for them, while this phone's
+        /// player is turned round to the bottom-right corner - so the colours are turned round the table by Turn quarter-turns
+        /// (the board picture is turned the same way). 0 = the corners keep their own colour.
+        /// </summary>
+        public static int Turn
+        {
+            get => turn;
+            set { turn = ((value % 4) + 4) % 4; turned = null; }
+        }
+        static int turn;
+        static UnityEngine.Color[] turned;
+
+        public static UnityEngine.Color[] Colors
+        {
+            get
+            {
+                if (turned == null)
+                {
+                    turned = new UnityEngine.Color[4];
+                    for (int seat = 0; seat < 4; seat++) turned[seat] = Base[((seat - turn) % 4 + 4) % 4];
+                }
+                return turned;
+            }
+        }
+
+        public static readonly UnityEngine.Color[] Base =
         {
             new UnityEngine.Color(0.91f, 0.17f, 0.22f),  // Red
             new UnityEngine.Color(0.12f, 0.66f, 0.33f),  // Green
@@ -34,10 +60,17 @@ namespace Ludo.Game
             ReturnToRoom = false;
             PlayerCount = 4;
             Mode = Ludo.Core.GameMode.Classic;
+            LocalPartner = 0;
+            MatchType = Ludo.Services.GameAnalytics.TypeOffline;
+            PartnerLevel = AiDifficulty.Medium;
+            profileOf = null;
             Slots = new[] { PlayerSlot.Human, PlayerSlot.Human, PlayerSlot.Human, PlayerSlot.Human };
         }
 
         public static bool IsConfigured { get; private set; }
+
+        /// <summary>For analytics only: "offline", "online" (Quick Match) or "private" (a room with a code). Set by the code that starts the match.</summary>
+        public static string MatchType = Ludo.Services.GameAnalytics.TypeOffline;
 
         /// <summary>The game mode of the next game (Classic / Master / Arrow / Blitz). Online it comes from the host's room.</summary>
         public static Ludo.Core.GameMode Mode { get; set; } = Ludo.Core.GameMode.Classic;
@@ -65,7 +98,7 @@ namespace Ludo.Game
                 case Ludo.Core.GameMode.Master: return "Capture an opponent before your pawns can go home.";
                 case Ludo.Core.GameMode.Arrow: return "Stop on an arrow to slide 6 cells ahead.";
                 case Ludo.Core.GameMode.Blitz: return "Pawns start out. First pawn home wins!";
-                case Ludo.Core.GameMode.TeamUp: return "2 vs 2. Red+Yellow against Green+Blue. Both partners must finish.";
+                case Ludo.Core.GameMode.TeamUp: return "2 vs 2. The player facing you is your partner. Both partners must finish.";
                 default: return "Standard Ludo rules. All 4 pawns home wins.";
             }
         }
@@ -91,25 +124,56 @@ namespace Ludo.Game
         public static PlayerSlot[] Slots { get; private set; } =
             { PlayerSlot.Human, PlayerSlot.Human, PlayerSlot.Human, PlayerSlot.Human };
 
-        /// <summary>Pass-and-play: every seat is a person.</summary>
+        /// <summary>
+        /// Team Up, pass and play: which of the other three people (1..3 = their profile number) the first person chose as partner.
+        /// 0 = not chosen, the next person plays with them. The partner sits across the table (see ConfigureLocal).
+        /// </summary>
+        public static int LocalPartner = 0;
+
+        /// <summary>Team Up against the computer: how good the computer partner is. The opponents use the difficulty chosen as usual.</summary>
+        public static AiDifficulty PartnerLevel = AiDifficulty.Medium;
+
+        /// <summary>Pass and play: the profile (name and picture) of each player number. Normally 0, 1, 2, 3.</summary>
+        static int[] profileOf;
+
+        static int ProfileIndex(int index) => profileOf != null && index >= 0 && index < profileOf.Length ? profileOf[index] : index;
+
+        /// <summary>Pass-and-play: every seat is a person. In Team Up the first person may choose their partner: that person sits across
+        /// the table (the seat facing you is always your partner), the other two sit on the sides.</summary>
         public static void ConfigureLocal(int players)
         {
             Link = null;
             PlayerCount = players;
             Slots = new PlayerSlot[players];
             for (int i = 0; i < players; i++) Slots[i] = PlayerSlot.Human;
+            profileOf = LocalOrder(players);
             IsConfigured = true;
+            MatchType = Ludo.Services.GameAnalytics.TypeOffline;
+            Ludo.Services.GameAnalytics.LogMatchCreated(ModeName(Mode), MatchType, players);
         }
 
-        /// <summary>One person against 1-3 computer players of the same difficulty.</summary>
+        /// <summary>Pass and play: which profile (0..3) plays each player number. Team Up with a chosen partner puts that person
+        /// in player 3's place, across the table; otherwise the order is simply 0, 1, 2, 3 (null when nothing is reordered).</summary>
+        public static int[] LocalOrder(int players)
+        {
+            if (Mode != Ludo.Core.GameMode.TeamUp || players != 4 || LocalPartner < 1 || LocalPartner > 3) return null;
+            int a = LocalPartner == 1 ? 2 : 1, b = LocalPartner == 3 ? 2 : 3;     // the two who play against us
+            return new[] { 0, a, LocalPartner, b };
+        }
+
+        /// <summary>One person against 1-3 computer players of the same difficulty. Team Up: the partner (across the table) has its own level.</summary>
         public static void ConfigureVsAi(int opponents, AiDifficulty level)
         {
             Link = null;
+            profileOf = null;
             PlayerCount = 1 + opponents;
             Slots = new PlayerSlot[PlayerCount];
             Slots[0] = PlayerSlot.Human;
             for (int i = 1; i < PlayerCount; i++) Slots[i] = PlayerSlot.Cpu(level);
+            if (Mode == Ludo.Core.GameMode.TeamUp && PlayerCount == 4) Slots[2] = PlayerSlot.Cpu(PartnerLevel);
             IsConfigured = true;
+            MatchType = Ludo.Services.GameAnalytics.TypeOffline;
+            Ludo.Services.GameAnalytics.LogMatchCreated(ModeName(Mode), MatchType, PlayerCount);
         }
 
         // ---------- online ----------
@@ -158,13 +222,13 @@ namespace Ludo.Game
 
         /// <summary>Text for the badge and the result screen.</summary>
         public static string NameOf(PlayerSlot slot, int index) =>
-            slot.hasProfile ? slot.onlineName : slot.isAi ? "CPU " + index : GameSettings.PlayerName(index);
+            slot.hasProfile ? slot.onlineName : slot.isAi ? "CPU " + index : GameSettings.PlayerName(ProfileIndex(index));
 
         /// <summary>The picture for the badge, turn banner and win screen: the player's chosen avatar, or the robot for the computer.</summary>
         public static Sprite AvatarOf(PlayerSlot slot, int index) =>
             slot.isAi ? AvatarLibrary.Computer
             : slot.hasProfile ? (ProfilePhoto.ForPlayer(slot.onlineId) ?? AvatarLibrary.Get(slot.onlineAvatar))
-            : GameSettings.Picture(index);
+            : GameSettings.Picture(ProfileIndex(index));
 
         /// <summary>Online players only: the flag of the country they chose in their profile (null = none chosen, or an offline game).</summary>
         public static Sprite FlagOf(PlayerSlot slot) => slot.hasProfile ? FlagLibrary.Get(slot.onlineCountry) : null;

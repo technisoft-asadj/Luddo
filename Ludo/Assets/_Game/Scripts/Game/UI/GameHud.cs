@@ -478,6 +478,7 @@ namespace Ludo.Game
         /// <summary>The game cannot go on. Online with a summary this is a forfeit: the card shows what it cost.</summary>
         public void ShowEnded(string message, MatchSummary forfeit = null)
         {
+            Ludo.Services.GameAnalytics.LogMatchAbandoned();     // the match cannot go on (connection lost / away too long)
             toast.Hide();
             summary = forfeit;
             if (resultDetail != null) resultDetail.gameObject.SetActive(false);
@@ -529,10 +530,11 @@ namespace Ludo.Game
                 if (!earned) { resultCard.SetNote("The ad was not completed - no bonus this time."); return; }
                 var updated = GameSession.Settler?.ClaimAdBonus();      // once per match: a second claim does nothing
                 if (updated == null) return;
+                Ludo.Services.GameAnalytics.LogRewardEarned("result_card", "rank_points_bonus");
                 summary = updated;
                 resultCard.Show(updated, updated.ByForfeit ? "Your opponent did not reconnect." : "");
                 AudioService.Play(SfxId.Win);
-            });
+            }, "result_card");
         }
 
         void PollRewardedAd()
@@ -601,6 +603,7 @@ namespace Ludo.Game
         public void GoToMenu()
         {
             if (leaving) return;
+            if (!resultPanel.activeSelf) Ludo.Services.GameAnalytics.LogMatchAbandoned();     // left the match before its end
             RunAfterPossibleAd(() =>
             {
                 Time.timeScale = 1f;

@@ -51,6 +51,7 @@ namespace Ludo.Game
         {
             GameSettings.Changed += RefreshPlayerRows;
             ModePicker.Changed += RefreshForMode;
+            PartnerPicker.Chosen += RefreshPlayerRows;
             if (router != null) router.ScreenShown += OnScreenShown;          // Team Up fixes the seat count: keep the chips honest
         }
 
@@ -58,6 +59,7 @@ namespace Ludo.Game
         {
             GameSettings.Changed -= RefreshPlayerRows;
             ModePicker.Changed -= RefreshForMode;
+            PartnerPicker.Chosen -= RefreshPlayerRows;
             if (router != null) router.ScreenShown -= OnScreenShown;
         }
 
@@ -108,13 +110,19 @@ namespace Ludo.Game
         {
             if (playersPicker != null)
                 playersPicker.anchoredPosition = new Vector2(0f, -300f - (players - 1) * 220f - 230f);
-            int[] seats = Board.DefaultSeats(players);      // 2 players sit opposite: Red and Yellow
+            int[] seats = Board.SeatsWithPlayerAt(players, 0, (int)Seat.Yellow);      // the first person sits bottom-right, in Yellow's corner
+            GameSession.Mode = ModePicker.Current;
+            int[] order = GameSession.LocalOrder(players);
             for (int i = 0; i < playerRows.Length; i++)
             {
                 playerRows[i].SetActive(i < players);
                 playerRowNames[i].text = GameSettings.PlayerName(i);
                 playerRowAvatars[i].sprite = GameSettings.Picture(i);
-                if (i < players) playerRowPawns[i].color = SeatStyle.Colors[seats[i]];
+                if (i < players)
+                {
+                    int who = order == null ? i : System.Array.IndexOf(order, i);       // the player number this profile plays
+                    playerRowPawns[i].color = SeatStyle.Colors[seats[who]];
+                }
             }
         }
 
@@ -203,7 +211,8 @@ namespace Ludo.Game
             int shown = seats > 0 ? seats - 1 : opponents;
             for (int i = 0; i < opponentButtons.Length; i++)
             {
-                opponentButtons[i].gameObject.SetActive(seats == 0 || i + 1 == shown);
+                // Team Up always has three others; the partner picker takes this row's place (see PartnerPicker)
+                opponentButtons[i].gameObject.SetActive(ModePicker.Current != GameMode.TeamUp && (seats == 0 || i + 1 == shown));
                 opponentButtons[i].color = i + 1 == shown ? selectedColor : normalColor;
             }
         }

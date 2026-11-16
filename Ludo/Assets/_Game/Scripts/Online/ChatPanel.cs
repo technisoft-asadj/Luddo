@@ -212,8 +212,19 @@ namespace Ludo.Online
                 notice.text = "";
                 input.DeactivateInputField();             // the keyboard closes after sending, so the phrases and emojis show again
             }
-            else notice.text = problem;
+            else Say(problem);
         }
+
+        /// <summary>A short, friendly note under the chat box (the anti-spam "wait a moment" is not an error): it fades away by itself.</summary>
+        void Say(string problem)
+        {
+            notice.color = new Color(1f, 0.88f, 0.55f);
+            notice.text = problem;
+            CancelInvoke(nameof(ClearNotice));
+            if (!string.IsNullOrEmpty(problem)) Invoke(nameof(ClearNotice), 1.6f);
+        }
+
+        void ClearNotice() { if (notice != null) notice.text = ""; }
 
         /// <summary>
         /// A quick-reaction button ("Nice move!", "Good game!"): sends that phrase at once, through the same chat path as a
@@ -224,7 +235,7 @@ namespace Ludo.Online
             if (!QuickChat.IsValidIndex(index)) return;
             var current = MatchLink.Current;
             if (current == null) { notice.text = "Chat works once you are in a room."; return; }
-            notice.text = current.SendChat(QuickChat.Get(index), out string problem) ? "" : problem;
+            Say(current.SendChat(QuickChat.Get(index), out string problem) ? "" : problem);
         }
 
         /// <summary>An emoji button: sends that emoji straight away as its own message.</summary>
@@ -233,7 +244,7 @@ namespace Ludo.Online
             if (index < 0 || index >= ChatEmoji.Codes.Length) return;
             var current = MatchLink.Current;
             if (current == null) { notice.text = "Chat works once you are in a room."; return; }
-            notice.text = current.SendChat(ChatEmoji.Text(ChatEmoji.Codes[index]), out string problem) ? "" : problem;
+            Say(current.SendChat(ChatEmoji.Text(ChatEmoji.Codes[index]), out string problem) ? "" : problem);
         }
     }
 }

@@ -59,6 +59,20 @@ namespace Ludo.Core
             return r == 0 || r == StarOffset;
         }
 
+        /// <summary>
+        /// The default seat plan turned round the board so that player 'me' sits in seat 'target' (the game puts the person holding the
+        /// phone in the bottom-right corner). Turning every seat by the same amount keeps the turn order, the distances between players
+        /// and who faces whom exactly as they were, so the rules and every phone's copy of the match are unaffected.
+        /// </summary>
+        public static int[] SeatsWithPlayerAt(int playerCount, int me, int target)
+        {
+            var seats = DefaultSeats(playerCount);
+            if (me < 0 || me >= seats.Length) return seats;
+            int turn = ((target - seats[me]) % MaxPlayers + MaxPlayers) % MaxPlayers;
+            for (int i = 0; i < seats.Length; i++) seats[i] = (seats[i] + turn) % MaxPlayers;
+            return seats;
+        }
+
         /// <summary>Seats used for a given number of players (2 = opposite corners).</summary>
         public static int[] DefaultSeats(int playerCount)
         {

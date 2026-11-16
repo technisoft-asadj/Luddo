@@ -816,10 +816,41 @@ namespace Ludo.EditorTools
                 rows[i] = row.gameObject; names[i] = label; editButtons[i] = edit;
             }
             playersPicker = BuildModePicker(s, -1165f, withRule: true).GetComponent<RectTransform>();
+            BuildPartnerPicker(s, -1540f, PartnerPicker.Kind.Friend, null);           // Team Up: who plays with the first person
             var start = MakeButton(s, "StartGameButton", "Start Game", "Green", new Vector2(800f, 170f), Icon2("icon_play_light"), true);
             At((RectTransform)start.transform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 120f), new Vector2(800f, 170f));
             OnClick(start, flow.StartLocalGame);
             return s;
+        }
+
+        /// <summary>Team Up (offline): "Partner" with three chips, shown only while Team Up is the chosen rule (see PartnerPicker).</summary>
+        static void BuildPartnerPicker(RectTransform screen, float y, PartnerPicker.Kind kind, GameObject[] hideInTeamUp)
+        {
+            var holder = NewRect("PartnerPicker", screen);
+            At(holder, new Vector2(0f, 1f), new Vector2(0f, 0.5f), new Vector2(0f, y), new Vector2(1080f, 120f));
+            var picker = holder.gameObject.AddComponent<PartnerPicker>();
+            var row = NewRect("Row", holder);
+            Stretch(row);
+            var label = AddText(row, "PartnerLabel", "Partner", 58, Color.white, TextAlignmentOptions.Left, true);
+            At(label.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 0.5f), new Vector2(60f, -60f), new Vector2(300f, 90f));
+            var chips = new Image[3]; var labels = new TMP_Text[3];
+            for (int i = 0; i < 3; i++)
+            {
+                var b = SmallChoice(row, "Partner" + (i + 1), "-", new Vector2(360f + i * 224f, -60f));
+                ((RectTransform)b.transform).sizeDelta = new Vector2(212f, 110f);
+                OnClickInt(b, picker.Choose, i);
+                chips[i] = b.GetComponent<Image>();
+                labels[i] = b.GetComponentInChildren<TMP_Text>();
+                labels[i].enableAutoSizing = true; labels[i].fontSizeMin = 26f; labels[i].fontSizeMax = 52f;
+                labels[i].margin = new Vector4(8f, 0f, 8f, 0f);
+            }
+            var so = new SerializedObject(picker);
+            so.FindProperty("kind").enumValueIndex = (int)kind;
+            so.FindProperty("row").objectReferenceValue = row.gameObject;
+            SetObjects(so.FindProperty("hideInTeamUp"), hideInTeamUp ?? new GameObject[0]);
+            SetObjects(so.FindProperty("chips"), chips);
+            SetObjects(so.FindProperty("labels"), labels);
+            so.ApplyModifiedProperties();
         }
 
         static RectTransform BuildDifficulty(RectTransform parent, ScreenRouter router, MenuFlow flow,
@@ -859,6 +890,7 @@ namespace Ludo.EditorTools
                 OnClickInt(b, flow.SetOpponents, i + 1);
                 oppButtons[i] = b.GetComponent<Image>();
             }
+            BuildPartnerPicker(s, -1110f, PartnerPicker.Kind.Computer, new[] { label.gameObject });     // Team Up: the partner's strength replaces "Opponents"
             BuildModePicker(s, -1215f, withRule: true);
             var start = MakeButton(s, "StartGameButton", "Start Game", "Green", new Vector2(800f, 170f), Icon2("icon_play_light"), true);
             At((RectTransform)start.transform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 120f), new Vector2(800f, 170f));
@@ -1306,10 +1338,11 @@ namespace Ludo.EditorTools
             fo.ApplyModifiedProperties();
 
             var badges = new PlayerBadge[4];
-            badges[(int)Seat.Red] = MakeBadge(frame, "Badge_Red", new Vector2(0f, 1f), new Vector2(0f, 0f), new Vector2(0f, 64f));
-            badges[(int)Seat.Green] = MakeBadge(frame, "Badge_Green", new Vector2(1f, 1f), new Vector2(1f, 0f), new Vector2(0f, 64f));
-            badges[(int)Seat.Yellow] = MakeBadge(frame, "Badge_Yellow", new Vector2(1f, 0f), new Vector2(1f, 1f), new Vector2(0f, -64f));
-            badges[(int)Seat.Blue] = MakeBadge(frame, "Badge_Blue", new Vector2(0f, 0f), new Vector2(0f, 1f), new Vector2(0f, -64f));
+            // each badge sits 16px in from the board's side, so its glow ring is never cut off by (or pressed against) the screen edge
+            badges[(int)Seat.Red] = MakeBadge(frame, "Badge_Red", new Vector2(0f, 1f), new Vector2(0f, 0f), new Vector2(16f, 64f));
+            badges[(int)Seat.Green] = MakeBadge(frame, "Badge_Green", new Vector2(1f, 1f), new Vector2(1f, 0f), new Vector2(-16f, 64f));
+            badges[(int)Seat.Yellow] = MakeBadge(frame, "Badge_Yellow", new Vector2(1f, 0f), new Vector2(1f, 1f), new Vector2(-16f, -64f));
+            badges[(int)Seat.Blue] = MakeBadge(frame, "Badge_Blue", new Vector2(0f, 0f), new Vector2(0f, 1f), new Vector2(16f, -64f));
 
             var toast = BuildToast(frame);
 
@@ -1348,6 +1381,9 @@ namespace Ludo.EditorTools
             At((RectTransform)auto.transform, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(146f, 150f), new Vector2(250f, 110f));
             OnClick(auto, hud.TapAuto);
             auto.gameObject.SetActive(false);
+            // drawn BEHIND the pop-ups (chat, pause...) built above: a button made later is drawn on top, and it used to cover the Chat title
+            var firstPopup = safe.Find("ChatModal");
+            if (firstPopup != null) auto.transform.SetSiblingIndex(firstPopup.GetSiblingIndex());
 
             // the 3 - 2 - 1 - GO! that opens every match (hidden until the first turn is about to start)
             var countdown = AddText(safe, "Countdown", "", 260, Color.white, TextAlignmentOptions.Center, true);

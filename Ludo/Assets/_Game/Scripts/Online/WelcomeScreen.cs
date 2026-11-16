@@ -117,7 +117,7 @@ namespace Ludo.Online
             busy = false;
             if (this == null) return;
             SetButtons(true);
-            if (done) Finish();
+            if (done) { Ludo.Services.GameAnalytics.LogLogin(provider.ToLowerInvariant()); Finish(); }
             else Show(OnlineService.LastError, true);
         }
 

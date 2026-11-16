@@ -56,6 +56,7 @@ namespace Ludo.Game
         {
             if (mode < 0 || mode > (int)GameMode.TeamUp || TableChoice.ModeLocked) return;
             Current = (GameMode)mode;
+            Ludo.Services.GameAnalytics.LogModeSelected(GameSession.ModeName((GameMode)mode));
         }
 
         void Refresh()

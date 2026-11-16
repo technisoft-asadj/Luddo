@@ -23,7 +23,11 @@ namespace Ludo.Online
         /// <summary>The message that goes out with the link.</summary>
         public static string Message => "Play Ludo Fight with me! Free Ludo - play online with friends or on one phone.\n" + StoreUrl;
 
-        public static void Invite() => NativeShare.Text("Ludo Fight", Message);
+        public static void Invite()
+        {
+            Ludo.Services.GameAnalytics.LogInviteSent("share_link");
+            NativeShare.Text("Ludo Fight", Message);
+        }
     }
 
     /// <summary>A button in a scene can only point at a component, so this carries "Share the game" for the menu's share button.</summary>

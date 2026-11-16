@@ -111,7 +111,10 @@ namespace Ludo.Online
         void Refresh()
         {
             if (!RoomService.InRoom) return;
-            shown = RoomService.Players();
+            shown = RoomService.Seated();                       // Team Up: partners who chose each other sit across the table
+            bool teamRoom = RoomService.Mode == Ludo.Core.GameMode.TeamUp && shown.Count == 4;
+            int myIndex = shown.FindIndex(p => p.IsMe);
+            string myPartnerId = teamRoom && myIndex >= 0 ? shown[(myIndex + 2) % 4].Id : "";
             bool host = RoomService.IsHost;
             bool isPublic = RoomService.IsPublic;
 
@@ -133,14 +136,15 @@ namespace Ludo.Online
             else if (!allReady) hintText.text = "Waiting for everybody to press Ready...";
             else hintText.text = isPublic ? "" : mode + "Everyone is ready!";
 
-            int[] seats = Ludo.Core.Board.DefaultSeats(Mathf.Clamp(Mathf.Max(shown.Count, 2), 2, 4));
+            // the colour dots show each player's colour exactly as every other phone shows it (the game turns the table, not the colours)
             int[] fullSeats = Ludo.Core.Board.DefaultSeats(Mathf.Clamp(size, 2, 4));
             for (int i = 0; i < rows.Length; i++)
             {
                 var row = rows[i];
                 row.root.SetActive(i < size);                              // a 2-player room shows two seats
                 bool filled = i < shown.Count;
-                if (row.seatColor != null) row.seatColor.color = SeatStyle.Colors[i < fullSeats.Length && !filled ? fullSeats[i] : seats[Mathf.Min(i, seats.Length - 1)]];
+                if (row.seatColor != null) row.seatColor.color = SeatStyle.Base[fullSeats[Mathf.Min(i, fullSeats.Length - 1)]];
+                EnsureTapTarget(i);
                 if (filled)
                 {
                     var p = shown[i];
@@ -154,6 +158,7 @@ namespace Ludo.Online
                     string level = Ludo.Core.Rating.Tier(p.Rating) + " " + p.Rating;
                     string state = isPublic || p.IsHost ? "" : (p.Ready ? "READY" : "not ready");
                     string tag = who.Length > 0 ? who + "  |  " + level : level;
+                    if (teamRoom) tag = p.IsMe ? who + "  |  tap a player to pick your partner" : (p.Id == myPartnerId ? "YOUR PARTNER" : "OPPONENT") + "  |  " + level;
                     row.tagText.text = state.Length > 0 ? tag + "  |  " + state : tag;
                     row.moreButton.gameObject.SetActive(!p.IsMe);
                 }
@@ -175,6 +180,35 @@ namespace Ludo.Online
                 lastPlayerCount = shown.Count;
                 countdown = -1f;
             }
+        }
+
+        // ---------- Team Up: choose your partner ----------
+
+        readonly bool[] tapReady = new bool[4];
+
+        /// <summary>Make a whole seat row tappable (the small block button on it keeps its own tap, being deeper in the row).</summary>
+        void EnsureTapTarget(int index)
+        {
+            if (tapReady[index]) return;
+            tapReady[index] = true;
+            var root = rows[index].root;
+            if (root.GetComponent<Graphic>() == null) root.AddComponent<Image>().color = Color.clear;
+            var button = root.GetComponent<Button>() ?? root.AddComponent<Button>();
+            button.transition = Selectable.Transition.None;
+            button.onClick.AddListener(() => ChoosePartner(index));
+        }
+
+        async void ChoosePartner(int rowIndex)
+        {
+            if (starting || RoomService.Mode != Ludo.Core.GameMode.TeamUp || shown.Count != 4 || rowIndex >= shown.Count) return;
+            var target = shown[rowIndex];
+            if (target.IsMe) { Notice("Tap another player to choose your partner."); return; }
+            bool undo = RoomService.MyPartnerChoice() == target.Id;
+            bool ok = await RoomService.SetPartnerAsync(undo ? "" : target.Id);
+            if (this == null) return;
+            if (!ok) { Notice("Could not choose your partner. Try again."); return; }
+            Notice(undo ? "Partner choice cleared" : "You asked for " + target.Name + " as your partner");
+            Refresh();
         }
 
         void RefreshVoice()

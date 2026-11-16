@@ -101,8 +101,9 @@ namespace Ludo.Online
                 busy = false;
                 if (this == null) return;
                 if (!rewarded) { statusText.text = "The ad did not finish - you can still claim normally."; Refresh(); return; }
+                Ludo.Services.GameAnalytics.LogRewardEarned("daily_reward", "daily_double");
                 Take(true);
-            });
+            }, "daily_reward");
         }
 
         async void Take(bool doubled)
