@@ -1,4 +1,5 @@
 using UnityEngine;
+using Ludo.Services;
 
 namespace Ludo.Game
 {
@@ -17,7 +18,7 @@ namespace Ludo.Game
 
         void Update()
         {
-            Rect safe = Screen.safeArea;
+            Rect safe = AdsService.UsableArea;       // the phone's safe area, minus the ad banner while a match is on
             var size = new Vector2Int(Screen.width, Screen.height);
             if (safe == applied && size == screenSize) return;
             applied = safe;

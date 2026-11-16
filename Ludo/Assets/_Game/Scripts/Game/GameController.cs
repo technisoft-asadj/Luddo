@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using Ludo.AI;
 using Ludo.Core;
+using Ludo.Services;
 
 namespace Ludo.Game
 {
@@ -124,6 +125,7 @@ namespace Ludo.Game
                 slots = (PlayerSlot[])GameSession.Slots.Clone();      // a copy: a player who leaves online becomes a computer
             }
             link = GameSession.Link;
+            AdsService.SetInGame(true);                   // the banner shows during every match (offline, pass & play and online)
             StartGame(playerCount);
         }
 
@@ -173,7 +175,7 @@ namespace Ludo.Game
             StartCoroutine(Flow());
         }
 
-        void OnDestroy() => SeatStyle.Turn = 0;                    // the menus use the plain colours
+        void OnDestroy() { SeatStyle.Turn = 0; AdsService.SetInGame(false); }                    // the menus use the plain colours
 
         int[] seatPlan;                                            // board seat of each player, fixed for the whole match
 
@@ -215,7 +217,7 @@ namespace Ludo.Game
             {
                 // no corner slots: the chat message bar goes above the dice, so the dice sits as low as the screen allows -
                 // above the phone's gesture bar - to leave the most room between it and the badges
-                float safeBottom = -cam.ScreenToWorldPoint(new Vector3(0f, Screen.safeArea.yMin, 0f)).y;     // > 0: how far down the usable screen reaches
+                float safeBottom = -cam.ScreenToWorldPoint(new Vector3(0f, AdsService.UsableArea.yMin, 0f)).y;     // > 0: how far down the usable screen reaches
                 float lowest = Mathf.Min(yMax, safeBottom - trayHalfHeight - trayOffset - 0.1f);
                 if (lowest >= yMin) y = lowest;
             }
@@ -251,7 +253,7 @@ namespace Ludo.Game
         /// </summary>
         void PlaceOnlineExtras(bool corners, Vector3 dicePosition)
         {
-            float safeBottom = -cam.ScreenToWorldPoint(new Vector3(0f, Screen.safeArea.yMin, 0f)).y;
+            float safeBottom = -cam.ScreenToWorldPoint(new Vector3(0f, AdsService.UsableArea.yMin, 0f)).y;
             bool autoBesideSlot = corners && PlaceAutoBesideOwnSlot();      // the Auto button belongs to MY slot, right next to my dice
             float barBottomInCorners = cornerRowY - padHalf - 0.2f - chatBarHeight;
             if (corners && barBottomInCorners >= -safeBottom + 0.05f)

@@ -41,7 +41,7 @@ namespace Ludo.Services
         [Min(0)] public float appOpenMinSecondsBetween = 180f;      // at most one App Open ad every 3 minutes
 
         [Header("Banner")]
-        [Tooltip("A small banner at the bottom of the MAIN MENU only. Never shown during a game.")]
+        [Tooltip("A small banner at the bottom of the main menu and of every game screen (offline, pass & play, online).")]
         public bool showMenuBanner = true;
 
         [Header("How often an interstitial may appear (only between games, never during one)")]

@@ -4,8 +4,8 @@ using Ludo.Services;
 namespace Ludo.Game
 {
     /// <summary>
-    /// Connects the menu to the ad banner: the banner is visible only while the MAIN menu screen is showing - never on
-    /// the splash, the other menu screens, in a pop-up flow or in a game. It only asks; AdsService decides whether a
+    /// Connects the menu to the ad banner: on the menu the banner is visible only while the MAIN screen is showing (never on
+    /// the splash, the other menu screens or in a pop-up flow); games turn it on themselves (GameController). It only asks; AdsService decides whether a
     /// banner exists (ads on, SDK started, ad loaded).
     /// </summary>
     public sealed class MenuBanner : MonoBehaviour
@@ -18,6 +18,9 @@ namespace Ludo.Game
             router.ScreenShown += OnScreenShown;
             OnScreenShown(router.Current);
         }
+
+        // After every OnEnable/OnDestroy of a scene change has run (a game may be closing as the menu opens), say again what is wanted.
+        void Start() => OnScreenShown(router.Current);
 
         void OnDisable()
         {

@@ -41,8 +41,9 @@ namespace Ludo.Services
         Action pendingContinue;                // what to do once the ad closes
         Coroutine watchdog;
 
-        BannerView banner;                     // the main-menu banner (created on first use, then only hidden/shown)
-        bool bannerWanted;                     // is the main menu on screen right now?
+        BannerView banner;                     // the banner (created on first use, then only hidden/shown): main menu and games
+        bool bannerWanted;                     // is the main menu (or a game) on screen right now?
+        static bool inGame;                    // a match is on screen: the banner is wanted, and the game's layout leaves room for it
         bool bannerLoaded;
         int bannerFailures;
 
@@ -56,7 +57,7 @@ namespace Ludo.Services
         static int appOpenBlockers;            // rooms and games raise this so no ad appears over them
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void ResetStatics() { instance = null; appOpenBlockers = 0; }
+        static void ResetStatics() { instance = null; appOpenBlockers = 0; inGame = false; }
 
         /// <summary>A screen that must never be covered by an App Open ad (the waiting room) calls this with true when it opens and false when it closes.</summary>
         public static void BlockAppOpen(bool blocked) => appOpenBlockers = Mathf.Max(0, appOpenBlockers + (blocked ? 1 : -1));
@@ -119,8 +120,34 @@ namespace Ludo.Services
         public static void SetMenuBannerVisible(bool visible)
         {
             if (instance == null) return;
+            if (!visible && inGame) return;         // the menu closing as a match opens must not hide the match's banner
             instance.bannerWanted = visible;
             instance.ApplyBanner();
+        }
+
+        /// <summary>A match is on screen (true) or has been left (false). While it is on, the banner is shown at the bottom and the game keeps its controls above it.</summary>
+        public static void SetInGame(bool value)
+        {
+            inGame = value;
+            if (value) SetMenuBannerVisible(true);
+        }
+
+        /// <summary>Height in pixels the banner takes at the bottom of the screen right now (0 when there is none showing).</summary>
+        public static int BannerReservePx =>
+            instance != null && inGame && instance.bannerWanted && instance.bannerLoaded && instance.banner != null
+                ? Mathf.RoundToInt(instance.banner.GetHeightInPixels()) : 0;
+
+        /// <summary>The phone's safe area minus the banner at the bottom: the part of the screen a game's controls may use.</summary>
+        public static Rect UsableArea
+        {
+            get
+            {
+                Rect r = Screen.safeArea;
+                float reserve = BannerReservePx;
+                if (reserve <= 0f) return r;
+                r.yMin = Mathf.Min(r.yMax - 1f, r.yMin + reserve);
+                return r;
+            }
         }
 
         /// <summary>True in regions where the law requires a "Privacy settings" entry in the app (GDPR etc.).</summary>

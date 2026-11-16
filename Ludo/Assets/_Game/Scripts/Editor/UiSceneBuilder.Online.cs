@@ -1260,6 +1260,11 @@ namespace Ludo.EditorTools
             so.FindProperty("rankFill").objectReferenceValue = rankFill;
             so.FindProperty("rankBarText").objectReferenceValue = rankBarText;
             so.ApplyModifiedProperties();
+
+            // The scrolling Body above runs up to the very top of the screen and its (invisible) viewport catches taps, so it sat on
+            // top of the Back arrow and the arrow did nothing. The header goes last: drawn and hit-tested above the Body.
+            s.Find("BackButton")?.SetAsLastSibling();
+            s.Find("Title")?.SetAsLastSibling();
             return s;
         }
 
